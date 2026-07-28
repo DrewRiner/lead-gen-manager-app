@@ -50,7 +50,7 @@ import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeads } from "@/lib/queries/leads";
 import { getPropertyMonthlySeries, getRangeMetrics } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
-import { cn } from "@/lib/utils";
+import { TabLink, TabNav } from "@/components/tab-link";
 
 export const dynamic = "force-dynamic";
 
@@ -227,14 +227,14 @@ export default async function PropertyDetailPage({
       </Card>
 
       {/* Tabs (server-rendered via ?tab=) */}
-      <div className="mb-6 flex gap-1 border-b">
+      <TabNav>
         <TabLink href={`/properties/${id}?tab=activity`} active={tab === "activity"}>
           Activity
         </TabLink>
         <TabLink href={`/properties/${id}?tab=lifetime`} active={tab === "lifetime"}>
           Lifetime
         </TabLink>
-      </div>
+      </TabNav>
 
       {tab === "activity" ? (
         <ActivityTab
@@ -572,30 +572,6 @@ async function LifetimeTab({
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function TabLink({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors",
-        active
-          ? "border-primary text-foreground"
-          : "border-transparent text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {children}
-    </Link>
   );
 }
 
