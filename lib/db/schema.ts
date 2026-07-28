@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -229,6 +230,43 @@ export const leads = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// property_assignments — source of truth for WHO rented WHAT, WHEN, at WHAT RATE.
+// properties.client_id is only "who holds it right now" and must always match
+// the single active assignment (ended_on is null).
+// ---------------------------------------------------------------------------
+
+export const propertyAssignments = pgTable(
+  "property_assignments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    propertyId: uuid("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "restrict" }),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "restrict" }),
+    // Calendar dates in the org timezone. ended_on null => currently active.
+    startedOn: date("started_on", { mode: "string" }).notNull(),
+    endedOn: date("ended_on", { mode: "string" }),
+    // Rates SNAPSHOTTED at creation. Changing property rates never rewrites these.
+    billingType: billingTypeEnum("billing_type").notNull(),
+    monthlyRate: money("monthly_rate").notNull().default("0"),
+    perLeadCallRate: money("per_lead_call_rate").notNull().default("0"),
+    perLeadFormRate: money("per_lead_form_rate").notNull().default("0"),
+    createdAt,
+    updatedAt,
+  },
+  (t) => [
+    // Exactly one active assignment per property at a time.
+    uniqueIndex("property_assignments_active_uniq")
+      .on(t.propertyId)
+      .where(sql`${t.endedOn} is null`),
+    index("property_assignments_property_id_idx").on(t.propertyId),
+    index("property_assignments_client_id_idx").on(t.clientId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 
@@ -240,3 +278,5 @@ export type Property = typeof properties.$inferSelect;
 export type NewProperty = typeof properties.$inferInsert;
 export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
+export type PropertyAssignment = typeof propertyAssignments.$inferSelect;
+export type NewPropertyAssignment = typeof propertyAssignments.$inferInsert;

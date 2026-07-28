@@ -131,3 +131,50 @@ Rules:
    30-day windows. Month-to-date and prior full months.
 7. The gap (estimated_value - billed_amount) is a first-class reported metric.
    It identifies underpriced flat-rate contracts and unrented inventory.
+
+## Rental assignments and lifetime value
+
+property_assignments is the source of truth for WHO rented WHAT, WHEN, and at
+WHAT RATE. properties.client_id remains only as "who holds it right now" and
+must always match the active assignment.
+
+Rules:
+1. An assignment has started_on and ended_on (null = currently active). Exactly
+   one active assignment per property at a time. Enforce with a partial unique
+   index on (property_id) where ended_on is null.
+2. Rates are SNAPSHOTTED onto the assignment at creation: billing_type,
+   monthly_rate, per_lead_call_rate, per_lead_form_rate. Changing a property's
+   current rates must never rewrite historical assignment revenue.
+3. Assigning a client creates an assignment and sets properties.client_id.
+   Unassigning sets ended_on and nulls properties.client_id. Both happen in one
+   transaction. These are the only ways client_id ever changes.
+4. Monthly flat revenue comes from the assignment active during that month, using
+   that assignment's snapshotted monthly_rate. Never the property's current rate,
+   and never "does it have a client now."
+5. Lifetime value of a property = all flat rent across all its assignments, plus
+   SUM(billed_amount) of all its leads. Lifetime estimated value =
+   SUM(estimated_value) of all its leads, independent of any client.
+6. Lifetime value of a client = the same, scoped to that client's assignments and
+   the leads stamped with that client_id.
+7. Leads keep their own client_id snapshot. Never re-attribute a historical lead
+   to a different client.
+
+## Additional lifetime metrics on /properties/[id]
+
+The lifetime cards must combine ALL clients that ever rented this property, plus
+all lead revenue regardless of who held it at the time. Add to that section:
+
+- Total clients (how many distinct clients have ever rented it)
+- Average tenure per client, in months
+- Longest tenure, with the client name
+- Revenue per month rented (lifetime revenue / months rented) - the comparable
+  earning rate between properties
+- Occupancy rate (months rented / months since first assignment or first lead)
+
+In the Client history table, add a "% of lifetime revenue" column so I can see at
+a glance whether this property's value came from one anchor client or many short
+ones.
+
+Rank properties by revenue per month rented, not raw lifetime revenue, anywhere
+properties are compared. A property owned for 6 months earning $2k/mo beats one
+owned 3 years earning $500/mo, and raw lifetime totals hide that.

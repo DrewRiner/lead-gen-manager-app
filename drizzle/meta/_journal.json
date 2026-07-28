@@ -15,6 +15,20 @@
       "when": 1785259270746,
       "tag": "0001_rls_auth_trigger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785262951890,
+      "tag": "0002_broken_hellion",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785262967058,
+      "tag": "0003_assignments_rls_backfill",
+      "breakpoints": true
     }
   ]
 }
