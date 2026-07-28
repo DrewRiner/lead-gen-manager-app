@@ -10,6 +10,7 @@ import { LeadsTable } from "@/components/leads/leads-table";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
+import { ChangeRateDialog } from "@/components/properties/change-rate-dialog";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
 import { StatCard } from "@/components/stat-card";
@@ -34,10 +35,11 @@ import { unassignClient } from "@/lib/actions/assignments";
 import {
   nowLocalInputValue,
   recentMonths,
+  todayDateStr,
   trailingDayRange,
 } from "@/lib/dates";
 import { db } from "@/lib/db";
-import { clients, leads, properties } from "@/lib/db/schema";
+import { clients, leads, properties, propertyAssignments } from "@/lib/db/schema";
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
@@ -94,6 +96,7 @@ export default async function PropertyDetailPage({
     leadCountRow,
     leadsPage,
     clientList,
+    activeAssignmentRow,
   ] = await Promise.all([
     getRangeMetrics(trailingDayRange(tz, 1), { propertyId: id }),
     getRangeMetrics(trailingDayRange(tz, 7), { propertyId: id }),
@@ -124,11 +127,27 @@ export default async function PropertyDetailPage({
       .from(clients)
       .where(isNull(clients.deletedAt))
       .orderBy(asc(clients.businessName)),
+    db
+      .select({
+        billingType: propertyAssignments.billingType,
+        monthlyRate: propertyAssignments.monthlyRate,
+        perLeadCallRate: propertyAssignments.perLeadCallRate,
+        perLeadFormRate: propertyAssignments.perLeadFormRate,
+      })
+      .from(propertyAssignments)
+      .where(
+        and(
+          eq(propertyAssignments.propertyId, id),
+          isNull(propertyAssignments.endedOn),
+        ),
+      )
+      .limit(1),
   ]);
 
   const totalLeadCount = leadCountRow[0]?.count ?? 0;
   const monthlyDesc = [...monthly].reverse();
   const isAssigned = p.clientId != null;
+  const activeAssignment = activeAssignmentRow[0];
   const s = lifetime.summary;
 
   const editValue = {
@@ -179,6 +198,15 @@ export default async function PropertyDetailPage({
             </Button>
           }
         />
+        {isAssigned && activeAssignment ? (
+          <ChangeRateDialog
+            propertyId={p.id}
+            active={activeAssignment}
+            defaultEffectiveDate={todayDateStr(tz)}
+            clientName={row.clientName}
+            trigger={<Button variant="outline">Change rate</Button>}
+          />
+        ) : null}
         {isAssigned ? (
           <ConfirmDialog
             title="Unassign client?"
@@ -367,8 +395,9 @@ export default async function PropertyDetailPage({
         <CardHeader>
           <CardTitle>Billing configuration</CardTitle>
           <CardDescription>
-            Current property rates. Active assignments keep the rate snapshotted
-            when they started — reassign to reprice.
+            Current property defaults (used for new assignments). The active
+            client keeps the rate snapshotted on their assignment — use Change
+            rate to reprice them.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">

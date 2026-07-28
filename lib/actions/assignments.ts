@@ -5,8 +5,14 @@ import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
-import { clients, properties, propertyAssignments } from "@/lib/db/schema";
-import { todayDateStr } from "@/lib/dates";
+import {
+  billingTypeEnum,
+  clients,
+  properties,
+  propertyAssignments,
+} from "@/lib/db/schema";
+import { previousDateStr, todayDateStr } from "@/lib/dates";
+import { toMoneyString } from "@/lib/money";
 import { getOrgTimezone } from "@/lib/settings";
 
 export type ActionResult =
@@ -99,6 +105,103 @@ export async function assignClient(
 
   revalidateAll(propertyId, clientId);
   return { ok: true, message: "Client assigned." };
+}
+
+const money = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => toMoneyString(v && v.length > 0 ? v : 0));
+
+const changeRateSchema = z.object({
+  effectiveDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick an effective date."),
+  billingType: z.enum(billingTypeEnum.enumValues),
+  monthlyRate: money,
+  perLeadCallRate: money,
+  perLeadFormRate: money,
+});
+
+/**
+ * Reprice the ACTIVE assignment from an effective date forward, keeping history
+ * intact: end the current assignment the day before the effective date and
+ * start a new one for the SAME client with the new snapshotted rates. This is
+ * the explicit, non-silent way to change what the current client pays.
+ */
+export async function changeActiveRate(
+  propertyId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  if (!z.string().uuid().safeParse(propertyId).success) {
+    return { ok: false, error: "Invalid property id." };
+  }
+  const parsed = changeRateSchema.safeParse({
+    effectiveDate: formData.get("effectiveDate"),
+    billingType: formData.get("billingType"),
+    monthlyRate: formData.get("monthlyRate"),
+    perLeadCallRate: formData.get("perLeadCallRate"),
+    perLeadFormRate: formData.get("perLeadFormRate"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.errors[0]?.message ?? "Invalid input.",
+    };
+  }
+  const data = parsed.data;
+  const dayBefore = previousDateStr(data.effectiveDate);
+
+  let clientId: string | null = null;
+  try {
+    await db.transaction(async (tx) => {
+      const [active] = await tx
+        .select()
+        .from(propertyAssignments)
+        .where(
+          and(
+            eq(propertyAssignments.propertyId, propertyId),
+            isNull(propertyAssignments.endedOn),
+          ),
+        )
+        .limit(1);
+      if (!active) throw new Error("No active assignment to reprice.");
+
+      // Effective date must fall after the current assignment started, so the
+      // ended-day-before is not earlier than its start.
+      if (data.effectiveDate <= active.startedOn) {
+        throw new Error(
+          "Effective date must be after the current assignment started.",
+        );
+      }
+      clientId = active.clientId;
+
+      await tx
+        .update(propertyAssignments)
+        .set({ endedOn: dayBefore, updatedAt: new Date() })
+        .where(eq(propertyAssignments.id, active.id));
+
+      await tx.insert(propertyAssignments).values({
+        propertyId,
+        clientId: active.clientId,
+        startedOn: data.effectiveDate,
+        endedOn: null,
+        billingType: data.billingType,
+        monthlyRate: data.monthlyRate,
+        perLeadCallRate: data.perLeadCallRate,
+        perLeadFormRate: data.perLeadFormRate,
+      });
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Could not change rate.",
+    };
+  }
+
+  revalidateAll(propertyId, clientId);
+  return { ok: true, message: "Rate changed for the current client." };
 }
 
 /**

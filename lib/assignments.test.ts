@@ -61,17 +61,38 @@ describe("flatRevenueForMonth", () => {
     expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 3), NOW)).toBe("900.00");
   });
 
-  it("handoff month with two overlapping assignments counts both full rates", () => {
+  it("handoff month books only the assignment active on the LAST day", () => {
     const asgs = [
+      // Outgoing: ends mid-March.
       a({ clientId: "c1", startedOn: "2026-01-01", endedOn: "2026-03-10", monthlyRate: "1000.00" }),
+      // Incoming: starts mid-March, still active.
       a({ clientId: "c2", startedOn: "2026-03-15", endedOn: null, monthlyRate: "1200.00" }),
     ];
-    // March overlaps both.
-    expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 3), NOW)).toBe("2200.00");
-    // February only the first.
+    // March: only c2 is active on Mar 31 -> 1200 (not 2200).
+    expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 3), NOW)).toBe("1200.00");
+    // February: only c1.
     expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 2), NOW)).toBe("1000.00");
-    // April only the second.
+    // April: only c2.
     expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 4), NOW)).toBe("1200.00");
+  });
+
+  it("outgoing assignment books zero for its final partial month", () => {
+    // c1 alone, ending mid-March -> March is a partial final month.
+    const asgs = [
+      a({ clientId: "c1", startedOn: "2026-01-01", endedOn: "2026-03-10", monthlyRate: "1000.00" }),
+    ];
+    expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 2), NOW)).toBe("1000.00");
+    expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 3), NOW)).toBe("0.00");
+  });
+
+  it("an assignment ending on the last day of the month still books that month", () => {
+    const asgs = [
+      a({ clientId: "c1", startedOn: "2026-01-01", endedOn: "2026-04-30", monthlyRate: "1000.00" }),
+    ];
+    // Ended exactly on Apr 30 -> active on the last day -> booked.
+    expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 4), NOW)).toBe("1000.00");
+    // May: gone.
+    expect(flatRevenueForMonth(asgs, monthIndexFromYm(2026, 5), NOW)).toBe("0.00");
   });
 });
 
@@ -85,13 +106,15 @@ describe("monthsRented + lifetimeFlatRevenue", () => {
     expect(monthsRented(asgs, NOW)).toBe(5);
   });
 
-  it("lifetime flat revenue counts each assignment's full months (incl. handoff)", () => {
+  it("lifetime flat revenue books a handoff month once (to the incoming client)", () => {
     const asgs = [
-      a({ startedOn: "2026-01-01", endedOn: "2026-03-10", monthlyRate: "1000.00" }), // Jan,Feb,Mar = 3
-      a({ clientId: "c2", startedOn: "2026-03-15", endedOn: "2026-04-20", monthlyRate: "1200.00" }), // Mar,Apr = 2
+      // Outgoing: Jan 1 – Mar 10. Books Jan, Feb (Mar is its partial final month).
+      a({ startedOn: "2026-01-01", endedOn: "2026-03-10", monthlyRate: "1000.00" }),
+      // Incoming: Mar 15 – May 20. Books Mar, Apr (May is its partial final month).
+      a({ clientId: "c2", startedOn: "2026-03-15", endedOn: "2026-05-20", monthlyRate: "1500.00" }),
     ];
-    // 3*1000 + 2*1200 = 5400
-    expect(lifetimeFlatRevenue(asgs, NOW)).toBe("5400.00");
+    // Jan 1000 + Feb 1000 + Mar 1500 + Apr 1500 + May 0 = 5000
+    expect(lifetimeFlatRevenue(asgs, NOW)).toBe("5000.00");
   });
 
   it("active assignment accrues through the current month", () => {

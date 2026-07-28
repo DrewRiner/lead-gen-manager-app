@@ -1,4 +1,4 @@
-import { sumMoney, toMoneyNumber } from "@/lib/money";
+import { sumMoney, toMoneyNumber, toMoneyString } from "@/lib/money";
 
 // ---------------------------------------------------------------------------
 // Pure assignment math. Everything works in whole org-tz calendar months
@@ -48,23 +48,42 @@ export function activeInMonth(
   return start <= monthIndex && monthIndex <= endIndex(a, nowIndex);
 }
 
+/** The last calendar day of a month index, as a "YYYY-MM-DD" string. */
+function lastDayOfMonth(monthIndex: number): string {
+  const year = Math.floor(monthIndex / 12);
+  const month = (monthIndex % 12) + 1; // 1-12
+  const day = new Date(year, month, 0).getDate(); // day 0 of next month
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
+
+/** Is the assignment active on a specific calendar date? (ended_on inclusive) */
+export function activeOnDate(a: AssignmentLite, dateStr: string): boolean {
+  return a.startedOn <= dateStr && (a.endedOn === null || a.endedOn >= dateStr);
+}
+
 /**
- * Flat rent booked for a single month: the full monthly_rate of every
- * flat/hybrid assignment active that month (no proration). In a handoff month
- * where two assignments overlap, both full rates count.
+ * Flat rent booked for a single month: the full monthly_rate of the ONE
+ * flat/hybrid assignment active on the LAST day of the month (no proration).
+ * In a handoff month, the outgoing assignment (which ended before month-end)
+ * books nothing for its final partial month; only the assignment still active
+ * on the last day books. Months beyond `nowIndex` book nothing.
  */
 export function flatRevenueForMonth(
   assignments: AssignmentLite[],
   monthIndex: number,
   nowIndex: number,
 ): string {
-  return sumMoney(
-    assignments
-      .filter(
-        (a) => chargesFlat(a.billingType) && activeInMonth(a, monthIndex, nowIndex),
-      )
-      .map((a) => a.monthlyRate),
+  if (monthIndex > nowIndex) return "0.00";
+  const lastDay = lastDayOfMonth(monthIndex);
+  const covering = assignments.filter(
+    (a) => chargesFlat(a.billingType) && activeOnDate(a, lastDay),
   );
+  if (covering.length === 0) return "0.00";
+  // At most one assignment is active on any given day; if the data somehow
+  // overlaps, the incoming (latest-started) assignment wins.
+  covering.sort((x, y) => x.startedOn.localeCompare(y.startedOn));
+  return toMoneyString(covering[covering.length - 1].monthlyRate);
 }
 
 /** Distinct month indices in which the property had ANY active assignment. */
@@ -89,16 +108,23 @@ export function monthsRented(
   return rentedMonthSet(assignments, nowIndex).size;
 }
 
-/** Lifetime flat rent across all assignments (full monthly_rate per month). */
+/**
+ * Lifetime flat rent, summed month-by-month using the same "active on the last
+ * day" rule as the monthly reports. This keeps lifetime totals consistent with
+ * the sum of monthly figures — a handoff month is booked once (to the incoming
+ * assignment), and an outgoing assignment's final partial month books nothing.
+ */
 export function lifetimeFlatRevenue(
   assignments: AssignmentLite[],
   nowIndex: number,
 ): string {
-  const parts: number[] = [];
-  for (const a of assignments) {
-    if (!chargesFlat(a.billingType)) continue;
-    const months = endIndex(a, nowIndex) - monthIndexFromDate(a.startedOn) + 1;
-    parts.push(toMoneyNumber(a.monthlyRate) * Math.max(0, months));
+  if (!assignments.some((a) => chargesFlat(a.billingType))) return "0.00";
+  const startIdx = Math.min(
+    ...assignments.map((a) => monthIndexFromDate(a.startedOn)),
+  );
+  const parts: string[] = [];
+  for (let mi = startIdx; mi <= nowIndex; mi++) {
+    parts.push(flatRevenueForMonth(assignments, mi, nowIndex));
   }
   return sumMoney(parts);
 }

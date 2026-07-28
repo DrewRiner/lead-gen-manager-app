@@ -149,6 +149,15 @@ export function parseMonthKey(
   return currentMonthKey(tz, now);
 }
 
+/** The calendar day before a "YYYY-MM-DD" date, as "YYYY-MM-DD". */
+export function previousDateStr(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+}
+
 /** "YYYY-MM-DD" for the current date in the org timezone. */
 export function todayDateStr(tz: string, now: Date = new Date()): string {
   const z = toZonedTime(now, tz);

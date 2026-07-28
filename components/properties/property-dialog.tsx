@@ -69,6 +69,13 @@ export function PropertyDialog({
   );
   const [status, setStatus] = useState<Status>(property?.status ?? "available");
 
+  // Editing rates when a client is actively assigned is the silent-wrong-revenue
+  // trap: these fields are only defaults for FUTURE assignments; the active
+  // client keeps the rate snapshotted on their assignment.
+  const hasActiveAssignment = mode === "edit" && property?.clientId != null;
+  const [rateChanged, setRateChanged] = useState(false);
+  const markRateChanged = () => setRateChanged(true);
+
   const showMonthly = billingType === "flat_monthly" || billingType === "hybrid";
   const showPerLead = billingType === "per_lead" || billingType === "hybrid";
 
@@ -186,7 +193,10 @@ export function PropertyDialog({
               <Field label="Billing type">
                 <Select
                   value={billingType}
-                  onValueChange={(v) => setBillingType(v as BillingType)}
+                  onValueChange={(v) => {
+                    setBillingType(v as BillingType);
+                    if (v !== property?.billingType) markRateChanged();
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -214,6 +224,7 @@ export function PropertyDialog({
                     step="0.01"
                     min={0}
                     defaultValue={property?.monthlyRate ?? "0"}
+                    onChange={markRateChanged}
                   />
                 </Field>
               ) : (
@@ -232,6 +243,7 @@ export function PropertyDialog({
                       step="0.01"
                       min={0}
                       defaultValue={property?.perLeadCallRate ?? "0"}
+                      onChange={markRateChanged}
                     />
                   </Field>
                   <Field label="Per-lead form rate ($)">
@@ -241,6 +253,7 @@ export function PropertyDialog({
                       step="0.01"
                       min={0}
                       defaultValue={property?.perLeadFormRate ?? "0"}
+                      onChange={markRateChanged}
                     />
                   </Field>
                 </>
@@ -259,6 +272,21 @@ export function PropertyDialog({
                 </>
               )}
             </div>
+            {hasActiveAssignment && rateChanged ? (
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                These rates apply to <strong>future assignments only</strong>.
+                The currently assigned client keeps the rate snapshotted when
+                their assignment started. To reprice them, close this and use{" "}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Change rate
+                </button>
+                .
+              </div>
+            ) : null}
           </section>
 
           <section className="space-y-4 rounded-lg border p-4">
