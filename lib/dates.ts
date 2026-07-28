@@ -138,6 +138,15 @@ export function parseMonthKey(
   return currentMonthKey(tz, now);
 }
 
+/** "YYYY-MM-DDTHH:mm" for the current time in the org tz (datetime-local value). */
+export function nowLocalInputValue(tz: string, now: Date = new Date()): string {
+  const z = toZonedTime(now, tz);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${z.getFullYear()}-${pad(z.getMonth() + 1)}-${pad(z.getDate())}T${pad(
+    z.getHours(),
+  )}:${pad(z.getMinutes())}`;
+}
+
 export interface LocalDay {
   /** YYYY-MM-DD in org tz */
   key: string;
@@ -179,6 +188,29 @@ export function recentMonths(
   for (let i = 0; i < count; i++) {
     const d = addMonths(base, -i);
     out.push(monthKey(d.getFullYear(), d.getMonth() + 1));
+  }
+  return out;
+}
+
+/**
+ * Convert org-local "YYYY-MM-DD" from/to strings into a UTC range.
+ * `from` is inclusive start-of-day; `to` is inclusive, so end is exclusive
+ * start of the day after `to`. Either bound may be omitted.
+ */
+export function dayRangeUtc(
+  tz: string,
+  from?: string,
+  to?: string,
+): { start?: Date; end?: Date } {
+  const out: { start?: Date; end?: Date } = {};
+  if (from && /^\d{4}-\d{2}-\d{2}$/.test(from)) {
+    const [y, m, d] = from.split("-").map(Number);
+    out.start = fromZonedTime(new Date(y, m - 1, d, 0, 0, 0, 0), tz);
+  }
+  if (to && /^\d{4}-\d{2}-\d{2}$/.test(to)) {
+    const [y, m, d] = to.split("-").map(Number);
+    const nextDay = addDays(new Date(y, m - 1, d, 0, 0, 0, 0), 1);
+    out.end = fromZonedTime(nextDay, tz);
   }
   return out;
 }

@@ -13,6 +13,15 @@ export function formatPercentChange(pct: number | null | undefined): string {
   return `${sign}${rounded}%`;
 }
 
+/** Format a call duration in seconds as m:ss (or "—" when null). */
+export function formatDuration(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds)) return "—";
+  const s = Math.max(0, Math.round(seconds));
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}:${String(rem).padStart(2, "0")}`;
+}
+
 export function titleCase(s: string | null | undefined): string {
   if (!s) return "";
   return s
