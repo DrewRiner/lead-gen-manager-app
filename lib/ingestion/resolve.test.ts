@@ -93,6 +93,47 @@ describe("matchProperty", () => {
     expect(m?.strategy).toBe("page_url");
   });
 
+  it("ignores GHL-hosted page_url hosts (leadconnectorhq.com)", () => {
+    // GHL-hosted forms always report a leadconnectorhq.com host, which
+    // identifies the provider, not the property — so it must never match.
+    const m = matchProperty(POOL, {
+      leadSourceRaw: null,
+      ghlFormId: null,
+      pageUrl: "https://api.leadconnectorhq.com/widget/form/abc",
+    });
+    expect(m).toBeNull();
+  });
+
+  it("ignores gohighlevel.com and its subdomains as page_url hosts", () => {
+    expect(
+      matchProperty(POOL, {
+        leadSourceRaw: null,
+        ghlFormId: null,
+        pageUrl: "https://link.gohighlevel.com/x",
+      }),
+    ).toBeNull();
+  });
+
+  it("still matches a real property domain even though GHL hosts are ignored", () => {
+    const m = matchProperty(POOL, {
+      leadSourceRaw: null,
+      ghlFormId: null,
+      pageUrl: "https://brunswickfence.com/contact",
+    });
+    expect(m?.property.id).toBe("fence");
+    expect(m?.strategy).toBe("page_url");
+  });
+
+  it("falls back to a GHL-hosted page_url producing no match => unmatched", () => {
+    // contact_source absent, mediumId doesn't match, host is GHL-hosted.
+    const m = matchProperty(POOL, {
+      leadSourceRaw: null,
+      ghlFormId: "unknown_form",
+      pageUrl: "https://api.leadconnectorhq.com/widget/form/xyz",
+    });
+    expect(m).toBeNull();
+  });
+
   it("returns null when nothing matches (=> unmatched lead)", () => {
     const m = matchProperty(POOL, {
       leadSourceRaw: "Totally Unknown",

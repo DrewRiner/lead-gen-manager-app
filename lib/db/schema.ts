@@ -246,6 +246,9 @@ export const leads = pgTable(
     ghlLeadSourceRaw: text("ghl_lead_source_raw"),
     pageUrl: text("page_url"),
     formName: text("form_name"),
+    // Swept custom form fields (label -> value) that don't map to a standard
+    // column. Composed into `message` for display, kept structured here.
+    formAnswers: jsonb("form_answers"),
     billableStatus: billableStatusEnum("billable_status").notNull(),
     billableReason: text("billable_reason"),
     qualifiedBy: qualifiedByEnum("qualified_by"),

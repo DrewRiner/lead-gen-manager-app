@@ -63,11 +63,25 @@ export function normalizeDomain(input: string | null | undefined): string | null
   return s.length > 0 ? s : null;
 }
 
+// Hosts that GHL-hosted forms always report (api.leadconnectorhq.com and the
+// like). They identify the provider, never the property, so a page-url host
+// under any of these domains is worthless for matching and must be ignored.
+const IGNORED_HOST_SUFFIXES = ["leadconnectorhq.com", "gohighlevel.com"];
+
+function isIgnoredHost(host: string): boolean {
+  return IGNORED_HOST_SUFFIXES.some(
+    (suffix) => host === suffix || host.endsWith("." + suffix),
+  );
+}
+
 /**
  * Pure matcher. Tries, in order:
  *   1. lead_source  vs property.ghl_lead_source (case-insensitive, trimmed)
- *   2. ghl_form_id  vs property.ghl_form_id (case-insensitive, trimmed)
- *   3. page_url host vs property.domain (both normalized)
+ *   2. ghl_form_id  vs property.ghl_form_id (case-insensitive, trimmed) — the
+ *      lead's ghlFormId comes from attributionSource.mediumId
+ *   3. page_url host vs property.domain (both normalized) — treated as
+ *      unreliable: GHL-hosted forms always report a leadconnectorhq.com /
+ *      gohighlevel.com host, which is explicitly ignored here.
  * Returns the first match, or null when nothing matches.
  */
 export function matchProperty(
@@ -88,9 +102,10 @@ export function matchProperty(
     if (hit) return { property: hit, strategy: "ghl_form_id" };
   }
 
-  // 3. Page URL host vs property domain.
+  // 3. Page URL host vs property domain. GHL-hosted form hosts are ignored —
+  // they identify the provider, not the property.
   const host = normalizeDomain(lead.pageUrl);
-  if (host) {
+  if (host && !isIgnoredHost(host)) {
     const hit = candidates.find((c) => normalizeDomain(c.domain) === host);
     if (hit) return { property: hit, strategy: "page_url" };
   }

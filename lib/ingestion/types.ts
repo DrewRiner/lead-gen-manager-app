@@ -26,19 +26,32 @@ export interface CanonicalLead {
   /** E.164 when parseable, otherwise the raw string, otherwise null. */
   phone: string | null;
   email: string | null;
+  /** Human-readable "Label: value" lines composed from formAnswers. */
   message: string | null;
   formName: string | null;
   ghlContactId: string | null;
   ghlLocationId: string | null;
+  /**
+   * Custom form fields keyed by their form label, e.g.
+   * { "Property Type": "Residential" }. Empty-valued fields are dropped. Null
+   * when the payload carried no custom fields.
+   */
+  formAnswers: Record<string, string> | null;
 
   // -- Timing -------------------------------------------------------------
   /** When the lead actually occurred (from the payload, not server time). */
   occurredAt: Date;
   /**
-   * True when the payload carried no usable timestamp and occurredAt fell back
-   * to ingestion time. Surfaced in billable_reason so it's never silent.
+   * True when occurredAt fell back to ingestion time instead of the payload's
+   * timestamp — either because none was present or because it was stale.
+   * Surfaced in billable_reason so it's never silent.
    */
   occurredAtFallback: boolean;
+  /**
+   * When occurredAtFallback is true, the specific reason (e.g. "provider
+   * timestamp was stale"). Composed into billable_reason. Null otherwise.
+   */
+  occurredAtNote: string | null;
 
   /** The untouched provider payload, stored verbatim on the lead + event. */
   rawPayload: unknown;

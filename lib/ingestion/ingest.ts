@@ -17,6 +17,12 @@ import type { CanonicalLead } from "@/lib/ingestion/types";
 const UNMATCHED_REASON = "unmatched_no_property";
 const FALLBACK_TIME_NOTE = "occurred_at defaulted to receipt time";
 
+/** The billable_reason suffix noting the occurred_at fallback, if any. */
+function occurredNote(lead: CanonicalLead): string {
+  if (!lead.occurredAtFallback) return "";
+  return ` (${lead.occurredAtNote ?? FALLBACK_TIME_NOTE})`;
+}
+
 export interface IngestResult {
   leadId: string;
   matched: boolean;
@@ -37,7 +43,7 @@ export async function ingestCanonicalLead(
 ): Promise<IngestResult> {
   const match = await resolveProperty(lead);
 
-  const fallbackNote = lead.occurredAtFallback ? ` (${FALLBACK_TIME_NOTE})` : "";
+  const fallbackNote = occurredNote(lead);
 
   let values: NewLead;
   if (match) {
@@ -75,6 +81,7 @@ export async function ingestCanonicalLead(
       ghlLeadSourceRaw: lead.leadSourceRaw,
       pageUrl: lead.pageUrl,
       formName: lead.formName,
+      formAnswers: lead.formAnswers as NewLead["formAnswers"],
       rawPayload: lead.rawPayload as NewLead["rawPayload"],
       occurredAt: lead.occurredAt,
     };
@@ -102,6 +109,7 @@ export async function ingestCanonicalLead(
       ghlLeadSourceRaw: lead.leadSourceRaw,
       pageUrl: lead.pageUrl,
       formName: lead.formName,
+      formAnswers: lead.formAnswers as NewLead["formAnswers"],
       rawPayload: lead.rawPayload as NewLead["rawPayload"],
       occurredAt: lead.occurredAt,
     };

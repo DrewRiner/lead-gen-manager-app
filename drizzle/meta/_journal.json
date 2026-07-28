@@ -57,6 +57,13 @@
       "when": 1785274317987,
       "tag": "0007_fearless_randall_flagg",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785276282129,
+      "tag": "0008_mighty_spiral",
+      "breakpoints": true
     }
   ]
 }
