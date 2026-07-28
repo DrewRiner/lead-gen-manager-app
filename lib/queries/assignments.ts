@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
 import {
   lifetimeFlatRevenue,
@@ -68,7 +68,8 @@ interface LeadLifetimeAgg {
 async function getLeadLifetimeByProperty(
   propertyIds?: string[],
 ): Promise<Map<string, LeadLifetimeAgg>> {
-  const conds = [isNull(leads.deletedAt)];
+  // Exclude unmatched leads (null property) — they belong to no property.
+  const conds = [isNull(leads.deletedAt), isNotNull(leads.propertyId)];
   if (propertyIds && propertyIds.length > 0) {
     conds.push(inArray(leads.propertyId, propertyIds));
   }
@@ -86,6 +87,7 @@ async function getLeadLifetimeByProperty(
 
   const map = new Map<string, LeadLifetimeAgg>();
   for (const r of rows) {
+    if (r.propertyId == null) continue;
     map.set(r.propertyId, {
       leadRevenue: toMoneyString(r.leadRevenue),
       estimatedValue: toMoneyString(r.estimatedValue),

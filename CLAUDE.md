@@ -200,3 +200,32 @@ property status. Property status derives from it, exactly as 'rented' does.
 6. Converting a trial ends the trial assignment and starts a new paid assignment
    for the same client, beginning the day after the trial ended. Both records
    persist so the history shows trial then paid.
+
+## Webhook ingestion (GoHighLevel and beyond)
+
+Inbound leads arrive via ONE HTTP endpoint (`POST /api/webhooks/ghl-form`) — the
+only API route in the app; everything else stays Server Actions/Components.
+
+1. The pipeline is provider-neutral: an adapter (`lib/ingestion/adapters/*`)
+   turns a raw payload into a CanonicalLead; `resolve` matches it to a property;
+   `ingest` runs evaluateLead and upserts. Adding CallRail/Twilio later means
+   adding ONE adapter file — nothing downstream changes.
+2. Every request is logged to `webhook_events` (raw payload + headers) BEFORE
+   parsing or auth, so malformed/unauthorized calls still leave a record. The
+   secret header is redacted before storage.
+3. Auth is a constant-time compare against `app_settings.webhook_secret`. Invalid
+   secret ⇒ 401 (after logging). Everything else ⇒ 200, even unresolvable or
+   downstream-failed: GHL retries 5xx forever, and the logged event is replayable.
+4. Property resolution order: (1) Lead Source vs `properties.ghl_lead_source`
+   (case-insensitive, trimmed), (2) `ghl_form_id`, (3) page-url host vs
+   `properties.domain` (normalized). No match ⇒ the lead is stored 'unmatched'
+   with a null property and ZERO billed/estimated value.
+5. De-dupe on (source_system, external_id). Adapters synthesize a deterministic
+   external_id (hash of form id + email/phone + timestamp) when the payload has
+   none, so replays and retries never double-insert.
+6. occurred_at comes from the payload, never server time; if absent it falls back
+   to receipt time and that fact is noted in billable_reason.
+7. Unmatched leads are assigned from /leads, which re-runs evaluateLead against
+   the chosen property and can remember the Lead Source on it for auto-match.
+   Resolution/billing math is unit-tested (`lib/ingestion/*.test.ts`); the
+   endpoint is verified with curl.

@@ -36,6 +36,13 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isLogin = pathname === "/login";
+  // Inbound webhooks authenticate with a shared secret (see the route), not an
+  // app session, and must be reachable by third parties like GoHighLevel.
+  const isPublicWebhook = pathname.startsWith("/api/webhooks/");
+
+  if (isPublicWebhook) {
+    return supabaseResponse;
+  }
 
   if (!user && !isLogin) {
     const url = request.nextUrl.clone();

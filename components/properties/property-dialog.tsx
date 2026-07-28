@@ -62,6 +62,8 @@ export interface PropertyDialogValue {
   launchedOn: string | null;
   gbpPlaceId: string | null;
   trackingPhone: string | null;
+  ghlLeadSource: string | null;
+  ghlFormId: string | null;
   clientId: string | null;
   billingType: BillingType;
   monthlyRate: string;
@@ -369,6 +371,36 @@ export function PropertyDialog({
                   defaultValue={property?.estimatedFormValue ?? "0"}
                 />
               </Field>
+            </div>
+          </section>
+
+          <section className="space-y-4 rounded-lg border p-4">
+            <div>
+              <h3 className="text-sm font-semibold">Lead ingestion (GoHighLevel)</h3>
+              <p className="text-xs text-muted-foreground">
+                How inbound form submissions are matched to this property.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">GHL Lead Source</Label>
+              <Input
+                name="ghlLeadSource"
+                placeholder="e.g. Brunswick Fence Company"
+                defaultValue={property?.ghlLeadSource ?? ""}
+              />
+              <p className="text-xs text-muted-foreground">
+                The exact value to put in the GHL form&rsquo;s{" "}
+                <strong>Lead Source</strong> hidden field. Inbound leads carrying
+                this value are matched to this property (case-insensitive).
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">GHL Form ID</Label>
+              <Input
+                name="ghlFormId"
+                placeholder="Optional — matched if Lead Source is absent"
+                defaultValue={property?.ghlFormId ?? ""}
+              />
             </div>
           </section>
 

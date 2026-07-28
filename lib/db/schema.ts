@@ -65,6 +65,9 @@ export const billableStatusEnum = pgEnum("billable_status", [
   "disputed",
   "pending_review",
   "spam",
+  // Ingested lead that couldn't be resolved to a property. Books zero
+  // billed/estimated value until an operator assigns it (see /leads).
+  "unmatched",
 ]);
 
 export const qualifiedByEnum = pgEnum("qualified_by", [
@@ -130,6 +133,9 @@ export const appSettings = pgTable(
     )
       .notNull()
       .default(60),
+    // Shared secret for inbound webhooks (checked against the X-Webhook-Secret
+    // header). Nullable so a fresh install has none until one is generated.
+    webhookSecret: text("webhook_secret"),
     updatedAt,
   },
   (t) => [check("app_settings_singleton", sql`${t.id} = 1`)],
@@ -156,40 +162,58 @@ export const clients = pgTable("clients", {
 // properties — lead gen sites we own. One property = one brand.
 // ---------------------------------------------------------------------------
 
-export const properties = pgTable("properties", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  displayName: text("display_name"),
-  domain: text("domain"),
-  niche: text("niche"),
-  city: text("city"),
-  state: text("state"),
-  status: propertyStatusEnum("status").notNull().default("building"),
-  // When the site went live (org-tz calendar date). Null until launched.
-  launchedOn: date("launched_on", { mode: "string" }),
-  gbpPlaceId: text("gbp_place_id"),
-  trackingPhone: text("tracking_phone"),
-  clientId: uuid("client_id").references(() => clients.id, {
-    onDelete: "set null",
-  }),
-  billingType: billingTypeEnum("billing_type")
-    .notNull()
-    .default("flat_monthly"),
-  monthlyRate: money("monthly_rate").notNull().default("0"),
-  // What we aim to rent it for (independent of any current assignment).
-  targetMonthlyRent: money("target_monthly_rent").notNull().default("0"),
-  perLeadCallRate: money("per_lead_call_rate").notNull().default("0"),
-  perLeadFormRate: money("per_lead_form_rate").notNull().default("0"),
-  estimatedCallValue: money("estimated_call_value").notNull().default("0"),
-  estimatedFormValue: money("estimated_form_value").notNull().default("0"),
-  billableThresholdSeconds: integer("billable_threshold_seconds")
-    .notNull()
-    .default(60),
-  notes: text("notes"),
-  createdAt,
-  updatedAt,
-  deletedAt,
-});
+export const properties = pgTable(
+  "properties",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    displayName: text("display_name"),
+    domain: text("domain"),
+    niche: text("niche"),
+    city: text("city"),
+    state: text("state"),
+    status: propertyStatusEnum("status").notNull().default("building"),
+    // When the site went live (org-tz calendar date). Null until launched.
+    launchedOn: date("launched_on", { mode: "string" }),
+    gbpPlaceId: text("gbp_place_id"),
+    trackingPhone: text("tracking_phone"),
+    // GoHighLevel ingestion keys. ghl_lead_source is the exact value the GHL
+    // form puts in its Lead Source hidden field; ghl_form_id is the form's id.
+    // Either resolves an inbound webhook to this property (see lib/ingestion).
+    ghlLeadSource: text("ghl_lead_source"),
+    ghlFormId: text("ghl_form_id"),
+    clientId: uuid("client_id").references(() => clients.id, {
+      onDelete: "set null",
+    }),
+    billingType: billingTypeEnum("billing_type")
+      .notNull()
+      .default("flat_monthly"),
+    monthlyRate: money("monthly_rate").notNull().default("0"),
+    // What we aim to rent it for (independent of any current assignment).
+    targetMonthlyRent: money("target_monthly_rent").notNull().default("0"),
+    perLeadCallRate: money("per_lead_call_rate").notNull().default("0"),
+    perLeadFormRate: money("per_lead_form_rate").notNull().default("0"),
+    estimatedCallValue: money("estimated_call_value").notNull().default("0"),
+    estimatedFormValue: money("estimated_form_value").notNull().default("0"),
+    billableThresholdSeconds: integer("billable_threshold_seconds")
+      .notNull()
+      .default(60),
+    notes: text("notes"),
+    createdAt,
+    updatedAt,
+    deletedAt,
+  },
+  (t) => [
+    // A lead-source / form-id may belong to at most one property. Partial so
+    // the many properties without GHL keys don't collide on NULL.
+    uniqueIndex("properties_ghl_lead_source_uniq")
+      .on(t.ghlLeadSource)
+      .where(sql`${t.ghlLeadSource} is not null`),
+    uniqueIndex("properties_ghl_form_id_uniq")
+      .on(t.ghlFormId)
+      .where(sql`${t.ghlFormId} is not null`),
+  ],
+);
 
 // ---------------------------------------------------------------------------
 // leads — individual call or form leads, tied to a property
@@ -199,9 +223,11 @@ export const leads = pgTable(
   "leads",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    propertyId: uuid("property_id")
-      .notNull()
-      .references(() => properties.id, { onDelete: "restrict" }),
+    // Nullable: an ingested lead that can't be resolved to a property is stored
+    // 'unmatched' with a null property until an operator assigns it.
+    propertyId: uuid("property_id").references(() => properties.id, {
+      onDelete: "restrict",
+    }),
     clientId: uuid("client_id").references(() => clients.id, {
       onDelete: "set null",
     }),
@@ -213,6 +239,13 @@ export const leads = pgTable(
     message: text("message"),
     callDurationSeconds: integer("call_duration_seconds"),
     recordingUrl: text("recording_url"),
+    // GoHighLevel form-ingestion context (null for manually-entered leads).
+    ghlContactId: text("ghl_contact_id"),
+    ghlLocationId: text("ghl_location_id"),
+    // The raw Lead Source value as it arrived on the form (before resolution).
+    ghlLeadSourceRaw: text("ghl_lead_source_raw"),
+    pageUrl: text("page_url"),
+    formName: text("form_name"),
     billableStatus: billableStatusEnum("billable_status").notNull(),
     billableReason: text("billable_reason"),
     qualifiedBy: qualifiedByEnum("qualified_by"),
@@ -291,6 +324,41 @@ export const propertyAssignments = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// webhook_events — append-only audit log of every inbound webhook POST.
+// The raw payload + headers are recorded BEFORE any parsing/auth, so a
+// malformed or unauthorized request still leaves a durable record. A processed
+// event links to the lead it produced. This is the source for the Replay
+// button and the ingestion history in Settings.
+// ---------------------------------------------------------------------------
+
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Which integration sent it, e.g. 'ghl'. Kept as text (not an enum) so a
+    // new provider adapter needs no migration.
+    provider: text("provider").notNull(),
+    eventType: text("event_type"),
+    rawPayload: jsonb("raw_payload"),
+    headers: jsonb("headers"),
+    // Whether the shared-secret header matched. Recorded even on rejection.
+    authValid: boolean("auth_valid").notNull().default(false),
+    // Set once ingestion runs to completion (matched OR unmatched). Null while
+    // unprocessed or when processing failed before persisting a lead.
+    processedAt: timestamp("processed_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    leadId: uuid("lead_id").references(() => leads.id, {
+      onDelete: "set null",
+    }),
+    error: text("error"),
+    createdAt,
+  },
+  (t) => [index("webhook_events_created_at_idx").on(t.createdAt)],
+);
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 
@@ -304,3 +372,5 @@ export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
 export type PropertyAssignment = typeof propertyAssignments.$inferSelect;
 export type NewPropertyAssignment = typeof propertyAssignments.$inferInsert;
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
+export type NewWebhookEvent = typeof webhookEvents.$inferInsert;

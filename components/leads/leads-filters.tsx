@@ -118,6 +118,7 @@ export function LeadsFilters({
             { value: "disputed", label: "Disputed" },
             { value: "pending_review", label: "Pending review" },
             { value: "spam", label: "Spam" },
+            { value: "unmatched", label: "Unmatched" },
           ]}
         />
         <FilterSelect

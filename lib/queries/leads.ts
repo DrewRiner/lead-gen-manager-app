@@ -30,8 +30,8 @@ export interface LeadFilters {
 
 export interface LeadListRow {
   id: string;
-  propertyId: string;
-  propertyName: string;
+  propertyId: string | null;
+  propertyName: string | null;
   niche: string | null;
   clientId: string | null;
   clientName: string | null;
@@ -50,6 +50,10 @@ export interface LeadListRow {
   estimatedValue: string;
   deliveryStatus: string;
   sourceSystem: string;
+  // GoHighLevel ingestion context (null for manual leads).
+  ghlLeadSourceRaw: string | null;
+  pageUrl: string | null;
+  formName: string | null;
   occurredAt: Date;
   createdAt: Date;
 }
@@ -125,11 +129,15 @@ export async function getLeads(
         estimatedValue: leads.estimatedValue,
         deliveryStatus: leads.deliveryStatus,
         sourceSystem: leads.sourceSystem,
+        ghlLeadSourceRaw: leads.ghlLeadSourceRaw,
+        pageUrl: leads.pageUrl,
+        formName: leads.formName,
         occurredAt: leads.occurredAt,
         createdAt: leads.createdAt,
       })
       .from(leads)
-      .innerJoin(properties, eq(properties.id, leads.propertyId))
+      // Left join: unmatched leads have a null property and must still show.
+      .leftJoin(properties, eq(properties.id, leads.propertyId))
       .leftJoin(clients, eq(clients.id, leads.clientId))
       .where(where)
       .orderBy(desc(leads.occurredAt))
@@ -162,4 +170,13 @@ export async function getAllLeadsForExport(
 ): Promise<LeadListRow[]> {
   const { rows } = await getLeads(tz, filters, 1, 100000);
   return rows;
+}
+
+/** Count of ingested leads awaiting property assignment. */
+export async function getUnmatchedLeadCount(): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(leads)
+    .where(and(isNull(leads.deletedAt), eq(leads.billableStatus, "unmatched")));
+  return row?.count ?? 0;
 }

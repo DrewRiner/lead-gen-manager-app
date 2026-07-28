@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Fragment, useState } from "react";
 
+import { AssignLeadDialog } from "@/components/leads/assign-lead-dialog";
 import { LeadOverrideDialog } from "@/components/leads/lead-override-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -24,10 +25,13 @@ export function LeadsTable({
   rows,
   tz,
   hideProperty = false,
+  properties = [],
 }: {
   rows: LeadListRow[];
   tz: string;
   hideProperty?: boolean;
+  /** Property options for the "assign to property" flow on unmatched leads. */
+  properties?: { id: string; name: string }[];
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -90,13 +94,19 @@ export function LeadsTable({
                     </TableCell>
                     {hideProperty ? null : (
                       <TableCell className="font-medium">
-                        <Link
-                          href={`/properties/${r.propertyId}`}
-                          className="hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {r.propertyName}
-                        </Link>
+                        {r.propertyId ? (
+                          <Link
+                            href={`/properties/${r.propertyId}`}
+                            className="hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {r.propertyName}
+                          </Link>
+                        ) : (
+                          <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
+                            Unmatched
+                          </span>
+                        )}
                       </TableCell>
                     )}
                     <TableCell className="capitalize">{r.type}</TableCell>
@@ -142,6 +152,25 @@ export function LeadsTable({
                           <Detail label="Billable reason">
                             {r.billableReason ?? "—"}
                           </Detail>
+                          {r.ghlLeadSourceRaw ? (
+                            <Detail label="Lead source (raw)">
+                              <span className="font-mono text-xs">
+                                {r.ghlLeadSourceRaw}
+                              </span>
+                            </Detail>
+                          ) : null}
+                          {r.formName ? (
+                            <Detail label="Form">{r.formName}</Detail>
+                          ) : null}
+                          {r.pageUrl ? (
+                            <div className="col-span-2 md:col-span-4">
+                              <Detail label="Page URL">
+                                <span className="break-all font-mono text-xs">
+                                  {r.pageUrl}
+                                </span>
+                              </Detail>
+                            </div>
+                          ) : null}
                           <div className="col-span-2 md:col-span-4">
                             <Detail label="Message">
                               {r.message ?? "—"}
@@ -161,7 +190,22 @@ export function LeadsTable({
                               </Detail>
                             </div>
                           ) : null}
-                          <div className="col-span-2 flex items-end md:col-span-4">
+                          <div className="col-span-2 flex flex-wrap items-end gap-2 md:col-span-4">
+                            {r.propertyId == null ? (
+                              <AssignLeadDialog
+                                leadId={r.id}
+                                leadSourceRaw={r.ghlLeadSourceRaw}
+                                properties={properties}
+                                trigger={
+                                  <Button
+                                    size="sm"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    Assign to property
+                                  </Button>
+                                }
+                              />
+                            ) : null}
                             <LeadOverrideDialog
                               leadId={r.id}
                               current={r.billableStatus}

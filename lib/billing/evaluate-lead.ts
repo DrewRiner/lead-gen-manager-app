@@ -1,6 +1,7 @@
 import {
   billableStatusEnum,
   billingTypeEnum,
+  leadSourceEnum,
   leadTypeEnum,
   qualifiedByEnum,
 } from "@/lib/db/schema";
@@ -16,6 +17,7 @@ import { toMoneyString } from "@/lib/money";
 export type BillableStatus = (typeof billableStatusEnum.enumValues)[number];
 export type BillingType = (typeof billingTypeEnum.enumValues)[number];
 export type LeadType = (typeof leadTypeEnum.enumValues)[number];
+export type LeadSource = (typeof leadSourceEnum.enumValues)[number];
 export type QualifiedBy = (typeof qualifiedByEnum.enumValues)[number];
 
 /** Reasons the engine can attach to a decision. */

@@ -8,6 +8,8 @@
  * property scalar fields (snapshotting them to scripts/.demo-snapshot.json
  * first) and adds tagged records that teardown removes precisely:
  *   - demo leads:       source_system = 'demo'
+ *   - demo GHL leads:   source_system = 'ghl', external_id like 'demo-ghl-%'
+ *   - demo webhook events: raw_payload._demo = true
  *   - demo clients:     notes begins with '[DEMO]'
  *   - demo assignments: notes begins with '[DEMO]'
  */
@@ -15,7 +17,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
-import { and, eq, isNull, like, sql } from "drizzle-orm";
+import { and, eq, isNull, like, or, sql } from "drizzle-orm";
 
 import { evaluateLead } from "@/lib/billing/evaluate-lead";
 import { recentMonths } from "@/lib/dates";
@@ -25,8 +27,10 @@ import {
   leads,
   properties,
   propertyAssignments,
+  webhookEvents,
   type NewLead,
   type NewPropertyAssignment,
+  type NewWebhookEvent,
   type Property,
 } from "@/lib/db/schema";
 import { getMonthlyReport } from "@/lib/queries/metrics";
@@ -485,6 +489,175 @@ async function seed() {
     await db.insert(leads).values(leadRows.slice(i, i + 300));
   }
 
+  // -- 7b. GoHighLevel form leads (source_system='ghl', reversible) -------
+  // ~20 ingested form leads over the last ~3 weeks, exactly as the webhook
+  // would land them: most matched to a real property by Lead Source, a couple
+  // deliberately unmatched so /leads' "needs a property" flow has something to
+  // show. Each also gets a webhook_events row for the Settings history.
+  const ghlProps = leadSpecs.map((s) => s.prop).slice(0, 9);
+  const ghlLeadRows: NewLead[] = [];
+  const ghlPayloads: Array<Record<string, unknown>> = [];
+  let ghlSeq = 0;
+  const ghlOccurredAt = (dayISO: string): Date => {
+    const [y, mo, dd] = dayISO.split("-").map(Number);
+    return fromZonedTime(new Date(y, mo - 1, dd, randInt(8, 18), randInt(0, 59)), TZ);
+  };
+  for (const prop of ghlProps) {
+    for (let k = 0; k < 2; k++) {
+      const dayISO = dayStr(randInt(0, 20));
+      const iv = billingAt(prop.id, dayISO);
+      const chargePerLead = iv !== null && !iv.isTrial;
+      const est = estForNiche(prop.niche);
+      const decision = evaluateLead(
+        { type: "form", callDurationSeconds: null },
+        {
+          billingType: chargePerLead ? iv!.billingType : "flat_monthly",
+          perLeadCallRate: "0",
+          perLeadFormRate: chargePerLead ? iv!.perLeadForm : "0",
+          estimatedCallValue: money(est.call),
+          estimatedFormValue: money(est.form),
+          billableThresholdSeconds: prop.billableThresholdSeconds,
+        },
+      );
+      const occurredAt = ghlOccurredAt(dayISO);
+      const name = personName();
+      const ph = phone();
+      const ext = `demo-ghl-${++ghlSeq}`;
+      const payload: Record<string, unknown> = {
+        _demo: true,
+        submission_id: ext,
+        lead_source: prop.name,
+        form_id: `ghl_form_${prop.id.slice(0, 8)}`,
+        form_name: "Website Contact Form",
+        page_url: `https://${prop.domain ?? "example.com"}/contact`,
+        full_name: name,
+        email: "lead@example.com",
+        phone: ph,
+        message: "Requesting a quote.",
+        created_at: occurredAt.toISOString(),
+      };
+      ghlPayloads.push(payload);
+      ghlLeadRows.push({
+        propertyId: prop.id,
+        clientId: iv?.clientId ?? null,
+        type: "form",
+        source: "organic",
+        callerName: name,
+        callerPhone: ph,
+        callerEmail: "lead@example.com",
+        message: "Requesting a quote.",
+        billableStatus: decision.billableStatus,
+        billableReason: decision.billableReason,
+        qualifiedBy: decision.qualifiedBy,
+        billedAmount: decision.billedAmount,
+        estimatedValue: decision.estimatedValue,
+        deliveryStatus: "new",
+        sourceSystem: "ghl",
+        externalId: ext,
+        ghlLeadSourceRaw: prop.name,
+        pageUrl: payload.page_url as string,
+        formName: "Website Contact Form",
+        ghlContactId: `demo_con_${ghlSeq}`,
+        ghlLocationId: "demo_loc_1",
+        rawPayload: payload as NewLead["rawPayload"],
+        occurredAt,
+      });
+    }
+  }
+  // Two unmatched leads (a Lead Source no property owns).
+  for (const src of ["FB Ad – Spring Promo", "Unknown Landing Page"]) {
+    const dayISO = dayStr(randInt(0, 10));
+    const occurredAt = ghlOccurredAt(dayISO);
+    const name = personName();
+    const ph = phone();
+    const ext = `demo-ghl-${++ghlSeq}`;
+    const payload: Record<string, unknown> = {
+      _demo: true,
+      submission_id: ext,
+      lead_source: src,
+      form_name: "Landing Page Form",
+      full_name: name,
+      email: "lead@example.com",
+      phone: ph,
+      message: "Interested, please call.",
+      created_at: occurredAt.toISOString(),
+    };
+    ghlPayloads.push(payload);
+    ghlLeadRows.push({
+      propertyId: null,
+      clientId: null,
+      type: "form",
+      source: "organic",
+      callerName: name,
+      callerPhone: ph,
+      callerEmail: "lead@example.com",
+      message: "Interested, please call.",
+      billableStatus: "unmatched",
+      billableReason: "unmatched_no_property",
+      qualifiedBy: null,
+      billedAmount: "0.00",
+      estimatedValue: "0.00",
+      deliveryStatus: "new",
+      sourceSystem: "ghl",
+      externalId: ext,
+      ghlLeadSourceRaw: src,
+      pageUrl: null,
+      formName: "Landing Page Form",
+      ghlContactId: `demo_con_${ghlSeq}`,
+      ghlLocationId: "demo_loc_1",
+      rawPayload: payload as NewLead["rawPayload"],
+      occurredAt,
+    });
+  }
+  const insertedGhl = await db
+    .insert(leads)
+    .values(ghlLeadRows)
+    .returning({ id: leads.id, ext: leads.externalId });
+  const idByExt = new Map(insertedGhl.map((r) => [r.ext, r.id]));
+
+  // Matching webhook_events for the Settings history (tagged _demo).
+  const eventRows: NewWebhookEvent[] = ghlPayloads.map((p) => ({
+    provider: "ghl",
+    eventType: "form",
+    rawPayload: p as NewWebhookEvent["rawPayload"],
+    headers: {
+      "content-type": "application/json",
+      "x-webhook-secret": "[redacted]",
+    } as NewWebhookEvent["headers"],
+    authValid: true,
+    processedAt: now,
+    leadId: idByExt.get(p.submission_id as string) ?? null,
+  }));
+  // One rejected (bad secret) and one malformed body, for a realistic log.
+  eventRows.push({
+    provider: "ghl",
+    eventType: "form",
+    rawPayload: {
+      _demo: true,
+      submission_id: "demo-ghl-rej",
+      lead_source: "Brunswick Fence Company",
+    } as NewWebhookEvent["rawPayload"],
+    headers: { "x-webhook-secret": "[redacted]" } as NewWebhookEvent["headers"],
+    authValid: false,
+    error: "invalid_secret",
+    leadId: null,
+  });
+  eventRows.push({
+    provider: "ghl",
+    eventType: "form",
+    rawPayload: {
+      _demo: true,
+      _raw: "{not json",
+      _parseError: true,
+    } as NewWebhookEvent["rawPayload"],
+    headers: {} as NewWebhookEvent["headers"],
+    authValid: true,
+    error: "malformed_json",
+    leadId: null,
+  });
+  await db.insert(webhookEvents).values(eventRows);
+  const ghlUnmatched = ghlLeadRows.filter((r) => r.billableStatus === "unmatched").length;
+
   // -- 7. Summary + expected dashboard counts -----------------------------
   const byStatus = { building: 0, optimizing: 0, producing: 0, trial: 0, rented: 0, paused: 0 } as Record<string, number>;
   for (const plan of plans) byStatus[plan.status]++;
@@ -505,6 +678,9 @@ async function seed() {
     "demo clients": insertedClients.length,
     "demo assignments": demoAssignments.length,
     "demo leads": leadRows.length,
+    "demo GHL leads": ghlLeadRows.length,
+    "demo GHL unmatched": ghlUnmatched,
+    "demo webhook events": eventRows.length,
     "properties modified": plans.length,
   });
   console.log("Property statuses now:", byStatus);
@@ -519,6 +695,9 @@ async function seed() {
   );
   console.log("Status-review flags: expect >= 3 (high-lead optimizing, stale producing, expired trial).");
   console.log(`Total demo leads over ~9 months: ${leadRows.length}`);
+  console.log(
+    `GHL ingested form leads: ${ghlLeadRows.length} (${ghlUnmatched} unmatched) — see /leads and Settings › Webhooks.`,
+  );
 
   // -- 8. Computed monthly revenue + estimated value (last 3 months) ------
   const { orgTimezone: tz } = await getAppSettings();
@@ -540,7 +719,23 @@ async function seed() {
 async function clear() {
   const hasSnapshot = existsSync(SNAPSHOT_PATH);
 
-  const demoLeads = await db.delete(leads).where(eq(leads.sourceSystem, "demo")).returning({ id: leads.id });
+  // Demo webhook events first (their lead_id FK is set-null on lead delete, but
+  // removing them up front keeps the teardown tidy).
+  const demoEvents = await db
+    .delete(webhookEvents)
+    .where(sql`${webhookEvents.rawPayload}->>'_demo' = 'true'`)
+    .returning({ id: webhookEvents.id });
+
+  // Demo leads: the seeded 'demo' rows plus the ingested 'ghl' demo leads.
+  const demoLeads = await db
+    .delete(leads)
+    .where(
+      or(
+        eq(leads.sourceSystem, "demo"),
+        like(leads.externalId, "demo-ghl-%"),
+      ),
+    )
+    .returning({ id: leads.id });
   const demoAssignments = await db
     .delete(propertyAssignments)
     .where(like(propertyAssignments.notes, `${DEMO_TAG}%`))
@@ -597,6 +792,7 @@ async function clear() {
   console.log("\n=== demo:clear summary ===");
   console.table({
     "demo leads removed": demoLeads.length,
+    "demo webhook events removed": demoEvents.length,
     "demo assignments removed": demoAssignments.length,
     "demo clients removed": demoClients.length,
     "properties restored": restored,

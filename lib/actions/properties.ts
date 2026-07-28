@@ -60,6 +60,9 @@ const propertySchema = z.object({
   launchedOn: dateField,
   gbpPlaceId: optionalText,
   trackingPhone: optionalText,
+  // GoHighLevel ingestion keys.
+  ghlLeadSource: optionalText,
+  ghlFormId: optionalText,
   // client_id is intentionally NOT here: it changes only via assign/unassign.
   billingType: z.enum(billingTypeEnum.enumValues),
   monthlyRate: money,
@@ -84,6 +87,8 @@ function parseForm(formData: FormData) {
     launchedOn: formData.get("launchedOn"),
     gbpPlaceId: formData.get("gbpPlaceId"),
     trackingPhone: formData.get("trackingPhone"),
+    ghlLeadSource: formData.get("ghlLeadSource"),
+    ghlFormId: formData.get("ghlFormId"),
     billingType: formData.get("billingType"),
     monthlyRate: formData.get("monthlyRate"),
     targetMonthlyRent: formData.get("targetMonthlyRent"),
@@ -111,12 +116,32 @@ export async function createProperty(
       error: "Set 'rented' by assigning a client, not on the status field.",
     };
   }
-  await db.insert(properties).values({
-    ...data,
-    trackingPhone: normalizePhone(data.trackingPhone),
-  });
+  try {
+    await db.insert(properties).values({
+      ...data,
+      trackingPhone: normalizePhone(data.trackingPhone),
+    });
+  } catch (err) {
+    const conflict = ghlUniqueConflict(err);
+    if (conflict) return { ok: false, error: conflict };
+    throw err;
+  }
   revalidatePath("/properties");
+  revalidatePath("/settings");
   return { ok: true, message: "Property created." };
+}
+
+/** Map the ghl_lead_source / ghl_form_id unique violations to a friendly msg. */
+function ghlUniqueConflict(err: unknown): string | null {
+  const e = err as { code?: string; constraint?: string };
+  if (e?.code !== "23505") return null;
+  if (e.constraint === "properties_ghl_lead_source_uniq") {
+    return "Another property already uses that Lead Source value.";
+  }
+  if (e.constraint === "properties_ghl_form_id_uniq") {
+    return "Another property already uses that GHL form ID.";
+  }
+  return "That value is already in use by another property.";
 }
 
 export async function updateProperty(
@@ -163,17 +188,24 @@ export async function updateProperty(
     };
   }
 
-  await db
-    .update(properties)
-    .set({
-      ...data,
-      status,
-      trackingPhone: normalizePhone(data.trackingPhone),
-      updatedAt: new Date(),
-    })
-    .where(eq(properties.id, id));
+  try {
+    await db
+      .update(properties)
+      .set({
+        ...data,
+        status,
+        trackingPhone: normalizePhone(data.trackingPhone),
+        updatedAt: new Date(),
+      })
+      .where(eq(properties.id, id));
+  } catch (err) {
+    const conflict = ghlUniqueConflict(err);
+    if (conflict) return { ok: false, error: conflict };
+    throw err;
+  }
   revalidatePath("/properties");
   revalidatePath(`/properties/${id}`);
+  revalidatePath("/settings");
   return { ok: true, message: "Property updated." };
 }
 

@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { asc } from "drizzle-orm";
 
 import { PageHeader } from "@/components/page-header";
 import { SettingsForm } from "@/components/settings/settings-form";
+import { WebhooksPanel } from "@/components/settings/webhooks-panel";
 import {
   Card,
   CardContent,
@@ -21,6 +23,10 @@ import { formatDateInTz } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
 import { titleCase } from "@/lib/format";
+import {
+  getPropertyLeadSources,
+  getWebhookEvents,
+} from "@/lib/queries/webhooks";
 import { getAppSettings } from "@/lib/settings";
 
 export const metadata = { title: "Settings — LeadGen" };
@@ -55,13 +61,21 @@ function timezoneOptions(current: string): string[] {
 }
 
 export default async function SettingsPage() {
-  const settings = await getAppSettings();
-  const users = await db
-    .select()
-    .from(profiles)
-    .orderBy(asc(profiles.email));
+  const [settings, users, leadSources, events, hdrs] = await Promise.all([
+    getAppSettings(),
+    db.select().from(profiles).orderBy(asc(profiles.email)),
+    getPropertyLeadSources(),
+    getWebhookEvents(100),
+    headers(),
+  ]);
 
   const tz = settings.orgTimezone;
+
+  // Build the public webhook URL from the incoming request's host.
+  const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "localhost:3000";
+  const proto =
+    hdrs.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const webhookUrl = `${proto}://${host}/api/webhooks/ghl-form`;
 
   return (
     <div>
@@ -142,6 +156,25 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Webhooks · GoHighLevel form ingestion</CardTitle>
+          <CardDescription>
+            Inbound form leads. Configure a GHL workflow to POST submissions to
+            the endpoint below with the shared secret header.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <WebhooksPanel
+            webhookUrl={webhookUrl}
+            secret={settings.webhookSecret}
+            leadSources={leadSources}
+            events={events}
+            tz={tz}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

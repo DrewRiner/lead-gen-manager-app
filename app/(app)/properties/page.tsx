@@ -255,6 +255,8 @@ export default async function PropertiesPage({
                             launchedOn: p.launchedOn,
                             gbpPlaceId: p.gbpPlaceId,
                             trackingPhone: p.trackingPhone,
+                            ghlLeadSource: p.ghlLeadSource,
+                            ghlFormId: p.ghlFormId,
                             clientId: p.clientId,
                             billingType: p.billingType,
                             monthlyRate: p.monthlyRate,

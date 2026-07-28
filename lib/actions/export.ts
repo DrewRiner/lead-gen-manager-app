@@ -44,7 +44,7 @@ export async function exportLeadsCsv(filters: LeadFilters): Promise<string> {
       minute: "2-digit",
       hour12: false,
     }),
-    property: r.propertyName,
+    property: r.propertyName ?? "(unmatched)",
     niche: r.niche ?? "",
     client: r.clientName ?? "",
     type: r.type,

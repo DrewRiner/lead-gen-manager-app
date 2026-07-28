@@ -15,7 +15,17 @@ import {
 } from "@/lib/dates";
 import { sumMoney, toMoneyNumber, toMoneyString } from "@/lib/money";
 import { getAssignmentsMap } from "@/lib/queries/assignments";
-import { and, desc, eq, gte, isNull, lt, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  isNotNull,
+  isNull,
+  lt,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
 // Central aggregation. Lead counts and money are ALWAYS derived here via SQL,
@@ -422,13 +432,20 @@ export async function getPropertyRangeCounts(
       estimatedValue: aggEstimatedValue,
     })
     .from(leads)
-    .where(rangeConditions(range))
+    // Unmatched leads (null property) are never attributed to a property.
+    .where(and(rangeConditions(range), isNotNull(leads.propertyId)))
     .groupBy(leads.propertyId);
   return new Map(
-    rows.map((r) => [
-      r.propertyId,
-      { total: r.total, estimatedValue: toMoneyString(r.estimatedValue) },
-    ]),
+    rows.flatMap((r) =>
+      r.propertyId == null
+        ? []
+        : [
+            [
+              r.propertyId,
+              { total: r.total, estimatedValue: toMoneyString(r.estimatedValue) },
+            ] as const,
+          ],
+    ),
   );
 }
 

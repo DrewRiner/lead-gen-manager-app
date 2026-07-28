@@ -15,6 +15,7 @@ export async function getAppSettings(): Promise<
   Pick<AppSettings, "orgTimezone" | "defaultBillableThresholdSeconds"> & {
     id: number;
     updatedAt: Date | null;
+    webhookSecret: string | null;
   }
 > {
   const [row] = await db
@@ -24,7 +25,7 @@ export async function getAppSettings(): Promise<
     .limit(1);
 
   if (!row) {
-    return { id: 1, updatedAt: null, ...DEFAULTS };
+    return { id: 1, updatedAt: null, webhookSecret: null, ...DEFAULTS };
   }
   return row;
 }
