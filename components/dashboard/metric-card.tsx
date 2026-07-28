@@ -13,10 +13,13 @@ export function MetricCard({
   title,
   current,
   previous,
+  comparisonLabel,
 }: {
   title: string;
   current: RangeMetrics;
   previous: RangeMetrics;
+  /** e.g. "vs same period last month" — shown under the title. */
+  comparisonLabel?: string;
 }) {
   const leadsPct = percentChange(current.totalLeads, previous.totalLeads);
   const revenuePct = percentChange(
@@ -34,6 +37,9 @@ export function MetricCard({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
+        {comparisonLabel ? (
+          <p className="text-xs text-muted-foreground/70">{comparisonLabel}</p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-baseline gap-2">

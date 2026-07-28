@@ -1,4 +1,12 @@
-import { addDays, addMonths, startOfDay, startOfMonth, subDays } from "date-fns";
+import {
+  addDays,
+  addMonths,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+  subMonths,
+} from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { sql, type SQL } from "drizzle-orm";
 
@@ -53,6 +61,48 @@ export function comparativeDayWindow(
     previous: {
       start: fromZonedTime(previousStartZoned, tz),
       end: fromZonedTime(currentStartZoned, tz),
+    },
+  };
+}
+
+export type CalendarPeriod = "day" | "week" | "month";
+
+/**
+ * A calendar-period-to-date window (day / week-to-date [Mon start] /
+ * month-to-date) in the org timezone, paired with the SAME ELAPSED PORTION of
+ * the previous period:
+ *   - day   -> the same weekday last week
+ *   - week  -> the same number of days into the previous week
+ *   - month -> the same number of days into the previous month
+ * The previous window has the exact same duration as the elapsed current one,
+ * so on the first day of a month the comparison window is a single (partial) day.
+ */
+export function comparativeCalendarWindow(
+  kind: CalendarPeriod,
+  tz: string,
+  now: Date = new Date(),
+): ComparativeWindow {
+  const zoned = toZonedTime(now, tz);
+  let startZoned: Date;
+  let prevStartZoned: Date;
+  if (kind === "day") {
+    startZoned = startOfDay(zoned);
+    prevStartZoned = subDays(startZoned, 7); // same weekday last week
+  } else if (kind === "week") {
+    startZoned = startOfWeek(zoned, { weekStartsOn: 1 }); // Monday
+    prevStartZoned = subDays(startZoned, 7);
+  } else {
+    startZoned = startOfMonth(zoned);
+    prevStartZoned = subMonths(startZoned, 1);
+  }
+  const currentStart = fromZonedTime(startZoned, tz);
+  const prevStart = fromZonedTime(prevStartZoned, tz);
+  const elapsedMs = now.getTime() - currentStart.getTime();
+  return {
+    current: { start: currentStart, end: now },
+    previous: {
+      start: prevStart,
+      end: new Date(prevStart.getTime() + elapsedMs),
     },
   };
 }

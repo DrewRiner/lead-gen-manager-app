@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Plus, UserMinus, UserPlus } from "lucide-react";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
 import { LeadsFilters } from "@/components/leads/leads-filters";
@@ -33,12 +34,12 @@ import {
 } from "@/components/ui/table";
 import { unassignClient } from "@/lib/actions/assignments";
 import {
+  comparativeCalendarWindow,
   daysBetween,
   localDateStr,
   nowLocalInputValue,
   recentMonths,
   todayDateStr,
-  trailingDayRange,
 } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, leads, properties, propertyAssignments } from "@/lib/db/schema";
@@ -47,12 +48,9 @@ import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeads } from "@/lib/queries/leads";
-import {
-  getPropertyMonthlySeries,
-  getRangeMetrics,
-  type RangeMetrics,
-} from "@/lib/queries/metrics";
+import { getPropertyMonthlySeries, getRangeMetrics } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +74,7 @@ export default async function PropertyDetailPage({
   const { id } = await params;
   const sp = await searchParams;
   const { orgTimezone: tz } = await getAppSettings();
+  const tab = sp.tab === "lifetime" ? "lifetime" : "activity";
 
   const [row] = await db
     .select({ property: properties, clientName: clients.businessName })
@@ -83,47 +82,11 @@ export default async function PropertyDetailPage({
     .leftJoin(clients, eq(clients.id, properties.clientId))
     .where(and(eq(properties.id, id), isNull(properties.deletedAt)))
     .limit(1);
-
   if (!row) notFound();
   const p = row.property;
 
-  const page = Math.max(1, Number(sp.page) || 1);
-
-  const [
-    today,
-    week,
-    month,
-    monthly,
-    lifetime,
-    leadCountRow,
-    leadsPage,
-    clientList,
-    activeAssignmentRow,
-  ] = await Promise.all([
-    getRangeMetrics(trailingDayRange(tz, 1), { propertyId: id }),
-    getRangeMetrics(trailingDayRange(tz, 7), { propertyId: id }),
-    getRangeMetrics(trailingDayRange(tz, 30), { propertyId: id }),
-    getPropertyMonthlySeries(tz, id, recentMonths(tz, 12)),
-    getPropertyLifetime(tz, id),
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(leads)
-      .where(and(eq(leads.propertyId, id), isNull(leads.deletedAt))),
-    getLeads(
-      tz,
-      {
-        propertyId: id,
-        type: sp.type,
-        source: sp.source,
-        billableStatus: sp.billableStatus,
-        deliveryStatus: sp.deliveryStatus,
-        from: sp.from,
-        to: sp.to,
-        q: sp.q,
-      },
-      page,
-      25,
-    ),
+  // Always needed: header actions (assign/change-rate/recalc) and lead count.
+  const [clientList, activeAssignmentRow, leadCountRow] = await Promise.all([
     db
       .select({ id: clients.id, businessName: clients.businessName })
       .from(clients)
@@ -144,24 +107,15 @@ export default async function PropertyDetailPage({
         ),
       )
       .limit(1),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(leads)
+      .where(and(eq(leads.propertyId, id), isNull(leads.deletedAt))),
   ]);
 
   const totalLeadCount = leadCountRow[0]?.count ?? 0;
-  const monthlyDesc = [...monthly].reverse();
   const isAssigned = p.clientId != null;
   const activeAssignment = activeAssignmentRow[0];
-  const s = lifetime.summary;
-
-  // Timeline metrics (shown only when the data exists).
-  const launched = p.launchedOn;
-  const daysToFirstLead =
-    launched && lifetime.firstLeadAt
-      ? daysBetween(launched, localDateStr(lifetime.firstLeadAt, tz))
-      : null;
-  const daysToFirstRental =
-    launched && lifetime.firstAssignmentStartedOn
-      ? daysBetween(launched, lifetime.firstAssignmentStartedOn)
-      : null;
 
   const editValue = {
     id: p.id,
@@ -225,7 +179,7 @@ export default async function PropertyDetailPage({
         {isAssigned ? (
           <ConfirmDialog
             title="Unassign client?"
-            description="Ends the active assignment as of today and marks the property unassigned. Historical revenue is preserved."
+            description="Ends the active assignment as of today and returns the property to producing. Historical revenue is preserved."
             confirmLabel="Unassign"
             action={unassignClient.bind(null, p.id)}
             trigger={
@@ -236,13 +190,10 @@ export default async function PropertyDetailPage({
             }
           />
         ) : null}
-        <RecalcEstimatedValuesButton
-          propertyId={p.id}
-          leadCount={totalLeadCount}
-        />
+        <RecalcEstimatedValuesButton propertyId={p.id} leadCount={totalLeadCount} />
       </PageHeader>
 
-      {/* Property info */}
+      {/* Identity — always visible above the tabs */}
       <Card className="mb-6">
         <CardContent className="grid grid-cols-2 gap-4 p-6 text-sm md:grid-cols-4">
           <Info label="Status">
@@ -254,9 +205,7 @@ export default async function PropertyDetailPage({
           <Info label="City / State">
             {[p.city, p.state].filter(Boolean).join(", ") || "—"}
           </Info>
-          <Info label="Current client">
-            {row.clientName ?? "Unassigned"}
-          </Info>
+          <Info label="Current client">{row.clientName ?? "Unassigned"}</Info>
           <Info label="Tracking phone">{formatPhone(p.trackingPhone)}</Info>
           <Info label="GBP place ID">{p.gbpPlaceId ?? "—"}</Info>
           <Info label="Domain">
@@ -277,7 +226,200 @@ export default async function PropertyDetailPage({
         </CardContent>
       </Card>
 
-      {/* Lifetime (all clients that ever rented it + all lead revenue) */}
+      {/* Tabs (server-rendered via ?tab=) */}
+      <div className="mb-6 flex gap-1 border-b">
+        <TabLink href={`/properties/${id}?tab=activity`} active={tab === "activity"}>
+          Activity
+        </TabLink>
+        <TabLink href={`/properties/${id}?tab=lifetime`} active={tab === "lifetime"}>
+          Lifetime
+        </TabLink>
+      </div>
+
+      {tab === "activity" ? (
+        <ActivityTab
+          propertyId={id}
+          property={p}
+          tz={tz}
+          sp={sp}
+          totalLeadCount={totalLeadCount}
+        />
+      ) : (
+        <LifetimeTab propertyId={id} property={p} tz={tz} />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Activity tab — calendar-period metrics + billing config + leads table.
+// ---------------------------------------------------------------------------
+
+async function ActivityTab({
+  propertyId,
+  property: p,
+  tz,
+  sp,
+  totalLeadCount,
+}: {
+  propertyId: string;
+  property: typeof properties.$inferSelect;
+  tz: string;
+  sp: Record<string, string | undefined>;
+  totalLeadCount: number;
+}) {
+  const page = Math.max(1, Number(sp.page) || 1);
+  const dayW = comparativeCalendarWindow("day", tz);
+  const weekW = comparativeCalendarWindow("week", tz);
+  const monthW = comparativeCalendarWindow("month", tz);
+  const opts = { propertyId };
+
+  const [
+    todayCur,
+    todayPrev,
+    weekCur,
+    weekPrev,
+    monthCur,
+    monthPrev,
+    leadsPage,
+  ] = await Promise.all([
+    getRangeMetrics(dayW.current, opts),
+    getRangeMetrics(dayW.previous, opts),
+    getRangeMetrics(weekW.current, opts),
+    getRangeMetrics(weekW.previous, opts),
+    getRangeMetrics(monthW.current, opts),
+    getRangeMetrics(monthW.previous, opts),
+    getLeads(
+      tz,
+      {
+        propertyId,
+        type: sp.type,
+        source: sp.source,
+        billableStatus: sp.billableStatus,
+        deliveryStatus: sp.deliveryStatus,
+        from: sp.from,
+        to: sp.to,
+        q: sp.q,
+      },
+      page,
+      25,
+    ),
+  ]);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard
+          title="Today"
+          comparisonLabel="vs same weekday last week"
+          current={todayCur}
+          previous={todayPrev}
+        />
+        <MetricCard
+          title="This week"
+          comparisonLabel="vs same days last week"
+          current={weekCur}
+          previous={weekPrev}
+        />
+        <MetricCard
+          title="This month"
+          comparisonLabel="vs same period last month"
+          current={monthCur}
+          previous={monthPrev}
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Billing configuration</CardTitle>
+          <CardDescription>
+            Current property defaults. The active client keeps the rate
+            snapshotted on their assignment — use Change rate to reprice.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+          <Info label="Billing type">
+            {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}
+          </Info>
+          <Info label="Monthly rate">{formatCurrency(p.monthlyRate)}</Info>
+          <Info label="Target rent">{formatCurrency(p.targetMonthlyRent)}</Info>
+          <Info label="Per-lead call">{formatCurrency(p.perLeadCallRate)}</Info>
+          <Info label="Per-lead form">{formatCurrency(p.perLeadFormRate)}</Info>
+          <Info label="Call threshold">{p.billableThresholdSeconds}s</Info>
+          <Info label="Est. call value">
+            {formatCurrency(p.estimatedCallValue)}
+          </Info>
+          <Info label="Est. form value">
+            {formatCurrency(p.estimatedFormValue)}
+          </Info>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle>Leads</CardTitle>
+            <CardDescription>{formatNumber(totalLeadCount)} total</CardDescription>
+          </div>
+          <AddLeadDialog
+            properties={[{ id: propertyId, name: p.name }]}
+            defaultPropertyId={propertyId}
+            defaultOccurredAt={nowLocalInputValue(tz)}
+            tzLabel={tz}
+            trigger={
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" /> Add lead
+              </Button>
+            }
+          />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <LeadsFilters />
+          <LeadsTable rows={leadsPage.rows} tz={tz} hideProperty />
+          <Pagination
+            page={leadsPage.page}
+            pageCount={leadsPage.pageCount}
+            total={leadsPage.total}
+            pageSize={leadsPage.pageSize}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Lifetime tab — all clients / all leads, client history, monthly, timeline.
+// ---------------------------------------------------------------------------
+
+async function LifetimeTab({
+  propertyId,
+  property: p,
+  tz,
+}: {
+  propertyId: string;
+  property: typeof properties.$inferSelect;
+  tz: string;
+}) {
+  const [lifetime, monthly] = await Promise.all([
+    getPropertyLifetime(tz, propertyId),
+    getPropertyMonthlySeries(tz, propertyId, recentMonths(tz, 12)),
+  ]);
+  const s = lifetime.summary;
+  const monthlyDesc = [...monthly].reverse();
+
+  const launched = p.launchedOn;
+  const daysToFirstLead =
+    launched && lifetime.firstLeadAt
+      ? daysBetween(launched, localDateStr(lifetime.firstLeadAt, tz))
+      : null;
+  const daysToFirstRental =
+    launched && lifetime.firstAssignmentStartedOn
+      ? daysBetween(launched, lifetime.firstAssignmentStartedOn)
+      : null;
+
+  return (
+    <div>
       <div className="mb-2 text-sm font-medium text-muted-foreground">
         Lifetime — all clients, all leads
       </div>
@@ -313,17 +455,10 @@ export default async function PropertyDetailPage({
         />
         <StatCard
           label="Longest tenure"
-          value={
-            s.longestTenure
-              ? `${s.longestTenure.months} mo`
-              : "—"
-          }
+          value={s.longestTenure ? `${s.longestTenure.months} mo` : "—"}
           hint={s.longestTenure?.clientName ?? undefined}
         />
-        <StatCard
-          label="Months rented"
-          value={formatNumber(s.monthsRented)}
-        />
+        <StatCard label="Months rented" value={formatNumber(s.monthsRented)} />
         <StatCard
           label="Launch → first lead"
           value={daysToFirstLead != null ? `${daysToFirstLead} days` : "—"}
@@ -336,7 +471,6 @@ export default async function PropertyDetailPage({
         />
       </div>
 
-      {/* Client history */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Client history</CardTitle>
@@ -361,10 +495,7 @@ export default async function PropertyDetailPage({
               <TableBody>
                 {lifetime.clientHistory.length === 0 ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="py-8 text-center text-muted-foreground"
-                    >
+                    <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                       Never rented.
                     </TableCell>
                   </TableRow>
@@ -372,10 +503,7 @@ export default async function PropertyDetailPage({
                   lifetime.clientHistory.map((c) => (
                     <TableRow key={c.clientId}>
                       <TableCell className="font-medium">
-                        <Link
-                          href={`/clients/${c.clientId}`}
-                          className="hover:underline"
-                        >
+                        <Link href={`/clients/${c.clientId}`} className="hover:underline">
                           {c.clientName ?? "—"}
                         </Link>
                         {c.isActive ? (
@@ -384,15 +512,9 @@ export default async function PropertyDetailPage({
                           </span>
                         ) : null}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {c.firstStarted}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {c.lastEnded ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {c.tenureMonths} mo
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{c.firstStarted}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.lastEnded ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{c.tenureMonths} mo</TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatCurrency(c.attributedRevenue)}
                       </TableCell>
@@ -408,51 +530,12 @@ export default async function PropertyDetailPage({
         </CardContent>
       </Card>
 
-      {/* Recent-window stats */}
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <PeriodCard label="Today" m={today} />
-        <PeriodCard label="Last 7 Days" m={week} />
-        <PeriodCard label="Last 30 Days" m={month} />
-      </div>
-
-      {/* Billing config summary */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Billing configuration</CardTitle>
-          <CardDescription>
-            Current property defaults (used for new assignments). The active
-            client keeps the rate snapshotted on their assignment — use Change
-            rate to reprice them.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-          <Info label="Billing type">
-            {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}
-          </Info>
-          <Info label="Monthly rate">{formatCurrency(p.monthlyRate)}</Info>
-          <Info label="Per-lead call rate">
-            {formatCurrency(p.perLeadCallRate)}
-          </Info>
-          <Info label="Per-lead form rate">
-            {formatCurrency(p.perLeadFormRate)}
-          </Info>
-          <Info label="Call threshold">{p.billableThresholdSeconds}s</Info>
-          <Info label="Est. call value">
-            {formatCurrency(p.estimatedCallValue)}
-          </Info>
-          <Info label="Est. form value">
-            {formatCurrency(p.estimatedFormValue)}
-          </Info>
-        </CardContent>
-      </Card>
-
-      {/* Monthly performance */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle>Monthly performance</CardTitle>
           <CardDescription>
-            Last 12 calendar months in {tz}. Flat revenue reflects the
-            assignment active each month.
+            Last 12 calendar months in {tz}. Flat revenue reflects the assignment
+            active each month.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
@@ -473,30 +556,14 @@ export default async function PropertyDetailPage({
               <TableBody>
                 {monthlyDesc.map((m) => (
                   <TableRow key={m.month.key}>
-                    <TableCell className="font-medium">
-                      {m.month.label}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(m.calls)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(m.forms)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(m.total)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(m.billable)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(m.estimatedValue)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(m.actualRevenue)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {formatCurrency(m.gap)}
-                    </TableCell>
+                    <TableCell className="font-medium">{m.month.label}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatNumber(m.calls)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatNumber(m.forms)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatNumber(m.total)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatNumber(m.billable)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatCurrency(m.estimatedValue)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatCurrency(m.actualRevenue)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(m.gap)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -504,50 +571,35 @@ export default async function PropertyDetailPage({
           </div>
         </CardContent>
       </Card>
-
-      {/* Leads */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>Leads</CardTitle>
-            <CardDescription>
-              {formatNumber(totalLeadCount)} total
-            </CardDescription>
-          </div>
-          <AddLeadDialog
-            properties={[{ id: p.id, name: p.name }]}
-            defaultPropertyId={p.id}
-            defaultOccurredAt={nowLocalInputValue(tz)}
-            tzLabel={tz}
-            trigger={
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" /> Add lead
-              </Button>
-            }
-          />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <LeadsFilters />
-          <LeadsTable rows={leadsPage.rows} tz={tz} hideProperty />
-          <Pagination
-            page={leadsPage.page}
-            pageCount={leadsPage.pageCount}
-            total={leadsPage.total}
-            pageSize={leadsPage.pageSize}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }
 
-function Info({
-  label,
+function TabLink({
+  href,
+  active,
   children,
 }: {
-  label: string;
+  href: string;
+  active: boolean;
   children: React.ReactNode;
 }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors",
+        active
+          ? "border-primary text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -555,26 +607,5 @@ function Info({
       </p>
       <div className="font-medium">{children}</div>
     </div>
-  );
-}
-
-function PeriodCard({ label, m }: { label: string; m: RangeMetrics }) {
-  return (
-    <StatCard
-      label={label}
-      value={`${formatNumber(m.totalLeads)} leads`}
-      hint={
-        <span className="flex flex-col gap-0.5">
-          <span>
-            {formatNumber(m.calls)} calls · {formatNumber(m.forms)} forms ·{" "}
-            {formatNumber(m.billable)} billable
-          </span>
-          <span>
-            Est. {formatCurrency(m.estimatedValue)} · Rev.{" "}
-            {formatCurrency(m.actualRevenue)}
-          </span>
-        </span>
-      }
-    />
   );
 }
