@@ -39,6 +39,15 @@ const nonNegInt = z
     return Number.isFinite(n) && n >= 0 ? n : 60;
   });
 
+const dateField = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v && v.length > 0 ? v : null))
+  .refine((v) => v === null || /^\d{4}-\d{2}-\d{2}$/.test(v), {
+    message: "Invalid launch date.",
+  });
+
 const propertySchema = z.object({
   name: z.string().trim().min(1, "Name is required."),
   displayName: optionalText,
@@ -47,11 +56,13 @@ const propertySchema = z.object({
   city: optionalText,
   state: optionalText,
   status: z.enum(propertyStatusEnum.enumValues),
+  launchedOn: dateField,
   gbpPlaceId: optionalText,
   trackingPhone: optionalText,
   // client_id is intentionally NOT here: it changes only via assign/unassign.
   billingType: z.enum(billingTypeEnum.enumValues),
   monthlyRate: money,
+  targetMonthlyRent: money,
   perLeadCallRate: money,
   perLeadFormRate: money,
   estimatedCallValue: money,
@@ -69,10 +80,12 @@ function parseForm(formData: FormData) {
     city: formData.get("city"),
     state: formData.get("state"),
     status: formData.get("status"),
+    launchedOn: formData.get("launchedOn"),
     gbpPlaceId: formData.get("gbpPlaceId"),
     trackingPhone: formData.get("trackingPhone"),
     billingType: formData.get("billingType"),
     monthlyRate: formData.get("monthlyRate"),
+    targetMonthlyRent: formData.get("targetMonthlyRent"),
     perLeadCallRate: formData.get("perLeadCallRate"),
     perLeadFormRate: formData.get("perLeadFormRate"),
     estimatedCallValue: formData.get("estimatedCallValue"),
@@ -90,6 +103,13 @@ export async function createProperty(
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Invalid input." };
   }
   const data = parsed.data;
+  // 'rented' follows an assignment; a property can't be created rented.
+  if (data.status === "rented") {
+    return {
+      ok: false,
+      error: "Set 'rented' by assigning a client, not on the status field.",
+    };
+  }
   await db.insert(properties).values({
     ...data,
     trackingPhone: normalizePhone(data.trackingPhone),
@@ -110,10 +130,31 @@ export async function updateProperty(
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Invalid input." };
   }
   const data = parsed.data;
+
+  // Status follows the rental: while a client is assigned, force 'rented' and
+  // never let it be changed by hand; when unassigned, reject a manual 'rented'.
+  const [current] = await db
+    .select({ clientId: properties.clientId })
+    .from(properties)
+    .where(eq(properties.id, id))
+    .limit(1);
+  if (!current) return { ok: false, error: "Property not found." };
+
+  let status = data.status;
+  if (current.clientId != null) {
+    status = "rented";
+  } else if (status === "rented") {
+    return {
+      ok: false,
+      error: "Set 'rented' by assigning a client, not on the status field.",
+    };
+  }
+
   await db
     .update(properties)
     .set({
       ...data,
+      status,
       trackingPhone: normalizePhone(data.trackingPhone),
       updatedAt: new Date(),
     })

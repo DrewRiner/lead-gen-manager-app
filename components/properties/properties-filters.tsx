@@ -60,9 +60,10 @@ export function PropertiesFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All statuses</SelectItem>
-          <SelectItem value="available">Available</SelectItem>
+          <SelectItem value="building">Building</SelectItem>
+          <SelectItem value="optimizing">Optimizing</SelectItem>
+          <SelectItem value="producing">Producing</SelectItem>
           <SelectItem value="rented">Rented</SelectItem>
-          <SelectItem value="active">Active</SelectItem>
           <SelectItem value="paused">Paused</SelectItem>
         </SelectContent>
       </Select>

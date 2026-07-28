@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/table";
 import { unassignClient } from "@/lib/actions/assignments";
 import {
+  daysBetween,
+  localDateStr,
   nowLocalInputValue,
   recentMonths,
   todayDateStr,
@@ -150,6 +152,17 @@ export default async function PropertyDetailPage({
   const activeAssignment = activeAssignmentRow[0];
   const s = lifetime.summary;
 
+  // Timeline metrics (shown only when the data exists).
+  const launched = p.launchedOn;
+  const daysToFirstLead =
+    launched && lifetime.firstLeadAt
+      ? daysBetween(launched, localDateStr(lifetime.firstLeadAt, tz))
+      : null;
+  const daysToFirstRental =
+    launched && lifetime.firstAssignmentStartedOn
+      ? daysBetween(launched, lifetime.firstAssignmentStartedOn)
+      : null;
+
   const editValue = {
     id: p.id,
     name: p.name,
@@ -159,11 +172,13 @@ export default async function PropertyDetailPage({
     city: p.city,
     state: p.state,
     status: p.status,
+    launchedOn: p.launchedOn,
     gbpPlaceId: p.gbpPlaceId,
     trackingPhone: p.trackingPhone,
     clientId: p.clientId,
     billingType: p.billingType,
     monthlyRate: p.monthlyRate,
+    targetMonthlyRent: p.targetMonthlyRent,
     perLeadCallRate: p.perLeadCallRate,
     perLeadFormRate: p.perLeadFormRate,
     estimatedCallValue: p.estimatedCallValue,
@@ -308,6 +323,16 @@ export default async function PropertyDetailPage({
         <StatCard
           label="Months rented"
           value={formatNumber(s.monthsRented)}
+        />
+        <StatCard
+          label="Launch → first lead"
+          value={daysToFirstLead != null ? `${daysToFirstLead} days` : "—"}
+          hint={p.launchedOn ? undefined : "No launch date set"}
+        />
+        <StatCard
+          label="Launch → first rental"
+          value={daysToFirstRental != null ? `${daysToFirstRental} days` : "—"}
+          hint={p.launchedOn ? undefined : "No launch date set"}
         />
       </div>
 

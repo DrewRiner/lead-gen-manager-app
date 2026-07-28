@@ -90,10 +90,10 @@ export async function assignClient(
         perLeadFormRate: property.perLeadFormRate,
       });
 
-      // Keep properties.client_id in lockstep with the active assignment.
+      // Keep properties.client_id and status in lockstep with the assignment.
       await tx
         .update(properties)
-        .set({ clientId, updatedAt: new Date() })
+        .set({ clientId, status: "rented", updatedAt: new Date() })
         .where(eq(properties.id, propertyId));
     });
   } catch (err) {
@@ -237,9 +237,10 @@ export async function unassignClient(
           ),
         );
 
+      // Unassigning returns the property to producing (sellable inventory).
       await tx
         .update(properties)
-        .set({ clientId: null, updatedAt: new Date() })
+        .set({ clientId: null, status: "producing", updatedAt: new Date() })
         .where(eq(properties.id, propertyId));
     });
   } catch (err) {

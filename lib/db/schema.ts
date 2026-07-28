@@ -26,9 +26,16 @@ export const clientStatusEnum = pgEnum("client_status", [
   "churned",
 ]);
 
+// Property lifecycle, in order. Meanings:
+//   building   = site being built, not live
+//   optimizing = live, SEO in progress, not yet producing meaningful leads
+//   producing  = ranked and generating leads, NOT rented — sellable inventory
+//   rented     = has an active assignment (follows the assignment, not manual)
+//   paused     = shelved
 export const propertyStatusEnum = pgEnum("property_status", [
-  "active",
-  "available",
+  "building",
+  "optimizing",
+  "producing",
   "rented",
   "paused",
 ]);
@@ -153,7 +160,9 @@ export const properties = pgTable("properties", {
   niche: text("niche"),
   city: text("city"),
   state: text("state"),
-  status: propertyStatusEnum("status").notNull().default("available"),
+  status: propertyStatusEnum("status").notNull().default("building"),
+  // When the site went live (org-tz calendar date). Null until launched.
+  launchedOn: date("launched_on", { mode: "string" }),
   gbpPlaceId: text("gbp_place_id"),
   trackingPhone: text("tracking_phone"),
   clientId: uuid("client_id").references(() => clients.id, {
@@ -163,6 +172,8 @@ export const properties = pgTable("properties", {
     .notNull()
     .default("flat_monthly"),
   monthlyRate: money("monthly_rate").notNull().default("0"),
+  // What we aim to rent it for (independent of any current assignment).
+  targetMonthlyRent: money("target_monthly_rent").notNull().default("0"),
   perLeadCallRate: money("per_lead_call_rate").notNull().default("0"),
   perLeadFormRate: money("per_lead_form_rate").notNull().default("0"),
   estimatedCallValue: money("estimated_call_value").notNull().default("0"),

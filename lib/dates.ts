@@ -149,6 +149,34 @@ export function parseMonthKey(
   return currentMonthKey(tz, now);
 }
 
+/** Shift a "YYYY-MM-DD" date by `deltaDays` (may be negative), as "YYYY-MM-DD". */
+export function shiftDateStr(dateStr: string, deltaDays: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + deltaDays);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+}
+
+/** The org-local calendar date of a UTC instant, as "YYYY-MM-DD". */
+export function localDateStr(date: Date, tz: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+/** Whole days from date A to date B (both "YYYY-MM-DD"); negative if B < A. */
+export function daysBetween(fromDateStr: string, toDateStr: string): number {
+  const [ay, am, ad] = fromDateStr.split("-").map(Number);
+  const [by, bm, bd] = toDateStr.split("-").map(Number);
+  const a = Date.UTC(ay, am - 1, ad);
+  const b = Date.UTC(by, bm - 1, bd);
+  return Math.round((b - a) / 86400000);
+}
+
 /** The calendar day before a "YYYY-MM-DD" date, as "YYYY-MM-DD". */
 export function previousDateStr(dateStr: string): string {
   const [y, m, d] = dateStr.split("-").map(Number);

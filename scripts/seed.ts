@@ -96,8 +96,10 @@ const CLIENT_DEFS = [
   { businessName: "Frontier Home Pros", contactName: "Derek Shaw" },
 ];
 
-// 12 properties. billing mix: 6 flat_monthly, 4 per_lead, 2 hybrid.
-// clientIndex null => unassigned (2 of them). Roughly weighted volume.
+// 12 properties spread across the five lifecycle statuses. Only 'rented' ones
+// carry a clientIndex (they get an active assignment). launchedDaysAgo is null
+// for 'building' (not live yet). Weights drive lead volume.
+type PropStatus = "building" | "optimizing" | "producing" | "rented" | "paused";
 interface PropDef {
   name: string;
   domain: string;
@@ -108,24 +110,31 @@ interface PropDef {
   monthlyRate: number;
   perLeadCall: number;
   perLeadForm: number;
+  status: PropStatus;
   clientIndex: number | null;
+  launchedDaysAgo: number | null;
+  targetRent: number;
   weight: number;
 }
 
 const PROP_DEFS: PropDef[] = [
-  { name: "Austin Plumbing Pros", domain: "austinplumbingpros.com", niche: NICHES.plumbing, city: "Austin", state: "TX", billingType: "flat_monthly", monthlyRate: 1500, perLeadCall: 0, perLeadForm: 0, clientIndex: 0, weight: 10 },
-  { name: "Dallas HVAC Experts", domain: "dallashvacexperts.com", niche: NICHES.hvac, city: "Dallas", state: "TX", billingType: "flat_monthly", monthlyRate: 1800, perLeadCall: 0, perLeadForm: 0, clientIndex: 0, weight: 9 },
-  { name: "Phoenix Roofing Co", domain: "phoenixroofingco.com", niche: NICHES.roofing, city: "Phoenix", state: "AZ", billingType: "hybrid", monthlyRate: 900, perLeadCall: 45, perLeadForm: 30, clientIndex: 0, weight: 8 },
-  { name: "Denver Garage Door", domain: "denvergaragedoor.com", niche: NICHES.garage_door, city: "Denver", state: "CO", billingType: "per_lead", monthlyRate: 0, perLeadCall: 28, perLeadForm: 18, clientIndex: 1, weight: 7 },
-  { name: "Tampa Tree Service", domain: "tampatreeservice.com", niche: NICHES.tree_service, city: "Tampa", state: "FL", billingType: "per_lead", monthlyRate: 0, perLeadCall: 40, perLeadForm: 25, clientIndex: 1, weight: 6 },
-  { name: "Charlotte Pest Control", domain: "charlottepestcontrol.com", niche: NICHES.pest_control, city: "Charlotte", state: "NC", billingType: "flat_monthly", monthlyRate: 1200, perLeadCall: 0, perLeadForm: 0, clientIndex: 2, weight: 8 },
-  { name: "Nashville Electricians", domain: "nashvilleelectricians.com", niche: NICHES.electrical, city: "Nashville", state: "TN", billingType: "flat_monthly", monthlyRate: 1400, perLeadCall: 0, perLeadForm: 0, clientIndex: 2, weight: 7 },
-  { name: "Houston Water Damage", domain: "houstonwaterdamage.com", niche: NICHES.water_damage, city: "Houston", state: "TX", billingType: "hybrid", monthlyRate: 1000, perLeadCall: 60, perLeadForm: 40, clientIndex: 3, weight: 9 },
-  { name: "Miami Plumbing Now", domain: "miamiplumbingnow.com", niche: NICHES.plumbing, city: "Miami", state: "FL", billingType: "per_lead", monthlyRate: 0, perLeadCall: 42, perLeadForm: 28, clientIndex: 3, weight: 6 },
-  { name: "Atlanta AC Repair", domain: "atlantaacrepair.com", niche: NICHES.hvac, city: "Atlanta", state: "GA", billingType: "flat_monthly", monthlyRate: 1650, perLeadCall: 0, perLeadForm: 0, clientIndex: 4, weight: 8 },
-  // Two unassigned (available inventory).
-  { name: "Seattle Roofing Group", domain: "seattleroofinggroup.com", niche: NICHES.roofing, city: "Seattle", state: "WA", billingType: "flat_monthly", monthlyRate: 1750, perLeadCall: 0, perLeadForm: 0, clientIndex: null, weight: 5 },
-  { name: "San Diego Garage Doors", domain: "sandiegogaragedoors.com", niche: NICHES.garage_door, city: "San Diego", state: "CA", billingType: "per_lead", monthlyRate: 0, perLeadCall: 30, perLeadForm: 20, clientIndex: null, weight: 5 },
+  // Rented (4) — active assignments.
+  { name: "Austin Plumbing Pros", domain: "austinplumbingpros.com", niche: NICHES.plumbing, city: "Austin", state: "TX", billingType: "flat_monthly", monthlyRate: 1500, perLeadCall: 0, perLeadForm: 0, status: "rented", clientIndex: 0, launchedDaysAgo: 300, targetRent: 1500, weight: 10 },
+  { name: "Dallas HVAC Experts", domain: "dallashvacexperts.com", niche: NICHES.hvac, city: "Dallas", state: "TX", billingType: "flat_monthly", monthlyRate: 1800, perLeadCall: 0, perLeadForm: 0, status: "rented", clientIndex: 0, launchedDaysAgo: 280, targetRent: 1800, weight: 9 },
+  { name: "Phoenix Roofing Co", domain: "phoenixroofingco.com", niche: NICHES.roofing, city: "Phoenix", state: "AZ", billingType: "hybrid", monthlyRate: 900, perLeadCall: 45, perLeadForm: 30, status: "rented", clientIndex: 1, launchedDaysAgo: 260, targetRent: 1200, weight: 8 },
+  { name: "Houston Water Damage", domain: "houstonwaterdamage.com", niche: NICHES.water_damage, city: "Houston", state: "TX", billingType: "hybrid", monthlyRate: 1000, perLeadCall: 60, perLeadForm: 40, status: "rented", clientIndex: 2, launchedDaysAgo: 240, targetRent: 1600, weight: 9 },
+  // Producing (3) — ranked, unrented sellable inventory.
+  { name: "Charlotte Pest Control", domain: "charlottepestcontrol.com", niche: NICHES.pest_control, city: "Charlotte", state: "NC", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "producing", clientIndex: null, launchedDaysAgo: 200, targetRent: 1100, weight: 8 },
+  { name: "Nashville Electricians", domain: "nashvilleelectricians.com", niche: NICHES.electrical, city: "Nashville", state: "TN", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "producing", clientIndex: null, launchedDaysAgo: 180, targetRent: 1300, weight: 7 },
+  { name: "Miami Plumbing Now", domain: "miamiplumbingnow.com", niche: NICHES.plumbing, city: "Miami", state: "FL", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "producing", clientIndex: null, launchedDaysAgo: 150, targetRent: 1400, weight: 8 },
+  // Optimizing (2) — live, SEO in progress.
+  { name: "Atlanta AC Repair", domain: "atlantaacrepair.com", niche: NICHES.hvac, city: "Atlanta", state: "GA", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "optimizing", clientIndex: null, launchedDaysAgo: 50, targetRent: 1650, weight: 3 },
+  { name: "Tampa Tree Service", domain: "tampatreeservice.com", niche: NICHES.tree_service, city: "Tampa", state: "FL", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "optimizing", clientIndex: null, launchedDaysAgo: 35, targetRent: 900, weight: 2 },
+  // Building (2) — not live yet.
+  { name: "Seattle Roofing Group", domain: "seattleroofinggroup.com", niche: NICHES.roofing, city: "Seattle", state: "WA", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "building", clientIndex: null, launchedDaysAgo: null, targetRent: 1750, weight: 1 },
+  { name: "Denver Garage Door", domain: "denvergaragedoor.com", niche: NICHES.garage_door, city: "Denver", state: "CO", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "building", clientIndex: null, launchedDaysAgo: null, targetRent: 800, weight: 1 },
+  // Paused (1) — shelved.
+  { name: "San Diego Garage Doors", domain: "sandiegogaragedoors.com", niche: NICHES.garage_door, city: "San Diego", state: "CA", billingType: "flat_monthly", monthlyRate: 0, perLeadCall: 0, perLeadForm: 0, status: "paused", clientIndex: null, launchedDaysAgo: 320, targetRent: 850, weight: 1 },
 ];
 
 const SOURCES: Array<"organic" | "gbp" | "direct" | "other"> = [
@@ -156,7 +165,15 @@ async function main() {
     )
     .returning({ id: clients.id });
 
-  // Properties
+  const now = new Date();
+  const dateStr = (daysAgo: number): string => {
+    const d = new Date(now);
+    d.setDate(now.getDate() - daysAgo);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+
+  // Properties (spread across the five lifecycle statuses).
   const propValues: NewProperty[] = PROP_DEFS.map((p) => {
     const assigned = p.clientIndex !== null;
     return {
@@ -166,11 +183,13 @@ async function main() {
       niche: p.niche.niche,
       city: p.city,
       state: p.state,
-      status: assigned ? ("rented" as const) : ("available" as const),
+      status: p.status,
+      launchedOn: p.launchedDaysAgo != null ? dateStr(p.launchedDaysAgo) : null,
       trackingPhone: phone(),
       clientId: assigned ? insertedClients[p.clientIndex!].id : null,
       billingType: p.billingType,
       monthlyRate: money(p.monthlyRate),
+      targetMonthlyRent: money(p.targetRent),
       perLeadCallRate: money(p.perLeadCall),
       perLeadFormRate: money(p.perLeadForm),
       estimatedCallValue: money(p.niche.call),
@@ -187,14 +206,6 @@ async function main() {
   // metrics are meaningful. Every 4th assigned property also gets a prior ended
   // assignment with a different client, to exercise client history and the
   // "% of lifetime revenue" column.
-  const now = new Date();
-  const dateStr = (daysAgo: number): string => {
-    const d = new Date(now);
-    d.setDate(now.getDate() - daysAgo);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  };
-
   const assignmentRows: NewPropertyAssignment[] = [];
   insertedProps.forEach((prop, i) => {
     if (!prop.clientId) return;

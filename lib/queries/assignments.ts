@@ -154,6 +154,10 @@ export interface ClientHistoryRow {
 
 export interface PropertyLifetimeDetail extends PropertyLifetime {
   clientHistory: ClientHistoryRow[];
+  /** Earliest lead occurred_at (UTC), or null. */
+  firstLeadAt: Date | null;
+  /** Earliest assignment started_on ("YYYY-MM-DD"), or null. */
+  firstAssignmentStartedOn: string | null;
 }
 
 /** Full lifetime detail for one property, including per-client history. */
@@ -240,6 +244,8 @@ export async function getPropertyLifetime(
       summary.monthsRented,
     ),
     clientHistory,
+    firstLeadAt: agg?.firstOccurredAt ?? null,
+    firstAssignmentStartedOn: assignments[0]?.startedOn ?? null,
   };
 }
 

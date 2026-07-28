@@ -51,7 +51,7 @@ function desiredFields(t: Target) {
     // Numbers are already E.164, so no normalization is needed (and it keeps
     // this standalone script free of the libphonenumber ESM/CJS loader).
     trackingPhone: t.trackingPhone,
-    status: "available" as const,
+    status: "producing" as const,
     billingType: "flat_monthly" as const,
     monthlyRate: toMoneyString(0),
     billableThresholdSeconds: 60,
@@ -121,7 +121,7 @@ async function main() {
       estimatedFormValue: toMoneyString(40),
     };
     if (fence.clientId == null) {
-      patch.status = "available";
+      patch.status = "producing";
     } else {
       warnings.push(
         `${fenceDomain}: has an assigned client (active assignment) — did NOT set status to "available". Unassign the client first if it should be available.`,

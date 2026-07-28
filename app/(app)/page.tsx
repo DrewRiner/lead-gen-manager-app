@@ -5,6 +5,7 @@ import {
   type DailyVolumePoint,
 } from "@/components/charts/daily-volume-chart";
 import { MetricCard } from "@/components/dashboard/metric-card";
+import { PipelineStrip } from "@/components/dashboard/pipeline-strip";
 import { PageHeader } from "@/components/page-header";
 import {
   Card,
@@ -29,6 +30,7 @@ import {
   getRangeMetrics,
   getTopProperties,
 } from "@/lib/queries/metrics";
+import { getPipelineSummary, getReviewFlags } from "@/lib/queries/pipeline";
 import { getAppSettings } from "@/lib/settings";
 
 export const metadata = { title: "Dashboard — LeadGen" };
@@ -52,6 +54,8 @@ export default async function DashboardPage() {
     monthPrev,
     dailyVolume,
     topProperties,
+    pipeline,
+    reviewFlags,
   ] = await Promise.all([
     getRangeMetrics(today.current),
     getRangeMetrics(today.previous),
@@ -61,6 +65,8 @@ export default async function DashboardPage() {
     getRangeMetrics(month.previous),
     getDailyVolume(tz, chartRange),
     getTopProperties(tz, chartRange),
+    getPipelineSummary(tz),
+    getReviewFlags(tz),
   ]);
 
   // Fill every day in the 30-day window (org tz), zero where no leads.
@@ -81,6 +87,8 @@ export default async function DashboardPage() {
         title="Dashboard"
         description={`Lead performance across all properties. Times in ${tz}.`}
       />
+
+      <PipelineStrip summary={pipeline} reviewCount={reviewFlags.size} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <MetricCard title="Today" current={todayCur} previous={todayPrev} />

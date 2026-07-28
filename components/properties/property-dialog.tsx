@@ -26,7 +26,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
 
 type BillingType = "flat_monthly" | "per_lead" | "hybrid";
-type Status = "active" | "available" | "rented" | "paused";
+type Status = "building" | "optimizing" | "producing" | "rented" | "paused";
+
+// Manually selectable statuses (not 'rented' — that follows the assignment).
+const SELECTABLE_STATUSES: { value: Status; label: string }[] = [
+  { value: "building", label: "Building" },
+  { value: "optimizing", label: "Optimizing" },
+  { value: "producing", label: "Producing" },
+  { value: "paused", label: "Paused" },
+];
+const STATUS_LABEL: Record<string, string> = {
+  building: "Building",
+  optimizing: "Optimizing",
+  producing: "Producing",
+  rented: "Rented",
+  paused: "Paused",
+};
 
 export interface PropertyDialogValue {
   id: string;
@@ -37,11 +52,13 @@ export interface PropertyDialogValue {
   city: string | null;
   state: string | null;
   status: Status;
+  launchedOn: string | null;
   gbpPlaceId: string | null;
   trackingPhone: string | null;
   clientId: string | null;
   billingType: BillingType;
   monthlyRate: string;
+  targetMonthlyRent: string;
   perLeadCallRate: string;
   perLeadFormRate: string;
   estimatedCallValue: string;
@@ -67,7 +84,7 @@ export function PropertyDialog({
   const [billingType, setBillingType] = useState<BillingType>(
     property?.billingType ?? "flat_monthly",
   );
-  const [status, setStatus] = useState<Status>(property?.status ?? "available");
+  const [status, setStatus] = useState<Status>(property?.status ?? "building");
 
   // Editing rates when a client is actively assigned is the silent-wrong-revenue
   // trap: these fields are only defaults for FUTURE assignments; the active
@@ -151,20 +168,39 @@ export function PropertyDialog({
               />
             </Field>
             <Field label="Status">
-              <Select
-                value={status}
-                onValueChange={(v) => setStatus(v as Status)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="rented">Rented</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                </SelectContent>
-              </Select>
+              {hasActiveAssignment ? (
+                <>
+                  <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground">
+                    {STATUS_LABEL[status] ?? status}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Status follows the rental while a client is assigned.
+                  </p>
+                </>
+              ) : (
+                <Select
+                  value={status}
+                  onValueChange={(v) => setStatus(v as Status)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SELECTABLE_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Field>
+            <Field label="Launched on">
+              <Input
+                name="launchedOn"
+                type="date"
+                defaultValue={property?.launchedOn ?? ""}
+              />
             </Field>
             <Field label="GBP place ID">
               <Input
@@ -214,6 +250,15 @@ export function PropertyDialog({
                   type="number"
                   min={0}
                   defaultValue={property?.billableThresholdSeconds ?? 60}
+                />
+              </Field>
+              <Field label="Target monthly rent ($)">
+                <Input
+                  name="targetMonthlyRent"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  defaultValue={property?.targetMonthlyRent ?? "0"}
                 />
               </Field>
               {showMonthly ? (
