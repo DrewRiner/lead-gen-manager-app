@@ -154,29 +154,24 @@ async function seed() {
   const realRentedIds = new Set(realActive.map((a) => a.propertyId));
 
   const nonReal = allProps.filter((p) => !realRentedIds.has(p.id));
-  const demoRentedCount = Math.max(0, 8 - realRentedIds.size); // target 8 rented total
 
-  // Mix: 1 building, 1 optimizing, 3 producing, 8 rented (incl. the real one).
-  const buckets = {
-    building: nonReal.slice(0, 1),
-    optimizing: nonReal.slice(1, 2),
-    producing: nonReal.slice(2, 5),
-    rented: nonReal.slice(5, 5 + demoRentedCount),
-  };
-
-  // Flat monthly rent by niche ($900-2200): roofing/concrete top, tow/appliance low.
+  // Flat monthly rent by niche, spread across $500-2500: roofing/concrete top,
+  // painting/pavers/fence/tree in the middle, towing/appliance at the bottom.
   const rentForNiche = (niche: string | null): number => {
     const n = (niche ?? "").toLowerCase();
-    if (n.includes("roof")) return randInt(2050, 2200);
-    if (n.includes("concrete")) return randInt(1950, 2150);
-    if (n.includes("water") || n.includes("restoration")) return randInt(1800, 2050);
-    if (n.includes("hvac") || n.includes("ac")) return randInt(1650, 1950);
-    if (n.includes("paver")) return randInt(1500, 1800);
+    if (n.includes("roof")) return randInt(2300, 2500);
+    if (n.includes("concrete")) return randInt(2100, 2400);
+    if (n.includes("water") || n.includes("restoration")) return randInt(1900, 2200);
+    if (n.includes("hvac") || n.includes("ac")) return randInt(1600, 1900);
     if (n.includes("electric")) return randInt(1400, 1700);
-    if (n.includes("tree") || n.includes("fence") || n.includes("window")) return randInt(1250, 1550);
-    if (n.includes("paint")) return randInt(1150, 1450);
-    if (n.includes("tow") || n.includes("appliance")) return randInt(1000, 1250);
-    return randInt(1300, 1600);
+    if (n.includes("paver")) return randInt(1200, 1500);
+    if (n.includes("fence")) return randInt(1100, 1400);
+    if (n.includes("tree")) return randInt(1000, 1300);
+    if (n.includes("paint")) return randInt(900, 1200);
+    if (n.includes("window")) return randInt(800, 1100);
+    if (n.includes("appliance")) return randInt(600, 850);
+    if (n.includes("tow")) return randInt(500, 750);
+    return randInt(1200, 1600);
   };
   const targetForNiche = (niche: string | null): number => rentForNiche(niche) + randInt(150, 450);
 
@@ -201,136 +196,171 @@ async function seed() {
   const perLeadRates = (niche: string | null, hybrid: boolean) => {
     const e = estForNiche(niche);
     // Per-lead charge is a fraction of market value (you charge below market).
-    const f = hybrid ? 0.6 : 0.9;
+    const f = hybrid ? 0.7 : 0.95;
     return { call: Math.round(e.call * f), form: Math.round(e.form * f) };
+  };
+  // Fixed niche rank (no randomness) for ordering properties into roles.
+  const nicheRank = (niche: string | null): number => {
+    const n = (niche ?? "").toLowerCase();
+    if (n.includes("roof")) return 2400;
+    if (n.includes("concrete")) return 2250;
+    if (n.includes("water") || n.includes("restoration")) return 2050;
+    if (n.includes("hvac") || n.includes("ac")) return 1750;
+    if (n.includes("electric")) return 1550;
+    if (n.includes("paver")) return 1350;
+    if (n.includes("fence")) return 1250;
+    if (n.includes("tree")) return 1150;
+    if (n.includes("paint")) return 1050;
+    if (n.includes("window")) return 950;
+    if (n.includes("appliance")) return 725;
+    if (n.includes("tow")) return 625;
+    return 1400;
   };
 
   type Billing = "flat_monthly" | "per_lead" | "hybrid";
-  // Billing across the (up to 7) demo-rented: 4 flat, 2 per_lead, 1 hybrid.
-  const RENTED_BILLING: Billing[] = ["flat_monthly", "flat_monthly", "hybrid", "per_lead", "per_lead", "flat_monthly", "flat_monthly"];
 
-  type PropPlan = {
-    prop: Property;
-    status: "building" | "optimizing" | "producing" | "rented";
-    launchedDaysAgo: number | null;
-    monthly: number; // base monthly lead volume
-    staleOld?: boolean; // leads only older than 30 days
-    drift?: "high-lead" | "stale";
-  };
-  const plans: PropPlan[] = [];
-
-  buckets.building.forEach((prop) =>
-    plans.push({ prop, status: "building", launchedDaysAgo: null, monthly: 0 }),
-  );
-  buckets.optimizing.forEach((prop) =>
-    plans.push({ prop, status: "optimizing", launchedDaysAgo: randInt(60, 110), monthly: 40, drift: "high-lead" }),
-  );
-  buckets.producing.forEach((prop, i) => {
-    const stale = i === buckets.producing.length - 1;
-    plans.push({
-      prop, status: "producing", launchedDaysAgo: randInt(240, 520),
-      monthly: stale ? 55 : 60, staleOld: stale, drift: stale ? "stale" : undefined,
-    });
-  });
-  buckets.rented.forEach((prop, idx) => {
-    const billing = RENTED_BILLING[idx] ?? "flat_monthly";
-    const monthly = billing === "per_lead" ? 95 : billing === "hybrid" ? 72 : 56;
-    plans.push({ prop, status: "rented", launchedDaysAgo: randInt(240, 520), monthly });
-  });
-
-  // -- 4. Assignments (with staggered starts for a revenue ramp) ----------
-  interface Interval { clientId: string; start: string; end: string | null }
+  // Each interval carries the billing active during it, so a lead bills exactly
+  // as its assignment would: a trial interval books zero, an unrented period
+  // defaults to flat $0, and a paid per_lead/hybrid interval charges per lead.
+  interface Interval {
+    clientId: string;
+    start: string;
+    end: string | null;
+    billingType: Billing;
+    perLeadCall: string;
+    perLeadForm: string;
+    isTrial: boolean;
+  }
   const intervalsByProperty = new Map<string, Interval[]>();
   const demoAssignments: NewPropertyAssignment[] = [];
   for (const a of realActive) {
-    intervalsByProperty.set(a.propertyId, [{ clientId: a.clientId, start: a.startedOn, end: null }]);
+    intervalsByProperty.set(a.propertyId, [
+      { clientId: a.clientId, start: a.startedOn, end: null, billingType: "flat_monthly", perLeadCall: money(0), perLeadForm: money(0), isTrial: false },
+    ]);
   }
 
-  const rentedPlans = plans.filter((p) => p.status === "rented");
-  rentedPlans.forEach((plan, idx) => {
+  // Lifecycle roles for the 12 non-real properties (name-sorted): 1 building,
+  // 1 optimizing, 2 producing, 2 trial, 6 rented.
+  type Role =
+    | "building" | "optimizing" | "producing-stale" | "producing-ended-trial"
+    | "trial-active" | "trial-expired" | "rented-converted" | "rented-seqgap"
+    | "rented-ratechange" | "rented-handoff" | "rented-single";
+  interface Plan {
+    prop: Property;
+    status: "building" | "optimizing" | "producing" | "trial" | "rented";
+    launchedDaysAgo: number | null;
+    monthly: number;
+    staleOld?: boolean;
+    role: Role;
+  }
+  // Flat-rented roles first so the highest-value niches become paid rentals;
+  // per_lead / trial / producing / building take the lower niches.
+  const ROLES: { role: Role; status: Plan["status"]; launched: number | null; monthly: number; staleOld?: boolean }[] = [
+    { role: "rented-ratechange", status: "rented", launched: randInt(300, 500), monthly: 56 },
+    { role: "rented-converted", status: "rented", launched: randInt(240, 420), monthly: 58 },
+    { role: "rented-converted", status: "rented", launched: randInt(240, 420), monthly: 58 },
+    { role: "rented-seqgap", status: "rented", launched: randInt(300, 500), monthly: 56 },
+    { role: "rented-handoff", status: "rented", launched: randInt(240, 420), monthly: 68 }, // hybrid
+    { role: "rented-single", status: "rented", launched: randInt(120, 300), monthly: 98 }, // per_lead
+    { role: "producing-stale", status: "producing", launched: randInt(200, 400), monthly: 55, staleOld: true }, // stale drift
+    { role: "producing-ended-trial", status: "producing", launched: randInt(140, 280), monthly: 48 },
+    { role: "trial-active", status: "trial", launched: randInt(150, 300), monthly: 54 },
+    { role: "trial-expired", status: "trial", launched: randInt(150, 300), monthly: 48 },
+    { role: "optimizing", status: "optimizing", launched: randInt(60, 110), monthly: 40 }, // high-lead drift
+    { role: "building", status: "building", launched: null, monthly: 0 },
+  ];
+  const ordered = [...nonReal].sort(
+    (a, b) => nicheRank(b.niche) - nicheRank(a.niche) || a.name.localeCompare(b.name),
+  );
+  const plans: Plan[] = ordered.slice(0, ROLES.length).map((prop, i) => ({
+    prop, status: ROLES[i].status, launchedDaysAgo: ROLES[i].launched,
+    monthly: ROLES[i].monthly, staleOld: ROLES[i].staleOld, role: ROLES[i].role,
+  }));
+
+  const pushInterval = (pid: string, cIdx: number, start: number, end: number | null, billing: Billing, pl: { call: number; form: number }, isTrial: boolean) => {
+    const list = intervalsByProperty.get(pid) ?? [];
+    list.push({ clientId: clientId(cIdx), start: dayStr(start), end: end === null ? null : dayStr(end), billingType: billing, perLeadCall: money(pl.call), perLeadForm: money(pl.form), isTrial });
+    intervalsByProperty.set(pid, list);
+  };
+  const addPaid = (pid: string, cIdx: number, start: number, end: number | null, billing: Billing, rent: number, pl: { call: number; form: number }, note: string) => {
+    demoAssignments.push({
+      propertyId: pid, clientId: clientId(cIdx), startedOn: dayStr(start), endedOn: end === null ? null : dayStr(end),
+      billingType: billing,
+      monthlyRate: billing === "per_lead" ? money(0) : money(rent),
+      perLeadCallRate: billing === "flat_monthly" ? money(0) : money(pl.call),
+      perLeadFormRate: billing === "flat_monthly" ? money(0) : money(pl.form),
+      isTrial: false, trialEndsOn: null, notes: `${DEMO_TAG} ${note}`,
+    });
+    pushInterval(pid, cIdx, start, end, billing, pl, false);
+  };
+  const addTrial = (pid: string, cIdx: number, start: number, end: number | null, trialEndsDaysAgo: number, note: string) => {
+    demoAssignments.push({
+      propertyId: pid, clientId: clientId(cIdx), startedOn: dayStr(start), endedOn: end === null ? null : dayStr(end),
+      billingType: "flat_monthly", monthlyRate: money(0), perLeadCallRate: money(0), perLeadFormRate: money(0),
+      isTrial: true, trialEndsOn: dayStr(trialEndsDaysAgo), notes: `${DEMO_TAG} ${note}`,
+    });
+    pushInterval(pid, cIdx, start, end, "flat_monthly", { call: 0, form: 0 }, true);
+  };
+
+  let convertedSeen = 0;
+  for (const plan of plans) {
     const pid = plan.prop.id;
-    const billing = RENTED_BILLING[idx] ?? "flat_monthly";
-    const scenario = idx === 0 ? "sequential-gap" : idx === 1 ? "rate-change" : idx === 2 ? "handoff" : "single";
     const rent = rentForNiche(plan.prop.niche);
-    const pl = perLeadRates(plan.prop.niche, billing === "hybrid");
-    const mk = (cIdx: number, start: number, end: number | null, rate: number): void => {
-      demoAssignments.push({
-        propertyId: pid,
-        clientId: clientId(cIdx),
-        startedOn: dayStr(start),
-        endedOn: end === null ? null : dayStr(end),
-        billingType: billing,
-        monthlyRate: billing === "per_lead" ? money(0) : money(rate),
-        perLeadCallRate: billing === "flat_monthly" ? money(0) : money(pl.call),
-        perLeadFormRate: billing === "flat_monthly" ? money(0) : money(pl.form),
-        notes: `${DEMO_TAG} ${scenario}`,
-      });
-      const list = intervalsByProperty.get(pid) ?? [];
-      list.push({ clientId: clientId(cIdx), start: dayStr(start), end: end === null ? null : dayStr(end) });
-      intervalsByProperty.set(pid, list);
-    };
-
-    if (scenario === "sequential-gap") {
-      mk(idx, 400, 250, rent); // client A
-      mk(idx + 3, 200, null, rent + 200); // vacant gap 250..200, client B active
-    } else if (scenario === "rate-change") {
-      mk(idx, 360, 150, rent); // same client, old rate
-      mk(idx, 149, null, rent + 450); // same client, new rate
-    } else if (scenario === "handoff") {
-      mk(idx, 300, 95, rent);
-      mk(idx + 2, 92, null, rent + 150); // same-month handoff
-    } else {
-      // Single active; staggered so a few come online mid-window (revenue ramp).
-      const start = idx === 5 ? 330 : idx === 6 ? 70 : idx === 4 ? 120 : 300;
-      mk(idx, start, null, rent);
+    const hy = perLeadRates(plan.prop.niche, true);
+    const pl = perLeadRates(plan.prop.niche, false);
+    switch (plan.role) {
+      case "producing-ended-trial":
+        addTrial(pid, 5, 70, 45, 45, "trial-ended"); // trial ended without converting
+        break;
+      case "trial-active":
+        addTrial(pid, 0, 5, null, -9, "trial-active"); // day 5 of 14 (ends in 9 days)
+        break;
+      case "trial-expired":
+        addTrial(pid, 1, 17, null, 3, "trial-expired"); // ended 3 days ago, unresolved
+        break;
+      case "rented-converted": {
+        const c = convertedSeen === 0 ? { cl: 2, t0: 130, t1: 100, p: 99 } : { cl: 3, t0: 110, t1: 80, p: 79 };
+        convertedSeen++;
+        addTrial(pid, c.cl, c.t0, c.t1, c.t1, "trial-converted");
+        addPaid(pid, c.cl, c.p, null, "flat_monthly", rent, pl, "converted-paid");
+        break;
+      }
+      case "rented-seqgap":
+        addPaid(pid, 4, 400, 250, "flat_monthly", Math.round(rent * 0.85), pl, "sequential-gap");
+        addPaid(pid, 0, 200, null, "flat_monthly", rent, pl, "sequential-gap");
+        break;
+      case "rented-ratechange":
+        addPaid(pid, 1, 360, 150, "flat_monthly", Math.round(rent * 0.8), pl, "rate-change");
+        addPaid(pid, 1, 149, null, "flat_monthly", rent, pl, "rate-change"); // raised to target
+        break;
+      case "rented-handoff":
+        addPaid(pid, 2, 300, 95, "hybrid", Math.round(rent * 0.9), hy, "handoff");
+        addPaid(pid, 4, 92, null, "hybrid", rent, hy, "handoff");
+        break;
+      case "rented-single":
+        addPaid(pid, 5, 200, null, "per_lead", 0, pl, "single");
+        break;
+      // building / optimizing / producing-stale: unrented, no assignment.
     }
-  });
-
-  // -- 5. Effective billing/estimated per lead-producing property ---------
-  interface Effective { billingType: Billing; perLeadCallRate: string; perLeadFormRate: string; estCall: number; estForm: number }
-  const effective = new Map<string, Effective>();
-  for (const plan of plans) {
-    const active = demoAssignments.find((a) => a.propertyId === plan.prop.id && a.endedOn === null);
-    const e = estForNiche(plan.prop.niche);
-    effective.set(plan.prop.id, {
-      billingType: (active?.billingType as Billing) ?? "flat_monthly",
-      perLeadCallRate: active?.perLeadCallRate ?? money(0),
-      perLeadFormRate: active?.perLeadFormRate ?? money(0),
-      estCall: e.call,
-      estForm: e.form,
-    });
-  }
-  // Real-rented (e.g. Brunswick): keep its own rates/estimates (not modified).
-  for (const pid of realRentedIds) {
-    const prop = allProps.find((p) => p.id === pid)!;
-    effective.set(pid, {
-      billingType: prop.billingType as Billing,
-      perLeadCallRate: prop.perLeadCallRate,
-      perLeadFormRate: prop.perLeadFormRate,
-      estCall: Number(prop.estimatedCallValue),
-      estForm: Number(prop.estimatedFormValue),
-    });
   }
 
-  // -- 6. Apply property field changes ------------------------------------
+  // -- Apply property field changes --------------------------------------
   for (const plan of plans) {
     const pid = plan.prop.id;
-    const active = (intervalsByProperty.get(pid) ?? []).find((iv) => iv.end === null);
-    const activeAssignment = demoAssignments.find((a) => a.propertyId === pid && a.endedOn === null);
-    const isRented = plan.status === "rented";
+    const active = demoAssignments.find((a) => a.propertyId === pid && a.endedOn === null);
     const e = estForNiche(plan.prop.niche);
-
+    const isEngaged = plan.status === "rented" || plan.status === "trial";
     await db
       .update(properties)
       .set({
         status: plan.status,
         launchedOn: plan.launchedDaysAgo != null ? dayStr(plan.launchedDaysAgo) : null,
         targetMonthlyRent: money(targetForNiche(plan.prop.niche)),
-        clientId: isRented ? (active?.clientId ?? plan.prop.clientId) : plan.prop.clientId,
-        billingType: activeAssignment?.billingType ?? "flat_monthly",
-        monthlyRate: activeAssignment?.monthlyRate ?? money(0),
-        perLeadCallRate: activeAssignment?.perLeadCallRate ?? money(0),
-        perLeadFormRate: activeAssignment?.perLeadFormRate ?? money(0),
+        clientId: isEngaged ? (active?.clientId ?? null) : null,
+        billingType: active?.billingType ?? "flat_monthly",
+        monthlyRate: active?.monthlyRate ?? money(0),
+        perLeadCallRate: active?.perLeadCallRate ?? money(0),
+        perLeadFormRate: active?.perLeadFormRate ?? money(0),
         estimatedCallValue: money(e.call),
         estimatedFormValue: money(e.form),
         updatedAt: new Date(),
@@ -342,9 +372,11 @@ async function seed() {
   }
 
   // -- 7. Leads (~9 months, tagged source_system='demo') ------------------
-  const activeClientAt = (pid: string, d: string): string | null => {
+  // The interval active at a lead's date determines who it's stamped to AND how
+  // it's billed (trial => $0; unrented => flat $0; paid per_lead/hybrid => rate).
+  const billingAt = (pid: string, d: string): Interval | null => {
     for (const iv of intervalsByProperty.get(pid) ?? []) {
-      if (iv.start <= d && (iv.end === null || iv.end >= d)) return iv.clientId;
+      if (iv.start <= d && (iv.end === null || iv.end >= d)) return iv;
     }
     return null;
   };
@@ -362,15 +394,15 @@ async function seed() {
   };
 
   // Lead-producing properties: plans with volume + the real-rented ones.
-  interface LeadSpec { prop: Property; monthly: number; staleOld: boolean; eff: Effective }
+  interface LeadSpec { prop: Property; monthly: number; staleOld: boolean }
   const leadSpecs: LeadSpec[] = [];
   for (const plan of plans) {
     if (plan.monthly <= 0) continue;
-    leadSpecs.push({ prop: plan.prop, monthly: plan.monthly, staleOld: !!plan.staleOld, eff: effective.get(plan.prop.id)! });
+    leadSpecs.push({ prop: plan.prop, monthly: plan.monthly, staleOld: !!plan.staleOld });
   }
   for (const pid of realRentedIds) {
     const prop = allProps.find((p) => p.id === pid)!;
-    leadSpecs.push({ prop, monthly: 50, staleOld: false, eff: effective.get(pid)! });
+    leadSpecs.push({ prop, monthly: 50, staleOld: false });
   }
 
   const LEAD_SCALE = 1.0; // global volume knob for the estimated-value target
@@ -380,7 +412,8 @@ async function seed() {
 
   const leadRows: NewLead[] = [];
   for (const spec of leadSpecs) {
-    const { prop, eff } = spec;
+    const { prop } = spec;
+    const est = estForNiche(prop.niche);
     const perDay = (spec.monthly / 30) * LEAD_SCALE;
     for (let day = HORIZON; day >= 0; day--) {
       if (spec.staleOld && day < 31) continue; // stale drift: nothing in 30 days
@@ -407,15 +440,18 @@ async function seed() {
         const isSpam = !isCall && rnd() < 0.06;
 
         const dayISO = dayStr(day);
-        const stampClient = activeClientAt(prop.id, dayISO);
+        const iv = billingAt(prop.id, dayISO);
+        const stampClient = iv?.clientId ?? null;
+        // A trial (or unrented period) bills as flat $0; paid intervals charge.
+        const chargePerLead = iv !== null && !iv.isTrial;
         const decision = evaluateLead(
           { type, callDurationSeconds },
           {
-            billingType: eff.billingType,
-            perLeadCallRate: eff.perLeadCallRate,
-            perLeadFormRate: eff.perLeadFormRate,
-            estimatedCallValue: money(eff.estCall),
-            estimatedFormValue: money(eff.estForm),
+            billingType: chargePerLead ? iv.billingType : "flat_monthly",
+            perLeadCallRate: chargePerLead ? iv.perLeadCall : "0",
+            perLeadFormRate: chargePerLead ? iv.perLeadForm : "0",
+            estimatedCallValue: money(est.call),
+            estimatedFormValue: money(est.form),
             billableThresholdSeconds: prop.billableThresholdSeconds,
           },
         );
@@ -450,9 +486,19 @@ async function seed() {
   }
 
   // -- 7. Summary + expected dashboard counts -----------------------------
-  const byStatus = { building: 0, optimizing: 0, producing: 0, rented: 0, paused: 0 } as Record<string, number>;
+  const byStatus = { building: 0, optimizing: 0, producing: 0, trial: 0, rented: 0, paused: 0 } as Record<string, number>;
   for (const plan of plans) byStatus[plan.status]++;
   for (const id of realRentedIds) byStatus.rented++; // real rented not in plans
+
+  const trialStates = { active: 0, expired: 0, converted: 0, ended: 0 };
+  for (const a of demoAssignments) {
+    if (!a.isTrial) continue;
+    const note = a.notes ?? "";
+    if (note.includes("trial-active")) trialStates.active++;
+    else if (note.includes("trial-expired")) trialStates.expired++;
+    else if (note.includes("trial-converted")) trialStates.converted++;
+    else if (note.includes("trial-ended")) trialStates.ended++;
+  }
 
   console.log("\n=== demo:seed summary ===");
   console.table({
@@ -462,12 +508,16 @@ async function seed() {
     "properties modified": plans.length,
   });
   console.log("Property statuses now:", byStatus);
+  console.log(
+    `Trials by state — active: ${trialStates.active}, expired: ${trialStates.expired}, ` +
+      `converted: ${trialStates.converted}, ended-unconverted: ${trialStates.ended}`,
+  );
   console.log("\n=== Expected on the dashboard ===");
   console.log(
     `Pipeline strip — Building: ${byStatus.building}, Optimizing: ${byStatus.optimizing}, ` +
-      `Producing: ${byStatus.producing}, Rented: ${byStatus.rented}`,
+      `Producing: ${byStatus.producing}, Trial: ${byStatus.trial}, Rented: ${byStatus.rented}`,
   );
-  console.log("Status-review flags: expect >= 2 (one optimizing with 30+ leads, one stale producing).");
+  console.log("Status-review flags: expect >= 3 (high-lead optimizing, stale producing, expired trial).");
   console.log(`Total demo leads over ~9 months: ${leadRows.length}`);
 
   // -- 8. Computed monthly revenue + estimated value (last 3 months) ------

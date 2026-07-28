@@ -258,7 +258,7 @@ export async function getTrialSummary(tz: string): Promise<TrialSummary> {
           eq(leads.clientId, propertyAssignments.clientId),
           isNull(leads.deletedAt),
           sql`${leads.occurredAt} >= (${propertyAssignments.startedOn}::timestamp AT TIME ZONE ${tz})`,
-          sql`${propertyAssignments.endedOn} is null or ${leads.occurredAt} < ((${propertyAssignments.endedOn}::timestamp AT TIME ZONE ${tz}) + interval '1 day')`,
+          sql`(${propertyAssignments.endedOn} is null or ${leads.occurredAt} < ((${propertyAssignments.endedOn}::timestamp AT TIME ZONE ${tz}) + interval '1 day'))`,
         ),
       )
       .where(eq(propertyAssignments.isTrial, true))
