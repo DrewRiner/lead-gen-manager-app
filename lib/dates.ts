@@ -125,6 +125,17 @@ export function currentMonthKey(tz: string, now: Date = new Date()): MonthKey {
   return monthKey(zoned.getFullYear(), zoned.getMonth() + 1);
 }
 
+/** Integer month index (year*12 + month-1) of a UTC instant, in the org tz. */
+export function monthIndexInTz(date: Date, tz: string): number {
+  const z = toZonedTime(date, tz);
+  return z.getFullYear() * 12 + z.getMonth();
+}
+
+/** Integer month index of the current month in the org tz. */
+export function currentMonthIndex(tz: string, now: Date = new Date()): number {
+  return monthIndexInTz(now, tz);
+}
+
 /** Parse "YYYY-MM" into a MonthKey, or return the current month if invalid. */
 export function parseMonthKey(
   value: string | undefined,
@@ -136,6 +147,13 @@ export function parseMonthKey(
     if (m >= 1 && m <= 12) return monthKey(y, m);
   }
   return currentMonthKey(tz, now);
+}
+
+/** "YYYY-MM-DD" for the current date in the org timezone. */
+export function todayDateStr(tz: string, now: Date = new Date()): string {
+  const z = toZonedTime(now, tz);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${z.getFullYear()}-${pad(z.getMonth() + 1)}-${pad(z.getDate())}`;
 }
 
 /** "YYYY-MM-DDTHH:mm" for the current time in the org tz (datetime-local value). */

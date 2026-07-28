@@ -19,8 +19,10 @@ import {
   clients,
   leads,
   properties,
+  propertyAssignments,
   type NewLead,
   type NewProperty,
+  type NewPropertyAssignment,
 } from "@/lib/db/schema";
 
 // --- Safety gate: never seed anything but a development environment ------
@@ -133,8 +135,10 @@ const SOURCES: Array<"organic" | "gbp" | "direct" | "other"> = [
 async function main() {
   console.log("Seeding (APP_ENV=development)…");
 
-  // Reset seedable tables (leads -> properties -> clients for FK order).
+  // Reset seedable tables in FK order:
+  // leads -> property_assignments -> properties -> clients.
   await db.delete(leads);
+  await db.delete(propertyAssignments);
   await db.delete(properties);
   await db.delete(clients);
 
@@ -179,6 +183,52 @@ async function main() {
     .values(propValues)
     .returning();
 
+  // Rental assignments: one active per assigned property, backdated so lifetime
+  // metrics are meaningful. Every 4th assigned property also gets a prior ended
+  // assignment with a different client, to exercise client history and the
+  // "% of lifetime revenue" column.
+  const now = new Date();
+  const dateStr = (daysAgo: number): string => {
+    const d = new Date(now);
+    d.setDate(now.getDate() - daysAgo);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+
+  const assignmentRows: NewPropertyAssignment[] = [];
+  insertedProps.forEach((prop, i) => {
+    if (!prop.clientId) return;
+    const activeStart = dateStr(randInt(150, 210));
+    if (i % 4 === 0) {
+      const other = insertedClients.find((c) => c.id !== prop.clientId);
+      if (other) {
+        assignmentRows.push({
+          propertyId: prop.id,
+          clientId: other.id,
+          startedOn: dateStr(randInt(360, 420)),
+          endedOn: activeStart,
+          billingType: prop.billingType,
+          monthlyRate: prop.monthlyRate,
+          perLeadCallRate: prop.perLeadCallRate,
+          perLeadFormRate: prop.perLeadFormRate,
+        });
+      }
+    }
+    assignmentRows.push({
+      propertyId: prop.id,
+      clientId: prop.clientId,
+      startedOn: activeStart,
+      endedOn: null,
+      billingType: prop.billingType,
+      monthlyRate: prop.monthlyRate,
+      perLeadCallRate: prop.perLeadCallRate,
+      perLeadFormRate: prop.perLeadFormRate,
+    });
+  });
+  if (assignmentRows.length > 0) {
+    await db.insert(propertyAssignments).values(assignmentRows);
+  }
+
   // Weighted property picker.
   const weightedPropIndexes: number[] = [];
   PROP_DEFS.forEach((p, i) => {
@@ -186,7 +236,6 @@ async function main() {
   });
 
   // Build ~90 days of leads, weekday-heavy.
-  const now = new Date();
   const leadRows: NewLead[] = [];
 
   for (let dayOffset = 89; dayOffset >= 0; dayOffset--) {

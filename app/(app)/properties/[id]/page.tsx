@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, UserMinus, UserPlus } from "lucide-react";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
 import { LeadsFilters } from "@/components/leads/leads-filters";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
+import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
 import { StatCard } from "@/components/stat-card";
@@ -28,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { unassignClient } from "@/lib/actions/assignments";
 import {
   nowLocalInputValue,
   recentMonths,
@@ -38,6 +41,7 @@ import { clients, leads, properties } from "@/lib/db/schema";
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeads } from "@/lib/queries/leads";
 import {
   getPropertyMonthlySeries,
@@ -53,6 +57,10 @@ const BILLING_LABEL: Record<string, string> = {
   per_lead: "Per lead",
   hybrid: "Hybrid",
 };
+
+function pct(n: number): string {
+  return `${Math.round(n * 100)}%`;
+}
 
 export default async function PropertyDetailPage({
   params,
@@ -77,49 +85,51 @@ export default async function PropertyDetailPage({
 
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const [today, week, month, monthly, leadCountRow, leadsPage, clientList] =
-    await Promise.all([
-      getRangeMetrics(trailingDayRange(tz, 1), { propertyId: id }),
-      getRangeMetrics(trailingDayRange(tz, 7), { propertyId: id }),
-      getRangeMetrics(trailingDayRange(tz, 30), { propertyId: id }),
-      getPropertyMonthlySeries(
-        tz,
-        {
-          id: p.id,
-          billingType: p.billingType,
-          monthlyRate: p.monthlyRate,
-          clientId: p.clientId,
-        },
-        recentMonths(tz, 12),
-      ),
-      db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(leads)
-        .where(and(eq(leads.propertyId, id), isNull(leads.deletedAt))),
-      getLeads(
-        tz,
-        {
-          propertyId: id,
-          type: sp.type,
-          source: sp.source,
-          billableStatus: sp.billableStatus,
-          deliveryStatus: sp.deliveryStatus,
-          from: sp.from,
-          to: sp.to,
-          q: sp.q,
-        },
-        page,
-        25,
-      ),
-      db
-        .select({ id: clients.id, businessName: clients.businessName })
-        .from(clients)
-        .where(isNull(clients.deletedAt))
-        .orderBy(asc(clients.businessName)),
-    ]);
+  const [
+    today,
+    week,
+    month,
+    monthly,
+    lifetime,
+    leadCountRow,
+    leadsPage,
+    clientList,
+  ] = await Promise.all([
+    getRangeMetrics(trailingDayRange(tz, 1), { propertyId: id }),
+    getRangeMetrics(trailingDayRange(tz, 7), { propertyId: id }),
+    getRangeMetrics(trailingDayRange(tz, 30), { propertyId: id }),
+    getPropertyMonthlySeries(tz, id, recentMonths(tz, 12)),
+    getPropertyLifetime(tz, id),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(leads)
+      .where(and(eq(leads.propertyId, id), isNull(leads.deletedAt))),
+    getLeads(
+      tz,
+      {
+        propertyId: id,
+        type: sp.type,
+        source: sp.source,
+        billableStatus: sp.billableStatus,
+        deliveryStatus: sp.deliveryStatus,
+        from: sp.from,
+        to: sp.to,
+        q: sp.q,
+      },
+      page,
+      25,
+    ),
+    db
+      .select({ id: clients.id, businessName: clients.businessName })
+      .from(clients)
+      .where(isNull(clients.deletedAt))
+      .orderBy(asc(clients.businessName)),
+  ]);
 
   const totalLeadCount = leadCountRow[0]?.count ?? 0;
   const monthlyDesc = [...monthly].reverse();
+  const isAssigned = p.clientId != null;
+  const s = lifetime.summary;
 
   const editValue = {
     id: p.id,
@@ -152,16 +162,37 @@ export default async function PropertyDetailPage({
         <ArrowLeft className="mr-1 h-4 w-4" /> Properties
       </Link>
 
-      <PageHeader
-        title={p.name}
-        description={p.domain ?? undefined}
-      >
+      <PageHeader title={p.name} description={p.domain ?? undefined}>
         <PropertyDialog
           mode="edit"
           property={editValue}
-          clients={clientList}
           trigger={<Button variant="outline">Edit property</Button>}
         />
+        <AssignClientDialog
+          propertyId={p.id}
+          currentClientId={p.clientId}
+          clients={clientList}
+          trigger={
+            <Button variant="outline">
+              <UserPlus className="mr-2 h-4 w-4" />
+              {isAssigned ? "Reassign" : "Assign client"}
+            </Button>
+          }
+        />
+        {isAssigned ? (
+          <ConfirmDialog
+            title="Unassign client?"
+            description="Ends the active assignment as of today and marks the property unassigned. Historical revenue is preserved."
+            confirmLabel="Unassign"
+            action={unassignClient.bind(null, p.id)}
+            trigger={
+              <Button variant="outline">
+                <UserMinus className="mr-2 h-4 w-4" />
+                Unassign
+              </Button>
+            }
+          />
+        ) : null}
         <RecalcEstimatedValuesButton
           propertyId={p.id}
           leadCount={totalLeadCount}
@@ -180,7 +211,9 @@ export default async function PropertyDetailPage({
           <Info label="City / State">
             {[p.city, p.state].filter(Boolean).join(", ") || "—"}
           </Info>
-          <Info label="Client">{row.clientName ?? "Unassigned"}</Info>
+          <Info label="Current client">
+            {row.clientName ?? "Unassigned"}
+          </Info>
           <Info label="Tracking phone">{formatPhone(p.trackingPhone)}</Info>
           <Info label="GBP place ID">{p.gbpPlaceId ?? "—"}</Info>
           <Info label="Domain">
@@ -201,7 +234,128 @@ export default async function PropertyDetailPage({
         </CardContent>
       </Card>
 
-      {/* Period stats */}
+      {/* Lifetime (all clients that ever rented it + all lead revenue) */}
+      <div className="mb-2 text-sm font-medium text-muted-foreground">
+        Lifetime — all clients, all leads
+      </div>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Revenue / month rented"
+          value={formatCurrency(lifetime.revenuePerMonthRented)}
+          hint="The comparable earning rate between properties"
+        />
+        <StatCard
+          label="Lifetime revenue"
+          value={formatCurrency(lifetime.lifetimeRevenue)}
+          hint={`Flat rent + ${formatCurrency(lifetime.leadRevenue)} per-lead`}
+        />
+        <StatCard
+          label="Lifetime estimated value"
+          value={formatCurrency(lifetime.lifetimeEstimatedValue)}
+          hint={`${formatNumber(lifetime.totalLeads)} leads, any client`}
+        />
+        <StatCard
+          label="Occupancy"
+          value={pct(s.occupancyRate)}
+          hint={`${s.monthsRented} of ${s.monthsSinceStart} months rented`}
+        />
+        <StatCard
+          label="Total clients"
+          value={formatNumber(s.totalClients)}
+          hint="Distinct clients ever rented"
+        />
+        <StatCard
+          label="Avg tenure / client"
+          value={`${s.averageTenureMonths.toFixed(1)} mo`}
+        />
+        <StatCard
+          label="Longest tenure"
+          value={
+            s.longestTenure
+              ? `${s.longestTenure.months} mo`
+              : "—"
+          }
+          hint={s.longestTenure?.clientName ?? undefined}
+        />
+        <StatCard
+          label="Months rented"
+          value={formatNumber(s.monthsRented)}
+        />
+      </div>
+
+      {/* Client history */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Client history</CardTitle>
+          <CardDescription>
+            Every client that ever rented this property, ranked by attributed
+            revenue.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="px-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Started</TableHead>
+                  <TableHead>Ended</TableHead>
+                  <TableHead className="text-right">Tenure</TableHead>
+                  <TableHead className="text-right">Attributed revenue</TableHead>
+                  <TableHead className="text-right">% of lifetime</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lifetime.clientHistory.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      Never rented.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  lifetime.clientHistory.map((c) => (
+                    <TableRow key={c.clientId}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/clients/${c.clientId}`}
+                          className="hover:underline"
+                        >
+                          {c.clientName ?? "—"}
+                        </Link>
+                        {c.isActive ? (
+                          <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                            active
+                          </span>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {c.firstStarted}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {c.lastEnded ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {c.tenureMonths} mo
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatCurrency(c.attributedRevenue)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {Math.round(c.pctOfLifetimeRevenue)}%
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent-window stats */}
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <PeriodCard label="Today" m={today} />
         <PeriodCard label="Last 7 Days" m={week} />
@@ -213,7 +367,8 @@ export default async function PropertyDetailPage({
         <CardHeader>
           <CardTitle>Billing configuration</CardTitle>
           <CardDescription>
-            What the client pays vs. the market value we record.
+            Current property rates. Active assignments keep the rate snapshotted
+            when they started — reassign to reprice.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
@@ -227,9 +382,7 @@ export default async function PropertyDetailPage({
           <Info label="Per-lead form rate">
             {formatCurrency(p.perLeadFormRate)}
           </Info>
-          <Info label="Call threshold">
-            {p.billableThresholdSeconds}s
-          </Info>
+          <Info label="Call threshold">{p.billableThresholdSeconds}s</Info>
           <Info label="Est. call value">
             {formatCurrency(p.estimatedCallValue)}
           </Info>
@@ -244,7 +397,8 @@ export default async function PropertyDetailPage({
         <CardHeader>
           <CardTitle>Monthly performance</CardTitle>
           <CardDescription>
-            Last 12 calendar months in {tz}.
+            Last 12 calendar months in {tz}. Flat revenue reflects the
+            assignment active each month.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
@@ -302,7 +456,9 @@ export default async function PropertyDetailPage({
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle>Leads</CardTitle>
-            <CardDescription>{formatNumber(totalLeadCount)} total</CardDescription>
+            <CardDescription>
+              {formatNumber(totalLeadCount)} total
+            </CardDescription>
           </div>
           <AddLeadDialog
             properties={[{ id: p.id, name: p.name }]}

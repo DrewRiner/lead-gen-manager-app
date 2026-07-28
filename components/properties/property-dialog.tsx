@@ -53,12 +53,10 @@ export interface PropertyDialogValue {
 export function PropertyDialog({
   mode,
   property,
-  clients,
   trigger,
 }: {
   mode: "create" | "edit";
   property?: PropertyDialogValue;
-  clients: { id: string; businessName: string }[];
   trigger: React.ReactNode;
 }) {
   const router = useRouter();
@@ -70,7 +68,6 @@ export function PropertyDialog({
     property?.billingType ?? "flat_monthly",
   );
   const [status, setStatus] = useState<Status>(property?.status ?? "available");
-  const [clientId, setClientId] = useState<string>(property?.clientId ?? "");
 
   const showMonthly = billingType === "flat_monthly" || billingType === "hybrid";
   const showPerLead = billingType === "per_lead" || billingType === "hybrid";
@@ -111,7 +108,6 @@ export function PropertyDialog({
           {/* Hidden mirrors for shadcn selects */}
           <input type="hidden" name="status" value={status} />
           <input type="hidden" name="billingType" value={billingType} />
-          <input type="hidden" name="clientId" value={clientId} />
 
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Name" required>
@@ -160,24 +156,6 @@ export function PropertyDialog({
                   <SelectItem value="rented">Rented</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="paused">Paused</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Client">
-              <Select
-                value={clientId || "none"}
-                onValueChange={(v) => setClientId(v === "none" ? "" : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Unassigned" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Unassigned</SelectItem>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.businessName}
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </Field>

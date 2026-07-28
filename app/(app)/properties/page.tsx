@@ -21,6 +21,7 @@ import { db } from "@/lib/db";
 import { clients, properties } from "@/lib/db/schema";
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
+import { getPropertyLifetimeMap } from "@/lib/queries/assignments";
 import { getPropertyRangeCounts } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
 
@@ -60,7 +61,8 @@ export default async function PropertiesPage({
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
 
-  const [rows, clientList, nicheRows, counts] = await Promise.all([
+  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap] =
+    await Promise.all([
     db
       .select({
         property: properties,
@@ -81,9 +83,20 @@ export default async function PropertiesPage({
       .where(and(isNull(properties.deletedAt), sql`${properties.niche} is not null`))
       .orderBy(asc(properties.niche)),
     getPropertyRangeCounts(trailingDayRange(tz, 30)),
+    getPropertyLifetimeMap(tz),
   ]);
 
   const niches = nicheRows.map((n) => n.niche).filter((n): n is string => !!n);
+
+  // Rank by revenue per month rented (comparable earning rate), not raw
+  // lifetime totals. Unranked (never rented) properties fall to the bottom,
+  // then by name.
+  const rows = [...rowsRaw].sort((a, b) => {
+    const ra = lifetimeMap.get(a.property.id)?.revenuePerMonthRented ?? 0;
+    const rb = lifetimeMap.get(b.property.id)?.revenuePerMonthRented ?? 0;
+    if (rb !== ra) return rb - ra;
+    return a.property.name.localeCompare(b.property.name);
+  });
 
   return (
     <div>
@@ -93,7 +106,6 @@ export default async function PropertiesPage({
       >
         <PropertyDialog
           mode="create"
-          clients={clientList}
           trigger={
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -121,6 +133,7 @@ export default async function PropertiesPage({
                 <TableHead>Billing</TableHead>
                 <TableHead className="text-right">30d leads</TableHead>
                 <TableHead className="text-right">30d est. value</TableHead>
+                <TableHead className="text-right">Rev/mo rented</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -128,7 +141,7 @@ export default async function PropertiesPage({
               {rows.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={11}
                     className="py-10 text-center text-muted-foreground"
                   >
                     No properties match these filters.
@@ -170,6 +183,13 @@ export default async function PropertiesPage({
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatCurrency(count?.estimatedValue ?? "0")}
+                      </TableCell>
+                      <TableCell className="text-right font-medium tabular-nums">
+                        {lifetimeMap.get(p.id)?.summary.monthsRented
+                          ? formatCurrency(
+                              lifetimeMap.get(p.id)!.revenuePerMonthRented,
+                            )
+                          : "—"}
                       </TableCell>
                       <TableCell>
                         <PropertyRowActions

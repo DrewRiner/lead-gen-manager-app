@@ -2,6 +2,7 @@
 
 import { MoreHorizontal } from "lucide-react";
 
+import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   PropertyDialog,
@@ -12,8 +13,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { unassignClient } from "@/lib/actions/assignments";
 import { softDeleteProperty } from "@/lib/actions/properties";
 
 export function PropertyRowActions({
@@ -23,6 +26,8 @@ export function PropertyRowActions({
   property: PropertyDialogValue;
   clients: { id: string; businessName: string }[];
 }) {
+  const isAssigned = property.clientId != null;
+
   return (
     <div className="flex justify-end">
       <DropdownMenu>
@@ -36,21 +41,44 @@ export function PropertyRowActions({
           <PropertyDialog
             mode="edit"
             property={property}
-            clients={clients}
             trigger={
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 Edit
               </DropdownMenuItem>
             }
           />
+          <DropdownMenuSeparator />
+          <AssignClientDialog
+            propertyId={property.id}
+            currentClientId={property.clientId}
+            clients={clients}
+            trigger={
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                {isAssigned ? "Reassign client" : "Assign client"}
+              </DropdownMenuItem>
+            }
+          />
+          {isAssigned ? (
+            <ConfirmDialog
+              title="Unassign client?"
+              description="Ends the active assignment as of today and marks the property unassigned. Historical revenue is preserved."
+              confirmLabel="Unassign"
+              action={unassignClient.bind(null, property.id)}
+              trigger={
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  Unassign client
+                </DropdownMenuItem>
+              }
+            />
+          ) : null}
+          <DropdownMenuSeparator />
           <ConfirmDialog
             destructive
             title="Delete property?"
             description={
               <>
                 This soft-deletes <strong>{property.name}</strong>. Its
-                historical lead data is preserved and it stops appearing in
-                lists. This can be undone in the database.
+                historical lead and assignment data is preserved.
               </>
             }
             confirmLabel="Delete property"

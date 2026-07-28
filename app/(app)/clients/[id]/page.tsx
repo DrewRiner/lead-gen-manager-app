@@ -29,6 +29,7 @@ import { clients, properties } from "@/lib/db/schema";
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency, sumMoney, toMoneyNumber } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { getClientLifetime } from "@/lib/queries/assignments";
 import { getPropertyRangeCounts, getRangeMetrics } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
 
@@ -57,7 +58,7 @@ export default async function ClientDetailPage({
 
   const range = trailingDayRange(tz, 30);
 
-  const [props, metrics, counts] = await Promise.all([
+  const [props, metrics, counts, lifetime] = await Promise.all([
     db
       .select()
       .from(properties)
@@ -65,6 +66,7 @@ export default async function ClientDetailPage({
       .orderBy(asc(properties.name)),
     getRangeMetrics(range, { clientId: id }),
     getPropertyRangeCounts(range),
+    getClientLifetime(tz, id),
   ]);
 
   const gap = sumMoney([
@@ -126,6 +128,31 @@ export default async function ClientDetailPage({
           ) : null}
         </CardContent>
       </Card>
+
+      <div className="mb-2 text-sm font-medium text-muted-foreground">
+        Lifetime (their assignments + leads stamped to them)
+      </div>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Lifetime revenue"
+          value={formatCurrency(lifetime.lifetimeRevenue)}
+          hint={`Flat rent + ${formatCurrency(lifetime.leadRevenue)} per-lead`}
+        />
+        <StatCard
+          label="Lifetime estimated value"
+          value={formatCurrency(lifetime.lifetimeEstimatedValue)}
+        />
+        <StatCard
+          label="Lifetime gap"
+          value={formatCurrency(lifetime.gap)}
+          hint="Estimated value − revenue"
+        />
+        <StatCard
+          label="Months rented"
+          value={String(lifetime.monthsRented)}
+          hint={`${lifetime.propertiesEverRented} propert${lifetime.propertiesEverRented === 1 ? "y" : "ies"} ever rented`}
+        />
+      </div>
 
       <div className="mb-2 text-sm font-medium text-muted-foreground">
         Last 30 days (combined)

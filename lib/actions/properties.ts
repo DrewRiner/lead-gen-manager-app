@@ -39,15 +39,6 @@ const nonNegInt = z
     return Number.isFinite(n) && n >= 0 ? n : 60;
   });
 
-const clientIdField = z
-  .string()
-  .trim()
-  .optional()
-  .transform((v) => (v && v.length > 0 ? v : null))
-  .refine((v) => v === null || z.string().uuid().safeParse(v).success, {
-    message: "Invalid client.",
-  });
-
 const propertySchema = z.object({
   name: z.string().trim().min(1, "Name is required."),
   displayName: optionalText,
@@ -58,7 +49,7 @@ const propertySchema = z.object({
   status: z.enum(propertyStatusEnum.enumValues),
   gbpPlaceId: optionalText,
   trackingPhone: optionalText,
-  clientId: clientIdField,
+  // client_id is intentionally NOT here: it changes only via assign/unassign.
   billingType: z.enum(billingTypeEnum.enumValues),
   monthlyRate: money,
   perLeadCallRate: money,
@@ -80,7 +71,6 @@ function parseForm(formData: FormData) {
     status: formData.get("status"),
     gbpPlaceId: formData.get("gbpPlaceId"),
     trackingPhone: formData.get("trackingPhone"),
-    clientId: formData.get("clientId"),
     billingType: formData.get("billingType"),
     monthlyRate: formData.get("monthlyRate"),
     perLeadCallRate: formData.get("perLeadCallRate"),

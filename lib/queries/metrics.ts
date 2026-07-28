@@ -1,6 +1,12 @@
+import {
+  flatRevenueForMonth,
+  monthIndexFromYm,
+  type AssignmentLite,
+} from "@/lib/assignments";
 import { db } from "@/lib/db";
 import { clients, leads, properties } from "@/lib/db/schema";
 import {
+  currentMonthIndex,
   localDateExpr,
   localMonthExpr,
   monthRangeUtc,
@@ -8,6 +14,7 @@ import {
   type MonthKey,
 } from "@/lib/dates";
 import { sumMoney, toMoneyNumber, toMoneyString } from "@/lib/money";
+import { getAssignmentsMap } from "@/lib/queries/assignments";
 import { and, desc, eq, gte, isNull, lt, sql, type SQL } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
@@ -233,57 +240,50 @@ export interface MonthlyReport {
   totals: MonthlyReportTotals;
 }
 
-function computeActualRevenue(
-  billingType: string,
-  monthlyRate: string,
-  isRented: boolean,
-  perLeadBilled: string,
-): string {
-  const includesFlat =
-    isRented && (billingType === "flat_monthly" || billingType === "hybrid");
-  const flat = includesFlat ? toMoneyNumber(monthlyRate) : 0;
-  return sumMoney([flat, perLeadBilled]);
-}
-
 export async function getMonthlyReport(
   tz: string,
   month: MonthKey,
 ): Promise<MonthlyReport> {
   const range = monthRangeUtc(tz, month.year, month.month);
+  const monthIndex = monthIndexFromYm(month.year, month.month);
+  const nowIndex = currentMonthIndex(tz);
 
-  // All non-deleted properties, with client name.
-  const props = await db
-    .select({
-      propertyId: properties.id,
-      name: properties.name,
-      niche: properties.niche,
-      city: properties.city,
-      state: properties.state,
-      status: properties.status,
-      billingType: properties.billingType,
-      monthlyRate: properties.monthlyRate,
-      clientId: properties.clientId,
-      clientName: clients.businessName,
-    })
-    .from(properties)
-    .leftJoin(clients, eq(clients.id, properties.clientId))
-    .where(isNull(properties.deletedAt))
-    .orderBy(properties.name);
-
-  // Per-property lead aggregates for the month.
-  const aggRows = await db
-    .select({
-      propertyId: leads.propertyId,
-      calls: aggCalls,
-      forms: aggForms,
-      total: aggTotal,
-      billable: aggBillable,
-      estimatedValue: aggEstimatedValue,
-      perLeadBilled: aggActualRevenue,
-    })
-    .from(leads)
-    .where(rangeConditions(range))
-    .groupBy(leads.propertyId);
+  // All non-deleted properties, per-month lead aggregates, and every
+  // assignment (flat revenue for the month comes from assignments active
+  // during it, not the property's current rate or "does it have a client now").
+  const [props, aggRows, assignmentsMap] = await Promise.all([
+    db
+      .select({
+        propertyId: properties.id,
+        name: properties.name,
+        niche: properties.niche,
+        city: properties.city,
+        state: properties.state,
+        status: properties.status,
+        billingType: properties.billingType,
+        monthlyRate: properties.monthlyRate,
+        clientId: properties.clientId,
+        clientName: clients.businessName,
+      })
+      .from(properties)
+      .leftJoin(clients, eq(clients.id, properties.clientId))
+      .where(isNull(properties.deletedAt))
+      .orderBy(properties.name),
+    db
+      .select({
+        propertyId: leads.propertyId,
+        calls: aggCalls,
+        forms: aggForms,
+        total: aggTotal,
+        billable: aggBillable,
+        estimatedValue: aggEstimatedValue,
+        perLeadBilled: aggActualRevenue,
+      })
+      .from(leads)
+      .where(rangeConditions(range))
+      .groupBy(leads.propertyId),
+    getAssignmentsMap(),
+  ]);
 
   const aggByProperty = new Map(aggRows.map((r) => [r.propertyId, r]));
 
@@ -292,12 +292,9 @@ export async function getMonthlyReport(
     const isRented = p.clientId != null;
     const estimatedValue = toMoneyString(agg?.estimatedValue ?? "0");
     const perLeadBilled = toMoneyString(agg?.perLeadBilled ?? "0");
-    const actualRevenue = computeActualRevenue(
-      p.billingType,
-      p.monthlyRate,
-      isRented,
-      perLeadBilled,
-    );
+    const assignments: AssignmentLite[] = assignmentsMap.get(p.propertyId) ?? [];
+    const flat = flatRevenueForMonth(assignments, monthIndex, nowIndex);
+    const actualRevenue = sumMoney([flat, perLeadBilled]);
     const gap = sumMoney([estimatedValue, -toMoneyNumber(actualRevenue)]);
     return {
       propertyId: p.propertyId,
@@ -349,12 +346,7 @@ export interface PropertyMonthRow {
 
 export async function getPropertyMonthlySeries(
   tz: string,
-  property: {
-    id: string;
-    billingType: string;
-    monthlyRate: string;
-    clientId: string | null;
-  },
+  propertyId: string,
   months: MonthKey[],
 ): Promise<PropertyMonthRow[]> {
   if (months.length === 0) return [];
@@ -367,36 +359,40 @@ export async function getPropertyMonthlySeries(
     start: monthRangeUtc(tz, first.year, first.month).start,
     end: monthRangeUtc(tz, last.year, last.month).end,
   };
+  const nowIndex = currentMonthIndex(tz);
 
   const monthExpr = localMonthExpr(tz, leads.occurredAt);
-  const aggRows = await db
-    .select({
-      monthDate: sql<string>`to_char(${monthExpr}, 'YYYY-MM')`,
-      calls: aggCalls,
-      forms: aggForms,
-      total: aggTotal,
-      billable: aggBillable,
-      estimatedValue: aggEstimatedValue,
-      perLeadBilled: aggActualRevenue,
-    })
-    .from(leads)
-    .where(rangeConditions(range, { propertyId: property.id }))
-    .groupBy(monthExpr)
-    .orderBy(monthExpr);
+  const [aggRows, assignmentsMap] = await Promise.all([
+    db
+      .select({
+        monthDate: sql<string>`to_char(${monthExpr}, 'YYYY-MM')`,
+        calls: aggCalls,
+        forms: aggForms,
+        total: aggTotal,
+        billable: aggBillable,
+        estimatedValue: aggEstimatedValue,
+        perLeadBilled: aggActualRevenue,
+      })
+      .from(leads)
+      .where(rangeConditions(range, { propertyId }))
+      .groupBy(monthExpr)
+      .orderBy(monthExpr),
+    getAssignmentsMap([propertyId]),
+  ]);
 
   const byMonth = new Map(aggRows.map((r) => [r.monthDate, r]));
-  const isRented = property.clientId != null;
+  const assignments: AssignmentLite[] = assignmentsMap.get(propertyId) ?? [];
 
   return sorted.map((m) => {
     const agg = byMonth.get(m.key);
     const estimatedValue = toMoneyString(agg?.estimatedValue ?? "0");
     const perLeadBilled = toMoneyString(agg?.perLeadBilled ?? "0");
-    const actualRevenue = computeActualRevenue(
-      property.billingType,
-      property.monthlyRate,
-      isRented,
-      perLeadBilled,
+    const flat = flatRevenueForMonth(
+      assignments,
+      monthIndexFromYm(m.year, m.month),
+      nowIndex,
     );
+    const actualRevenue = sumMoney([flat, perLeadBilled]);
     const gap = sumMoney([estimatedValue, -toMoneyNumber(actualRevenue)]);
     return {
       month: m,
