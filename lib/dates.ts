@@ -217,16 +217,35 @@ export function dayRangeUtc(
 
 // ---------------------------------------------------------------------------
 // SQL helpers for grouping by org-local calendar day / month.
+//
+// The timezone MUST be inlined as a literal, never a bind parameter. If it is
+// bound, each occurrence of the date expression (SELECT vs GROUP BY vs ORDER
+// BY) gets a distinct placeholder ($1, $2, …), and Postgres then treats them
+// as different expressions — so the bucketed occurred_at is no longer "covered"
+// by GROUP BY and it raises: column "leads.occurred_at" must appear in the
+// GROUP BY clause. Inlining makes every occurrence render identically.
 // ---------------------------------------------------------------------------
+
+/**
+ * Render a validated IANA timezone as a single-quoted SQL literal. IANA names
+ * are restricted to [A-Za-z0-9_+-/]; anything else is rejected outright so we
+ * never interpolate untrusted text.
+ */
+function tzLiteral(tz: string): SQL {
+  if (!/^[A-Za-z0-9_+/-]+$/.test(tz)) {
+    throw new Error(`Unsafe timezone value: ${JSON.stringify(tz)}`);
+  }
+  return sql.raw(`'${tz}'`);
+}
 
 /** SQL expression: the org-local calendar date of a timestamptz column. */
 export function localDateExpr(tz: string, column: SQL | unknown): SQL {
-  return sql`(${column} AT TIME ZONE ${tz})::date`;
+  return sql`(${column} AT TIME ZONE ${tzLiteral(tz)})::date`;
 }
 
 /** SQL expression: the org-local first-of-month date of a timestamptz column. */
 export function localMonthExpr(tz: string, column: SQL | unknown): SQL {
-  return sql`date_trunc('month', ${column} AT TIME ZONE ${tz})::date`;
+  return sql`date_trunc('month', ${column} AT TIME ZONE ${tzLiteral(tz)})::date`;
 }
 
 // ---------------------------------------------------------------------------
