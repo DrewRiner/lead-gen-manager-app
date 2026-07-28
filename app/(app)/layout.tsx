@@ -1,0 +1,65 @@
+import { LogOut } from "lucide-react";
+
+import { AppNav } from "@/components/app-nav";
+import { Button } from "@/components/ui/button";
+import { signOutAction } from "@/lib/actions/auth";
+import { getProfile, requireUser } from "@/lib/auth";
+
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  await requireUser();
+  const profile = await getProfile();
+
+  return (
+    <div className="flex min-h-screen">
+      <aside className="hidden w-60 shrink-0 flex-col border-r bg-muted/20 md:flex">
+        <div className="flex h-16 items-center border-b px-6">
+          <span className="text-sm font-semibold leading-tight">
+            LeadGen
+            <span className="block text-xs font-normal text-muted-foreground">
+              Property Manager
+            </span>
+          </span>
+        </div>
+        <div className="flex-1 py-4">
+          <AppNav />
+        </div>
+        <div className="border-t p-3">
+          <div className="px-2 pb-2">
+            <p className="truncate text-xs font-medium">{profile?.email}</p>
+            <p className="text-xs capitalize text-muted-foreground">
+              {profile?.role ?? "member"}
+            </p>
+          </div>
+          <form action={signOutAction}>
+            <Button
+              type="submit"
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-muted-foreground"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </Button>
+          </form>
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Mobile top bar */}
+        <header className="flex h-14 items-center justify-between border-b px-4 md:hidden">
+          <span className="text-sm font-semibold">LeadGen</span>
+          <form action={signOutAction}>
+            <Button type="submit" variant="ghost" size="sm">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </form>
+        </header>
+        <main className="flex-1 overflow-x-hidden p-4 md:p-8">{children}</main>
+      </div>
+    </div>
+  );
+}
