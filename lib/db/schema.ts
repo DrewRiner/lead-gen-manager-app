@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   date,
   index,
@@ -30,12 +31,15 @@ export const clientStatusEnum = pgEnum("client_status", [
 //   building   = site being built, not live
 //   optimizing = live, SEO in progress, not yet producing meaningful leads
 //   producing  = ranked and generating leads, NOT rented — sellable inventory
-//   rented     = has an active assignment (follows the assignment, not manual)
+//   trial      = a prospect is on a free trial (follows the trial assignment)
+//   rented     = has an active paid assignment (follows the assignment)
 //   paused     = shelved
+// 'trial' and 'rented' are never set by hand — they follow the assignment.
 export const propertyStatusEnum = pgEnum("property_status", [
   "building",
   "optimizing",
   "producing",
+  "trial",
   "rented",
   "paused",
 ]);
@@ -264,17 +268,25 @@ export const propertyAssignments = pgTable(
     monthlyRate: money("monthly_rate").notNull().default("0"),
     perLeadCallRate: money("per_lead_call_rate").notNull().default("0"),
     perLeadFormRate: money("per_lead_form_rate").notNull().default("0"),
+    // Free trial: a trial assignment books zero revenue. trial_ends_on is
+    // required when is_trial is true (enforced by check + in the actions).
+    isTrial: boolean("is_trial").notNull().default(false),
+    trialEndsOn: date("trial_ends_on", { mode: "string" }),
     notes: text("notes"),
     createdAt,
     updatedAt,
   },
   (t) => [
-    // Exactly one active assignment per property at a time.
+    // Exactly one active assignment per property at a time (trial OR paid).
     uniqueIndex("property_assignments_active_uniq")
       .on(t.propertyId)
       .where(sql`${t.endedOn} is null`),
     index("property_assignments_property_id_idx").on(t.propertyId),
     index("property_assignments_client_id_idx").on(t.clientId),
+    check(
+      "property_assignments_trial_ends_on",
+      sql`not ${t.isTrial} or ${t.trialEndsOn} is not null`,
+    ),
   ],
 );
 

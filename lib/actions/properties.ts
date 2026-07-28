@@ -9,6 +9,7 @@ import {
   billingTypeEnum,
   leads,
   properties,
+  propertyAssignments,
   propertyStatusEnum,
 } from "@/lib/db/schema";
 import { normalizePhone } from "@/lib/phone";
@@ -131,8 +132,9 @@ export async function updateProperty(
   }
   const data = parsed.data;
 
-  // Status follows the rental: while a client is assigned, force 'rented' and
-  // never let it be changed by hand; when unassigned, reject a manual 'rented'.
+  // Status follows the assignment: while a client is assigned it is 'trial'
+  // (active trial) or 'rented' (paid) and cannot be changed by hand; when
+  // unassigned, reject a manual 'trial' or 'rented'.
   const [current] = await db
     .select({ clientId: properties.clientId })
     .from(properties)
@@ -142,11 +144,22 @@ export async function updateProperty(
 
   let status = data.status;
   if (current.clientId != null) {
-    status = "rented";
-  } else if (status === "rented") {
+    const [active] = await db
+      .select({ isTrial: propertyAssignments.isTrial })
+      .from(propertyAssignments)
+      .where(
+        and(
+          eq(propertyAssignments.propertyId, id),
+          isNull(propertyAssignments.endedOn),
+        ),
+      )
+      .limit(1);
+    status = active?.isTrial ? "trial" : "rented";
+  } else if (status === "rented" || status === "trial") {
     return {
       ok: false,
-      error: "Set 'rented' by assigning a client, not on the status field.",
+      error:
+        "'rented' and 'trial' follow assignments — set them via assign / start trial.",
     };
   }
 

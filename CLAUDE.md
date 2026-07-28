@@ -178,3 +178,25 @@ ones.
 Rank properties by revenue per month rented, not raw lifetime revenue, anywhere
 properties are compared. A property owned for 6 months earning $2k/mo beats one
 owned 3 years earning $500/mo, and raw lifetime totals hide that.
+
+## Free trials
+
+A trial is a relationship with a specific prospect, so it lives on
+property_assignments (is_trial = true, trial_ends_on set), not as a standalone
+property status. Property status derives from it, exactly as 'rented' does.
+
+1. A trial assignment books ZERO flat revenue and zero per-lead revenue. Trials
+   are free by definition. billed_amount on trial leads is 0.
+2. Estimated value still books normally on trial leads. That figure is both the
+   sales pitch and our cost of running the trial.
+3. Leads during a trial ARE stamped with the prospect's client_id, so their lead
+   count and value are attributable.
+4. Starting a trial sets property status to 'trial'. Converting sets 'rented'.
+   Ending without converting sets 'producing'. Status always follows the
+   assignment.
+5. A trial that passes trial_ends_on without conversion is EXPIRED and must be
+   surfaced. An expired trial still books zero revenue — it does not silently
+   become a paid rental.
+6. Converting a trial ends the trial assignment and starts a new paid assignment
+   for the same client, beginning the day after the trial ended. Both records
+   persist so the history shows trial then paid.

@@ -26,7 +26,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
 
 type BillingType = "flat_monthly" | "per_lead" | "hybrid";
-type Status = "building" | "optimizing" | "producing" | "rented" | "paused";
+type Status =
+  | "building"
+  | "optimizing"
+  | "producing"
+  | "trial"
+  | "rented"
+  | "paused";
 
 // Manually selectable statuses (not 'rented' — that follows the assignment).
 const SELECTABLE_STATUSES: { value: Status; label: string }[] = [
@@ -39,6 +45,7 @@ const STATUS_LABEL: Record<string, string> = {
   building: "Building",
   optimizing: "Optimizing",
   producing: "Producing",
+  trial: "Trial",
   rented: "Rented",
   paused: "Paused",
 };

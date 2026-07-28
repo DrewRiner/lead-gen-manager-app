@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { evaluateLead } from "./billing/evaluate-lead";
 import {
   activeInMonth,
   flatRevenueForMonth,
@@ -8,6 +9,7 @@ import {
   monthsRented,
   revenuePerMonthRented,
   summarizeLifetime,
+  trialConversionDates,
   type AssignmentLite,
 } from "./assignments";
 
@@ -148,6 +150,60 @@ describe("summarizeLifetime", () => {
     expect(s.averageTenureMonths).toBe(0);
     expect(s.longestTenure).toBeNull();
     expect(s.occupancyRate).toBe(0);
+  });
+});
+
+describe("free trials", () => {
+  it("a trial assignment books zero flat revenue", () => {
+    const trial = a({
+      startedOn: "2026-01-01",
+      endedOn: null,
+      monthlyRate: "1500.00",
+      isTrial: true,
+    });
+    expect(flatRevenueForMonth([trial], monthIndexFromYm(2026, 3), NOW)).toBe("0.00");
+    expect(lifetimeFlatRevenue([trial], NOW)).toBe("0.00");
+  });
+
+  it("an expired trial (past its end date, still active) still books zero", () => {
+    // is_trial alone forces zero; trial_ends_on is not part of the flat calc,
+    // so an unresolved/expired trial never silently becomes a paid rental.
+    const expired = a({
+      startedOn: "2026-01-01",
+      endedOn: null,
+      monthlyRate: "1500.00",
+      isTrial: true,
+    });
+    expect(flatRevenueForMonth([expired], monthIndexFromYm(2026, 5), NOW)).toBe("0.00");
+    // ...and a trial is never counted as a rented month.
+    expect(monthsRented([expired], NOW)).toBe(0);
+  });
+
+  it("conversion produces two linked assignments with correct dates", () => {
+    // Paid begins on the given date; the trial ends the day before.
+    const { trialEndedOn, paidStartedOn } = trialConversionDates("2026-03-01");
+    expect(paidStartedOn).toBe("2026-03-01");
+    expect(trialEndedOn).toBe("2026-02-28");
+    // leap year
+    expect(trialConversionDates("2024-03-01").trialEndedOn).toBe("2024-02-29");
+  });
+
+  it("estimated value accrues normally during a trial (billed 0, estimated market)", () => {
+    // A property on trial is billed as flat_monthly at $0, so the lead's per-lead
+    // billed_amount is 0 but its estimated market value still books.
+    const dec = evaluateLead(
+      { type: "form", callDurationSeconds: null },
+      {
+        billingType: "flat_monthly",
+        perLeadCallRate: "0",
+        perLeadFormRate: "0",
+        estimatedCallValue: "80.00",
+        estimatedFormValue: "60.00",
+        billableThresholdSeconds: 60,
+      },
+    );
+    expect(dec.billedAmount).toBe("0.00");
+    expect(dec.estimatedValue).toBe("60.00");
   });
 });
 

@@ -17,6 +17,8 @@ import { sumMoney, toMoneyNumber, toMoneyString } from "@/lib/money";
 export interface AssignmentRow extends AssignmentLite {
   id: string;
   propertyId: string;
+  isTrial: boolean;
+  trialEndsOn: string | null;
 }
 
 /** Assignments (with client name) grouped by property, oldest first. */
@@ -38,6 +40,8 @@ export async function getAssignmentsMap(
       endedOn: propertyAssignments.endedOn,
       billingType: propertyAssignments.billingType,
       monthlyRate: propertyAssignments.monthlyRate,
+      isTrial: propertyAssignments.isTrial,
+      trialEndsOn: propertyAssignments.trialEndsOn,
     })
     .from(propertyAssignments)
     .leftJoin(clients, eq(clients.id, propertyAssignments.clientId))
@@ -148,6 +152,8 @@ export interface ClientHistoryRow {
   firstStarted: string;
   lastEnded: string | null;
   isActive: boolean;
+  /** This client's engagement included a free trial. */
+  hasTrial: boolean;
   attributedRevenue: string;
   pctOfLifetimeRevenue: number;
 }
@@ -223,6 +229,7 @@ export async function getPropertyLifetime(
       firstStarted: starts[0],
       lastEnded,
       isActive: anyActive,
+      hasTrial: list.some((a) => a.isTrial === true),
       attributedRevenue: attributed,
       pctOfLifetimeRevenue:
         lifetimeNum > 0 ? (toMoneyNumber(attributed) / lifetimeNum) * 100 : 0,

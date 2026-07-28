@@ -7,9 +7,16 @@ import {
   monthIndexFromYm,
   type AssignmentLite,
 } from "@/lib/assignments";
-import { currentMonthIndex, localMonthExpr, monthKey, type MonthKey } from "@/lib/dates";
+import {
+  currentMonthIndex,
+  daysBetween,
+  localMonthExpr,
+  monthKey,
+  shiftDateStr,
+  type MonthKey,
+} from "@/lib/dates";
 import { db } from "@/lib/db";
-import { leads, properties } from "@/lib/db/schema";
+import { leads, properties, propertyAssignments } from "@/lib/db/schema";
 import { sumMoney, toMoneyNumber, toMoneyString } from "@/lib/money";
 import { getAssignmentsMap } from "@/lib/queries/assignments";
 
@@ -200,4 +207,94 @@ export async function getLifetimeRollup(tz: string): Promise<LifetimeRollup> {
   }
 
   return { headline, properties: rows, trend };
+}
+
+// ---------------------------------------------------------------------------
+// Trial conversion metrics (dashboard Lifetime tab).
+// ---------------------------------------------------------------------------
+
+export interface TrialSummary {
+  trialsRun: number;
+  converted: number;
+  /** converted / trials that have concluded (ended), or null when none. */
+  conversionRate: number | null;
+  avgDaysToConvert: number | null;
+  /** Estimated value delivered in ended trials that did NOT convert. */
+  estimatedGivenAway: string;
+}
+
+export async function getTrialSummary(tz: string): Promise<TrialSummary> {
+  const [trials, paidAssignments, estRows] = await Promise.all([
+    db
+      .select({
+        id: propertyAssignments.id,
+        propertyId: propertyAssignments.propertyId,
+        clientId: propertyAssignments.clientId,
+        startedOn: propertyAssignments.startedOn,
+        endedOn: propertyAssignments.endedOn,
+      })
+      .from(propertyAssignments)
+      .where(eq(propertyAssignments.isTrial, true)),
+    db
+      .select({
+        propertyId: propertyAssignments.propertyId,
+        clientId: propertyAssignments.clientId,
+        startedOn: propertyAssignments.startedOn,
+      })
+      .from(propertyAssignments)
+      .where(eq(propertyAssignments.isTrial, false)),
+    // Estimated value delivered during each trial (leads stamped with the
+    // prospect, within the trial window).
+    db
+      .select({
+        trialId: propertyAssignments.id,
+        est: sql<string>`coalesce(sum(${leads.estimatedValue}), 0)::text`,
+      })
+      .from(propertyAssignments)
+      .innerJoin(
+        leads,
+        and(
+          eq(leads.propertyId, propertyAssignments.propertyId),
+          eq(leads.clientId, propertyAssignments.clientId),
+          isNull(leads.deletedAt),
+          sql`${leads.occurredAt} >= (${propertyAssignments.startedOn}::timestamp AT TIME ZONE ${tz})`,
+          sql`${propertyAssignments.endedOn} is null or ${leads.occurredAt} < ((${propertyAssignments.endedOn}::timestamp AT TIME ZONE ${tz}) + interval '1 day')`,
+        ),
+      )
+      .where(eq(propertyAssignments.isTrial, true))
+      .groupBy(propertyAssignments.id),
+  ]);
+
+  const estByTrial = new Map(estRows.map((r) => [r.trialId, r.est]));
+  const paidKey = new Set(
+    paidAssignments.map((p) => `${p.propertyId}|${p.clientId}|${p.startedOn}`),
+  );
+
+  let converted = 0;
+  let concluded = 0;
+  let daysSum = 0;
+  const givenAway: string[] = [];
+
+  for (const t of trials) {
+    if (t.endedOn === null) continue; // active/expired trials aren't concluded
+    concluded++;
+    // Converted iff a paid assignment for the same property+client began the
+    // day after the trial ended (exactly what convertTrial produces).
+    const paidStart = shiftDateStr(t.endedOn, 1);
+    const isConverted = paidKey.has(`${t.propertyId}|${t.clientId}|${paidStart}`);
+    if (isConverted) {
+      converted++;
+      daysSum += daysBetween(t.startedOn, paidStart);
+    } else {
+      givenAway.push(estByTrial.get(t.id) ?? "0");
+    }
+  }
+
+  return {
+    trialsRun: trials.length,
+    converted,
+    conversionRate: concluded > 0 ? converted / concluded : null,
+    avgDaysToConvert: converted > 0 ? daysSum / converted : null,
+    estimatedGivenAway: sumMoney(givenAway),
+  };
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus, UserMinus, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus, Sparkles, UserMinus, UserPlus } from "lucide-react";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import { MetricCard } from "@/components/dashboard/metric-card";
@@ -14,6 +14,8 @@ import { AssignClientDialog } from "@/components/properties/assign-client-dialog
 import { ChangeRateDialog } from "@/components/properties/change-rate-dialog";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
+import { StartTrialDialog } from "@/components/properties/start-trial-dialog";
+import { TrialBanner } from "@/components/properties/trial-banner";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -94,10 +96,15 @@ export default async function PropertyDetailPage({
       .orderBy(asc(clients.businessName)),
     db
       .select({
+        id: propertyAssignments.id,
+        clientId: propertyAssignments.clientId,
+        startedOn: propertyAssignments.startedOn,
         billingType: propertyAssignments.billingType,
         monthlyRate: propertyAssignments.monthlyRate,
         perLeadCallRate: propertyAssignments.perLeadCallRate,
         perLeadFormRate: propertyAssignments.perLeadFormRate,
+        isTrial: propertyAssignments.isTrial,
+        trialEndsOn: propertyAssignments.trialEndsOn,
       })
       .from(propertyAssignments)
       .where(
@@ -114,8 +121,46 @@ export default async function PropertyDetailPage({
   ]);
 
   const totalLeadCount = leadCountRow[0]?.count ?? 0;
-  const isAssigned = p.clientId != null;
   const activeAssignment = activeAssignmentRow[0];
+  const onTrial = p.status === "trial" && activeAssignment?.isTrial === true;
+  const isAssigned = p.clientId != null && !onTrial;
+  const today = todayDateStr(tz);
+
+  // Trial banner metrics (only when on a trial).
+  let trial: {
+    assignmentId: string;
+    dayN: number;
+    dayM: number;
+    daysRemaining: number;
+    expired: boolean;
+    leadsDelivered: number;
+    estimatedDelivered: string;
+  } | null = null;
+  if (onTrial && activeAssignment?.trialEndsOn) {
+    const [delivered] = await db
+      .select({
+        n: sql<number>`count(*)::int`,
+        est: sql<string>`coalesce(sum(${leads.estimatedValue}), 0)::text`,
+      })
+      .from(leads)
+      .where(
+        and(
+          eq(leads.propertyId, id),
+          eq(leads.clientId, activeAssignment.clientId),
+          isNull(leads.deletedAt),
+          sql`${leads.occurredAt} >= (${activeAssignment.startedOn}::timestamp AT TIME ZONE ${tz})`,
+        ),
+      );
+    trial = {
+      assignmentId: activeAssignment.id,
+      dayN: daysBetween(activeAssignment.startedOn, today) + 1,
+      dayM: daysBetween(activeAssignment.startedOn, activeAssignment.trialEndsOn) + 1,
+      daysRemaining: daysBetween(today, activeAssignment.trialEndsOn),
+      expired: today > activeAssignment.trialEndsOn,
+      leadsDelivered: delivered?.n ?? 0,
+      estimatedDelivered: delivered?.est ?? "0.00",
+    };
+  }
 
   const editValue = {
     id: p.id,
@@ -156,42 +201,82 @@ export default async function PropertyDetailPage({
           property={editValue}
           trigger={<Button variant="outline">Edit property</Button>}
         />
-        <AssignClientDialog
-          propertyId={p.id}
-          currentClientId={p.clientId}
-          clients={clientList}
-          trigger={
-            <Button variant="outline">
-              <UserPlus className="mr-2 h-4 w-4" />
-              {isAssigned ? "Reassign" : "Assign client"}
-            </Button>
-          }
-        />
-        {isAssigned && activeAssignment ? (
-          <ChangeRateDialog
-            propertyId={p.id}
-            active={activeAssignment}
-            defaultEffectiveDate={todayDateStr(tz)}
-            clientName={row.clientName}
-            trigger={<Button variant="outline">Change rate</Button>}
-          />
+        {/* Unassigned: offer both Assign client and Start free trial. */}
+        {!isAssigned && !onTrial ? (
+          <>
+            <AssignClientDialog
+              propertyId={p.id}
+              currentClientId={p.clientId}
+              clients={clientList}
+              trigger={
+                <Button variant="outline">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Assign client
+                </Button>
+              }
+            />
+            <StartTrialDialog
+              propertyId={p.id}
+              clients={clientList}
+              defaultStartedOn={today}
+              trigger={
+                <Button variant="outline">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Start free trial
+                </Button>
+              }
+            />
+          </>
         ) : null}
-        {isAssigned ? (
-          <ConfirmDialog
-            title="Unassign client?"
-            description="Ends the active assignment as of today and returns the property to producing. Historical revenue is preserved."
-            confirmLabel="Unassign"
-            action={unassignClient.bind(null, p.id)}
-            trigger={
-              <Button variant="outline">
-                <UserMinus className="mr-2 h-4 w-4" />
-                Unassign
-              </Button>
-            }
-          />
+        {isAssigned && activeAssignment ? (
+          <>
+            <AssignClientDialog
+              propertyId={p.id}
+              currentClientId={p.clientId}
+              clients={clientList}
+              trigger={
+                <Button variant="outline">
+                  <UserPlus className="mr-2 h-4 w-4" /> Reassign
+                </Button>
+              }
+            />
+            <ChangeRateDialog
+              propertyId={p.id}
+              active={activeAssignment}
+              defaultEffectiveDate={today}
+              clientName={row.clientName}
+              trigger={<Button variant="outline">Change rate</Button>}
+            />
+            <ConfirmDialog
+              title="Unassign client?"
+              description="Ends the active assignment as of today and returns the property to producing. Historical revenue is preserved."
+              confirmLabel="Unassign"
+              action={unassignClient.bind(null, p.id)}
+              trigger={
+                <Button variant="outline">
+                  <UserMinus className="mr-2 h-4 w-4" /> Unassign
+                </Button>
+              }
+            />
+          </>
         ) : null}
         <RecalcEstimatedValuesButton propertyId={p.id} leadCount={totalLeadCount} />
       </PageHeader>
+
+      {onTrial && trial ? (
+        <TrialBanner
+          assignmentId={trial.assignmentId}
+          prospectName={row.clientName ?? "Prospect"}
+          dayN={trial.dayN}
+          dayM={trial.dayM}
+          daysRemaining={trial.daysRemaining}
+          expired={trial.expired}
+          leadsDelivered={trial.leadsDelivered}
+          estimatedDelivered={trial.estimatedDelivered}
+          targetMonthlyRent={p.targetMonthlyRent}
+          today={today}
+        />
+      ) : null}
 
       {/* Identity — always visible above the tabs */}
       <Card className="mb-6">
@@ -509,6 +594,11 @@ async function LifetimeTab({
                         {c.isActive ? (
                           <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
                             active
+                          </span>
+                        ) : null}
+                        {c.hasTrial ? (
+                          <span className="ml-2 rounded-full bg-violet-100 px-1.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-400">
+                            Trial
                           </span>
                         ) : null}
                       </TableCell>

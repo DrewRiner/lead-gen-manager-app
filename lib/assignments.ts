@@ -16,6 +16,8 @@ export interface AssignmentLite {
   endedOn: string | null; // null = active
   billingType: string;
   monthlyRate: string;
+  /** A free trial books zero revenue and does not count as a rented month. */
+  isTrial?: boolean;
 }
 
 /** Integer month index for a "YYYY-MM-DD" date string. */
@@ -31,6 +33,11 @@ export function monthIndexFromYm(year: number, month1to12: number): number {
 
 function chargesFlat(billingType: string): boolean {
   return billingType === "flat_monthly" || billingType === "hybrid";
+}
+
+/** A trial books no revenue; a paid flat/hybrid assignment charges flat rent. */
+function chargesFlatRent(a: AssignmentLite): boolean {
+  return !a.isTrial && chargesFlat(a.billingType);
 }
 
 /** The last month index an assignment covers: its end month, or `now` if active. */
@@ -77,7 +84,7 @@ export function flatRevenueForMonth(
   if (monthIndex > nowIndex) return "0.00";
   const lastDay = lastDayOfMonth(monthIndex);
   const covering = assignments.filter(
-    (a) => chargesFlat(a.billingType) && activeOnDate(a, lastDay),
+    (a) => chargesFlatRent(a) && activeOnDate(a, lastDay),
   );
   if (covering.length === 0) return "0.00";
   // At most one assignment is active on any given day; if the data somehow
@@ -86,13 +93,14 @@ export function flatRevenueForMonth(
   return toMoneyString(covering[covering.length - 1].monthlyRate);
 }
 
-/** Distinct month indices in which the property had ANY active assignment. */
+/** Distinct month indices the property was PAID-rented (trials excluded). */
 function rentedMonthSet(
   assignments: AssignmentLite[],
   nowIndex: number,
 ): Set<number> {
   const set = new Set<number>();
   for (const a of assignments) {
+    if (a.isTrial) continue; // trials are free, not rented months
     const start = monthIndexFromDate(a.startedOn);
     const end = endIndex(a, nowIndex);
     for (let i = start; i <= end; i++) set.add(i);
@@ -118,7 +126,7 @@ export function lifetimeFlatRevenue(
   assignments: AssignmentLite[],
   nowIndex: number,
 ): string {
-  if (!assignments.some((a) => chargesFlat(a.billingType))) return "0.00";
+  if (!assignments.some((a) => chargesFlatRent(a))) return "0.00";
   const startIdx = Math.min(
     ...assignments.map((a) => monthIndexFromDate(a.startedOn)),
   );
@@ -216,4 +224,21 @@ export function revenuePerMonthRented(
 ): number {
   if (monthsRentedCount <= 0) return 0;
   return toMoneyNumber(lifetimeRevenue) / monthsRentedCount;
+}
+
+/**
+ * Trial-conversion dates: the new paid assignment starts on `paidStartedOn`,
+ * and the trial it converts from ends the day before (so paid begins the day
+ * after the trial ended — CLAUDE.md free-trial rule 6). Both records persist.
+ */
+export function trialConversionDates(paidStartedOn: string): {
+  trialEndedOn: string;
+  paidStartedOn: string;
+} {
+  const [y, m, d] = paidStartedOn.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const trialEndedOn = `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+  return { trialEndedOn, paidStartedOn };
 }

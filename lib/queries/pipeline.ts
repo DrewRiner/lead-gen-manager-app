@@ -11,6 +11,7 @@ export interface PipelineSummary {
     building: number;
     optimizing: number;
     producing: number;
+    trial: number;
     rented: number;
     paused: number;
   };
@@ -18,22 +19,24 @@ export interface PipelineSummary {
   producingLeads30d: number;
   /** SUM(target_monthly_rent) across producing properties. */
   producingTargetRent: string;
-  /** Current monthly flat revenue from active assignments. */
+  /** Current monthly flat revenue from active PAID assignments (trials excluded). */
   rentedMonthlyRevenue: string;
+  /** SUM(estimated_value) of leads delivered during active trials. */
+  trialEstimatedDelivered: string;
+  /** Active trials past their trial_ends_on. */
+  expiredTrials: number;
 }
 
 export async function getPipelineSummary(
   tz: string,
 ): Promise<PipelineSummary> {
   const range = trailingDayRange(tz, 30);
+  const today = todayDateStr(tz);
 
-  const [countRows, [prodLeads], [prodTarget], [rentedRev]] =
+  const [countRows, [prodLeads], [prodTarget], [rentedRev], [trialEst], [expired]] =
     await Promise.all([
       db
-        .select({
-          status: properties.status,
-          n: sql<number>`count(*)::int`,
-        })
+        .select({ status: properties.status, n: sql<number>`count(*)::int` })
         .from(properties)
         .where(isNull(properties.deletedAt))
         .groupBy(properties.status),
@@ -63,12 +66,43 @@ export async function getPipelineSummary(
         .where(
           and(
             isNull(propertyAssignments.endedOn),
+            eq(propertyAssignments.isTrial, false),
             sql`${propertyAssignments.billingType} in ('flat_monthly','hybrid')`,
+          ),
+        ),
+      // Estimated value delivered so far during active trials.
+      db
+        .select({
+          total: sql<string>`coalesce(sum(${leads.estimatedValue}), 0)::text`,
+        })
+        .from(leads)
+        .innerJoin(
+          propertyAssignments,
+          and(
+            eq(propertyAssignments.propertyId, leads.propertyId),
+            eq(propertyAssignments.isTrial, true),
+            isNull(propertyAssignments.endedOn),
+          ),
+        )
+        .where(
+          and(
+            isNull(leads.deletedAt),
+            sql`${leads.occurredAt} >= (${propertyAssignments.startedOn}::timestamp AT TIME ZONE ${tz})`,
+          ),
+        ),
+      db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(propertyAssignments)
+        .where(
+          and(
+            eq(propertyAssignments.isTrial, true),
+            isNull(propertyAssignments.endedOn),
+            sql`${propertyAssignments.trialEndsOn} < ${today}`,
           ),
         ),
     ]);
 
-  const counts = { building: 0, optimizing: 0, producing: 0, rented: 0, paused: 0 };
+  const counts = { building: 0, optimizing: 0, producing: 0, trial: 0, rented: 0, paused: 0 };
   for (const r of countRows) {
     if (r.status in counts) counts[r.status as keyof typeof counts] = r.n;
   }
@@ -78,6 +112,8 @@ export async function getPipelineSummary(
     producingLeads30d: prodLeads?.n ?? 0,
     producingTargetRent: toMoneyString(prodTarget?.total ?? "0"),
     rentedMonthlyRevenue: toMoneyString(rentedRev?.total ?? "0"),
+    trialEstimatedDelivered: toMoneyString(trialEst?.total ?? "0"),
+    expiredTrials: expired?.n ?? 0,
   };
 }
 
@@ -101,7 +137,8 @@ export interface ReviewFlag {
 export async function getReviewFlags(
   tz: string,
 ): Promise<Map<string, ReviewFlag>> {
-  const [rows, counts] = await Promise.all([
+  const today = todayDateStr(tz);
+  const [rows, counts, expiredTrials] = await Promise.all([
     db
       .select({
         id: properties.id,
@@ -111,12 +148,34 @@ export async function getReviewFlags(
       .from(properties)
       .where(isNull(properties.deletedAt)),
     getPropertyRangeCounts(trailingDayRange(tz, 30)),
+    db
+      .select({
+        propertyId: propertyAssignments.propertyId,
+        trialEndsOn: propertyAssignments.trialEndsOn,
+      })
+      .from(propertyAssignments)
+      .where(
+        and(
+          eq(propertyAssignments.isTrial, true),
+          isNull(propertyAssignments.endedOn),
+          sql`${propertyAssignments.trialEndsOn} < ${today}`,
+        ),
+      ),
   ]);
 
-  const cutoff = shiftDateStr(todayDateStr(tz), -90); // 90 days ago
+  const cutoff = shiftDateStr(today, -90); // 90 days ago
   const flags = new Map<string, ReviewFlag>();
 
+  // Expired trials take priority — they must be resolved.
+  for (const t of expiredTrials) {
+    flags.set(t.propertyId, {
+      badge: "Trial expired",
+      reason: `Trial ended ${t.trialEndsOn} without conversion — convert or end it (it still books zero revenue).`,
+    });
+  }
+
   for (const p of rows) {
+    if (flags.has(p.id)) continue;
     const leads30d = counts.get(p.id)?.total ?? 0;
 
     if ((p.status === "building" || p.status === "optimizing") && leads30d >= 10) {

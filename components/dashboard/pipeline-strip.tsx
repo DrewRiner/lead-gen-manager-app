@@ -17,7 +17,7 @@ export function PipelineStrip({
 
   return (
     <div className="mb-6 space-y-2">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Segment
           href="/properties?status=building"
           label="Building"
@@ -37,6 +37,17 @@ export function PipelineStrip({
             `${formatNumber(summary.producingLeads30d)} leads · 30d`,
             `${formatCurrency(summary.producingTargetRent)} target rent`,
           ]}
+        />
+        <Segment
+          href="/properties?status=trial"
+          label="Trial"
+          count={counts.trial}
+          lines={[`${formatCurrency(summary.trialEstimatedDelivered)} est. delivered`]}
+          warnLine={
+            summary.expiredTrials > 0
+              ? `${formatNumber(summary.expiredTrials)} expired`
+              : undefined
+          }
         />
         <Segment
           href="/properties?status=rented"
@@ -66,12 +77,14 @@ function Segment({
   label,
   count,
   lines,
+  warnLine,
   emphasized = false,
 }: {
   href: string;
   label: string;
   count: number;
   lines?: string[];
+  warnLine?: string;
   emphasized?: boolean;
 }) {
   return (
@@ -106,6 +119,11 @@ function Segment({
           {lines.map((l) => (
             <div key={l}>{l}</div>
           ))}
+        </div>
+      ) : null}
+      {warnLine ? (
+        <div className="mt-0.5 text-xs font-semibold text-red-600 dark:text-red-400">
+          {warnLine}
         </div>
       ) : null}
     </Link>

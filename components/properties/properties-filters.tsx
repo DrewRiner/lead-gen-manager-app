@@ -63,6 +63,7 @@ export function PropertiesFilters({
           <SelectItem value="building">Building</SelectItem>
           <SelectItem value="optimizing">Optimizing</SelectItem>
           <SelectItem value="producing">Producing</SelectItem>
+          <SelectItem value="trial">Trial</SelectItem>
           <SelectItem value="rented">Rented</SelectItem>
           <SelectItem value="paused">Paused</SelectItem>
         </SelectContent>

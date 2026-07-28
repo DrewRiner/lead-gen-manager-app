@@ -37,7 +37,7 @@ import {
   getRangeMetrics,
   getTopProperties,
 } from "@/lib/queries/metrics";
-import { getLifetimeRollup } from "@/lib/queries/lifetime";
+import { getLifetimeRollup, getTrialSummary } from "@/lib/queries/lifetime";
 import { getPipelineSummary, getReviewFlags } from "@/lib/queries/pipeline";
 import { getAppSettings } from "@/lib/settings";
 
@@ -202,7 +202,10 @@ async function ActivityTab({ tz }: { tz: string }) {
 // ---------------------------------------------------------------------------
 
 async function LifetimeTab({ tz }: { tz: string }) {
-  const roll = await getLifetimeRollup(tz);
+  const [roll, trials] = await Promise.all([
+    getLifetimeRollup(tz),
+    getTrialSummary(tz),
+  ]);
   const h = roll.headline;
 
   const diffNum = toMoneyNumber(h.difference);
@@ -238,6 +241,38 @@ async function LifetimeTab({ tz }: { tz: string }) {
           value={diffValue}
           hint="Potential − actual, and the multiple"
         />
+      </div>
+
+      <div>
+        <div className="mb-2 text-sm font-medium text-muted-foreground">
+          Free trial program (all-time)
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <StatCard label="Trials run" value={formatNumber(trials.trialsRun)} />
+          <StatCard label="Converted" value={formatNumber(trials.converted)} />
+          <StatCard
+            label="Conversion rate"
+            value={
+              trials.conversionRate != null
+                ? `${Math.round(trials.conversionRate * 100)}%`
+                : "—"
+            }
+            hint="of concluded trials"
+          />
+          <StatCard
+            label="Avg days to convert"
+            value={
+              trials.avgDaysToConvert != null
+                ? `${Math.round(trials.avgDaysToConvert)} days`
+                : "—"
+            }
+          />
+          <StatCard
+            label="Est. value given away"
+            value={formatCurrency(trials.estimatedGivenAway)}
+            hint="Delivered in trials that didn't convert — the real cost of the program"
+          />
+        </div>
       </div>
 
       <Card>
