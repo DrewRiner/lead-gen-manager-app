@@ -138,6 +138,35 @@ export function parseMonthKey(
   return currentMonthKey(tz, now);
 }
 
+export interface LocalDay {
+  /** YYYY-MM-DD in org tz */
+  key: string;
+  /** e.g. "Jul 3" */
+  label: string;
+}
+
+/** The last `n` org-local calendar days including today, oldest first. */
+export function lastNLocalDays(
+  tz: string,
+  n: number,
+  now: Date = new Date(),
+): LocalDay[] {
+  const zonedNow = toZonedTime(now, tz);
+  const todayStart = startOfDay(zonedNow);
+  const out: LocalDay[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = subDays(todayStart, i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    out.push({
+      key: `${y}-${m}-${day}`,
+      label: `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`,
+    });
+  }
+  return out;
+}
+
 /** The current month plus the previous N months (most recent first). */
 export function recentMonths(
   tz: string,
