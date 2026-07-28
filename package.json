@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "build:local": "NEXT_DIST_DIR=.next-prod next build",
+    "start:local": "NEXT_DIST_DIR=.next-prod next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
