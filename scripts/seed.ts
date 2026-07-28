@@ -1,15 +1,12 @@
 /**
- * Development seed. Aborts unless APP_ENV === 'development' (never seed prod).
+ * ⚠️ DESTRUCTIVE development seed (npm run db:seed:danger).
  *
- * Run with:  npm run db:seed
- * The db:seed script loads .env.local via --env-file. To seed despite an
- * .env.local that sets APP_ENV=production, override on the command line:
- *   APP_ENV=development npm run db:seed
- * (a shell-exported var takes precedence over the .env file value)
+ * This DELETES ALL leads, assignments, properties, and clients — INCLUDING your
+ * 13 real properties — and recreates fake ones. Do NOT run it to demo the app:
+ * use `npm run demo:seed` (reversible, never deletes real properties) instead.
  *
- * Produces 5 clients, 12 properties across home-service niches, and ~600
- * leads over the last 90 days. Every lead is snapshotted via evaluateLead,
- * exactly as the app does on create.
+ * Aborts unless APP_ENV === 'development'. To run despite an .env.local that
+ * sets APP_ENV=production:  APP_ENV=development npm run db:seed:danger
  */
 import { fromZonedTime } from "date-fns-tz";
 
@@ -32,6 +29,15 @@ if (process.env.APP_ENV !== "development") {
   );
   process.exit(1);
 }
+
+console.warn(
+  "\n" +
+    "!!! ============================================================ !!!\n" +
+    "!!!  DESTRUCTIVE SEED — this DELETES ALL properties (incl. your   !!!\n" +
+    "!!!  13 real ones), clients, assignments, and leads, then         !!!\n" +
+    "!!!  recreates fake data. For a demo use `npm run demo:seed`.     !!!\n" +
+    "!!! ============================================================ !!!\n",
+);
 
 const TZ = "America/New_York";
 

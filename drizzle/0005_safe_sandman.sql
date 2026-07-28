@@ -1,0 +1,1 @@
+ALTER TABLE "property_assignments" ADD COLUMN "notes" text;

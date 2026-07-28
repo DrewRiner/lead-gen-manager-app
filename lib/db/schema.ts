@@ -264,6 +264,7 @@ export const propertyAssignments = pgTable(
     monthlyRate: money("monthly_rate").notNull().default("0"),
     perLeadCallRate: money("per_lead_call_rate").notNull().default("0"),
     perLeadFormRate: money("per_lead_form_rate").notNull().default("0"),
+    notes: text("notes"),
     createdAt,
     updatedAt,
   },
