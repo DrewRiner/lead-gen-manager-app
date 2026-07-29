@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
+import { PLATFORM } from "@/lib/config";
 
 type BillingType = "flat_monthly" | "per_lead" | "hybrid";
 type Status =
@@ -377,20 +378,22 @@ export function PropertyDialog({
 
           <section className="space-y-4 rounded-lg border p-4">
             <div>
-              <h3 className="text-sm font-semibold">Lead ingestion (GoHighLevel)</h3>
+              <h3 className="text-sm font-semibold">
+                Lead ingestion ({PLATFORM.name})
+              </h3>
               <p className="text-xs text-muted-foreground">
                 How inbound form submissions are matched to this property.
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">GHL Lead Source</Label>
+              <Label className="text-xs">Lead Source</Label>
               <Input
                 name="ghlLeadSource"
                 placeholder="e.g. Brunswick Fence Company"
                 defaultValue={property?.ghlLeadSource ?? ""}
               />
               <p className="text-xs text-muted-foreground">
-                The exact value to put in the GHL form&rsquo;s{" "}
+                The exact value to put in the {PLATFORM.name} form&rsquo;s{" "}
                 <strong>Lead Source</strong> hidden field. Inbound leads carrying
                 this value are matched to this property (case-insensitive).
               </p>
@@ -408,7 +411,7 @@ export function PropertyDialog({
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">GHL Form ID</Label>
+              <Label className="text-xs">Form ID</Label>
               <Input
                 name="ghlFormId"
                 placeholder="Optional — matched if Lead Source is absent"

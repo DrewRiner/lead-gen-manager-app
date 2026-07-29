@@ -18,6 +18,7 @@ import {
   regenerateWebhookSecret,
   replayWebhookEvent,
 } from "@/lib/actions/webhooks";
+import { PLATFORM } from "@/lib/config";
 import {
   computeRoutingStatuses,
   type RoutingStatus,
@@ -77,7 +78,10 @@ export function WebhooksPanel({
     <div className="space-y-6">
       {/* Endpoint + secret */}
       <div className="space-y-4">
-        <Labeled label="Endpoint URL" hint="Point the GoHighLevel workflow's webhook action here (POST).">
+        <Labeled
+          label="Endpoint URL"
+          hint={`Point the ${PLATFORM.name} workflow's webhook action here (POST).`}
+        >
           <CopyRow value={webhookUrl} mono />
         </Labeled>
 
@@ -112,7 +116,7 @@ export function WebhooksPanel({
           </div>
         </div>
         <p className="mb-3 text-xs text-muted-foreground">
-          This is exactly what each GHL form must send in its{" "}
+          This is exactly what each {PLATFORM.name} form must send in its{" "}
           <strong>Lead Source</strong> hidden field. Copy the value and paste it
           into the matching form. Matching is case-insensitive and trimmed.
         </p>
@@ -380,7 +384,7 @@ function SecretField({ secret }: { secret: string | null }) {
   function onRegenerate() {
     if (
       !window.confirm(
-        "Regenerate the webhook secret? Every GoHighLevel form still using the old secret will stop working until you paste in the new value.",
+        `Regenerate the webhook secret? Every ${PLATFORM.name} form still using the old secret will stop working until you paste in the new value.`,
       )
     ) {
       return;

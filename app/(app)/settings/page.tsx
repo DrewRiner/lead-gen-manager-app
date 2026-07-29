@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PLATFORM } from "@/lib/config";
 import { formatDateInTz } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { profiles } from "@/lib/db/schema";
@@ -163,10 +164,10 @@ export default async function SettingsPage() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Webhooks · GoHighLevel form ingestion</CardTitle>
+          <CardTitle>Webhooks · {PLATFORM.name} form ingestion</CardTitle>
           <CardDescription>
-            Inbound form leads. Configure a GHL workflow to POST submissions to
-            the endpoint below with the shared secret header.
+            Inbound form leads. Configure an {PLATFORM.name} workflow to POST
+            submissions to the endpoint below with the shared secret header.
           </CardDescription>
         </CardHeader>
         <CardContent>
