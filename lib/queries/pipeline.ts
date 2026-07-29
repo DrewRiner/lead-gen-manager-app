@@ -1,10 +1,11 @@
 import { and, eq, gte, isNull, lt, sql } from "drizzle-orm";
 
-import { shiftDateStr, todayDateStr, trailingDayRange } from "@/lib/dates";
+import { todayDateStr, trailingDayRange } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { leads, properties, propertyAssignments } from "@/lib/db/schema";
 import { toMoneyString } from "@/lib/money";
-import { getPropertyRangeCounts } from "@/lib/queries/metrics";
+import { getProducingHealthMap } from "@/lib/queries/producing-health";
+import { getAppSettings } from "@/lib/settings";
 
 export interface PipelineSummary {
   counts: {
@@ -130,24 +131,26 @@ export interface ReviewFlag {
 
 /**
  * A property needs a status review when:
- *  - status is building/optimizing but it had >= 10 leads in the last 30 days
- *  - status is producing but 0 leads in the last 30 days AND launched_on is
- *    more than 90 days ago.
+ *  - an active trial has passed its trial_ends_on without conversion, OR
+ *  - the derived producing-health signal disagrees with the manual status:
+ *      · "overstated" — marked producing but billable lead flow doesn't meet
+ *        the bar, OR
+ *      · "understated" — still building/optimizing but the billable flow DOES
+ *        meet the bar (likely ready to sell).
+ * The producing-health signal is billable-only (spam/junk excluded) and is the
+ * single source of the producing/pre-launch drift reasons; see
+ * lib/producing-health.ts. This never mutates status — advisory only.
  */
 export async function getReviewFlags(
   tz: string,
 ): Promise<Map<string, ReviewFlag>> {
   const today = todayDateStr(tz);
-  const [rows, counts, expiredTrials] = await Promise.all([
-    db
-      .select({
-        id: properties.id,
-        status: properties.status,
-        launchedOn: properties.launchedOn,
-      })
-      .from(properties)
-      .where(isNull(properties.deletedAt)),
-    getPropertyRangeCounts(trailingDayRange(tz, 30)),
+  const settings = await getAppSettings();
+  const [health, expiredTrials] = await Promise.all([
+    getProducingHealthMap(tz, {
+      minBillableLeads: settings.producingMinBillableLeads,
+      monthsRequired: settings.producingMonthsRequired,
+    }),
     db
       .select({
         propertyId: propertyAssignments.propertyId,
@@ -163,7 +166,6 @@ export async function getReviewFlags(
       ),
   ]);
 
-  const cutoff = shiftDateStr(today, -90); // 90 days ago
   const flags = new Map<string, ReviewFlag>();
 
   // Expired trials take priority — they must be resolved.
@@ -174,27 +176,18 @@ export async function getReviewFlags(
     });
   }
 
-  for (const p of rows) {
-    if (flags.has(p.id)) continue;
-    const leads30d = counts.get(p.id)?.total ?? 0;
-
-    if ((p.status === "building" || p.status === "optimizing") && leads30d >= 10) {
-      flags.set(p.id, {
-        badge: "10+ leads, pre-launch",
-        reason: `${leads30d} leads in 30 days while still ${p.status} — likely ready to move to producing.`,
+  // Fold in producing-health mismatches with their specific per-row reason.
+  for (const [id, h] of health.map) {
+    if (flags.has(id)) continue;
+    if (h.health.signal === "overstated") {
+      flags.set(id, {
+        badge: "Overstated",
+        reason: h.health.reason ?? "Marked producing but lead flow is weak.",
       });
-      continue;
-    }
-
-    if (
-      p.status === "producing" &&
-      leads30d === 0 &&
-      p.launchedOn !== null &&
-      p.launchedOn < cutoff
-    ) {
-      flags.set(p.id, {
-        badge: "No leads 90d+",
-        reason: `Producing but 0 leads in 30 days and launched over 90 days ago (${p.launchedOn}).`,
+    } else if (h.health.signal === "understated") {
+      flags.set(id, {
+        badge: "Understated",
+        reason: h.health.reason ?? "Meets the producing bar but still pre-launch.",
       });
     }
   }

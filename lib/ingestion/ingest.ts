@@ -6,6 +6,8 @@ import { leads, webhookEvents, type NewLead } from "@/lib/db/schema";
 import type { MatchStrategy } from "@/lib/ingestion/resolve";
 import { resolveProperty } from "@/lib/ingestion/resolve";
 import type { CanonicalLead } from "@/lib/ingestion/types";
+import { makeSpamDeps } from "@/lib/spam/deps";
+import { getAppSettings } from "@/lib/settings";
 
 // ---------------------------------------------------------------------------
 // Persist a CanonicalLead: resolve its property, run the billing engine (the
@@ -48,7 +50,26 @@ export async function ingestCanonicalLead(
   let values: NewLead;
   if (match) {
     const { property } = match;
-    const decision = evaluateLead(
+    // Spam-score matched FORM leads only. The scorer's I/O (MX lookup, rate
+    // counts) is injected here; it runs inside evaluateLead (the one decider).
+    const spam =
+      lead.type === "form"
+        ? {
+            input: {
+              email: lead.email,
+              phone: lead.phone,
+              name: lead.fullName,
+              message: lead.message,
+              ip: lead.ip,
+              rawFields: lead.rawPayload as Record<string, unknown> | null,
+            },
+            deps: makeSpamDeps(
+              { email: lead.email, phone: lead.phone, ip: lead.ip },
+              (await getAppSettings()).spamScoreThreshold,
+            ),
+          }
+        : undefined;
+    const decision = await evaluateLead(
       { type: lead.type, callDurationSeconds: null },
       {
         billingType: property.billingType,
@@ -58,6 +79,7 @@ export async function ingestCanonicalLead(
         estimatedFormValue: property.estimatedFormValue,
         billableThresholdSeconds: property.billableThresholdSeconds,
       },
+      spam,
     );
     values = {
       propertyId: property.id,
@@ -78,6 +100,7 @@ export async function ingestCanonicalLead(
       externalId: lead.externalId,
       ghlContactId: lead.ghlContactId,
       ghlLocationId: lead.ghlLocationId,
+      submitterIp: lead.ip,
       ghlLeadSourceRaw: lead.leadSourceRaw,
       pageUrl: lead.pageUrl,
       formName: lead.formName,
@@ -106,6 +129,7 @@ export async function ingestCanonicalLead(
       externalId: lead.externalId,
       ghlContactId: lead.ghlContactId,
       ghlLocationId: lead.ghlLocationId,
+      submitterIp: lead.ip,
       ghlLeadSourceRaw: lead.leadSourceRaw,
       pageUrl: lead.pageUrl,
       formName: lead.formName,

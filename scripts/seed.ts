@@ -282,7 +282,7 @@ async function main() {
         else callDurationSeconds = randInt(60, 640);
       }
 
-      const decision = evaluateLead(
+      const decision = await evaluateLead(
         { type, callDurationSeconds },
         {
           billingType: prop.billingType,

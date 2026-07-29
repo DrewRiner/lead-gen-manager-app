@@ -1,3 +1,4 @@
+import { DeveloperCredit } from "@/components/developer-credit";
 import {
   Card,
   CardContent,
@@ -17,7 +18,7 @@ export default async function LoginPage({
   const { redirectedFrom } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">LeadGen Property Manager</CardTitle>
@@ -29,6 +30,7 @@ export default async function LoginPage({
           <LoginForm redirectedFrom={redirectedFrom} />
         </CardContent>
       </Card>
+      <DeveloperCredit className="mt-6 text-center" />
     </main>
   );
 }

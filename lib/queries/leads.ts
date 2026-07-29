@@ -11,7 +11,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 
-import { dayRangeUtc } from "@/lib/dates";
+import { dayRangeUtc, trailingDayRange } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, leads, properties } from "@/lib/db/schema";
 import { toMoneyString } from "@/lib/money";
@@ -54,6 +54,8 @@ export interface LeadListRow {
   ghlLeadSourceRaw: string | null;
   pageUrl: string | null;
   formName: string | null;
+  /** Swept custom form fields (label -> value); null for calls/manual leads. */
+  formAnswers: Record<string, string> | null;
   occurredAt: Date;
   createdAt: Date;
 }
@@ -132,6 +134,7 @@ export async function getLeads(
         ghlLeadSourceRaw: leads.ghlLeadSourceRaw,
         pageUrl: leads.pageUrl,
         formName: leads.formName,
+        formAnswers: leads.formAnswers,
         occurredAt: leads.occurredAt,
         createdAt: leads.createdAt,
       })
@@ -163,6 +166,37 @@ export async function getLeads(
   };
 }
 
+export interface LeadTypeCounts {
+  total: number;
+  calls: number;
+  forms: number;
+}
+
+/**
+ * Total / calls / forms split for the given filter scope. The `type` filter is
+ * intentionally ignored so the split is always visible even while the list is
+ * toggled to a single type.
+ */
+export async function getLeadTypeCounts(
+  tz: string,
+  filters: LeadFilters,
+): Promise<LeadTypeCounts> {
+  const where = buildConditions(tz, { ...filters, type: undefined });
+  const [row] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      calls: sql<number>`(count(*) filter (where ${leads.type} = 'call'))::int`,
+      forms: sql<number>`(count(*) filter (where ${leads.type} = 'form'))::int`,
+    })
+    .from(leads)
+    .where(where);
+  return {
+    total: row?.total ?? 0,
+    calls: row?.calls ?? 0,
+    forms: row?.forms ?? 0,
+  };
+}
+
 /** All rows matching filters (no pagination) — used for CSV export. */
 export async function getAllLeadsForExport(
   tz: string,
@@ -178,5 +212,28 @@ export async function getUnmatchedLeadCount(): Promise<number> {
     .select({ count: sql<number>`count(*)::int` })
     .from(leads)
     .where(and(isNull(leads.deletedAt), eq(leads.billableStatus, "unmatched")));
+  return row?.count ?? 0;
+}
+
+/**
+ * Form leads flagged spam in the trailing `days` (by occurred_at, org tz). A
+ * gut-check that the spam filter isn't too aggressive or too loose.
+ */
+export async function getSpamLeadCount(
+  tz: string,
+  days = 30,
+): Promise<number> {
+  const { start, end } = trailingDayRange(tz, days);
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(leads)
+    .where(
+      and(
+        isNull(leads.deletedAt),
+        eq(leads.billableStatus, "spam"),
+        gte(leads.occurredAt, start),
+        lt(leads.occurredAt, end),
+      ),
+    );
   return row?.count ?? 0;
 }

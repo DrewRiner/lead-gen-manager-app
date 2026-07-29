@@ -19,9 +19,12 @@ const ALL = "all";
 export function LeadsFilters({
   properties,
   clients,
+  hideType = false,
 }: {
   properties?: { id: string; name: string }[];
   clients?: { id: string; businessName: string }[];
+  /** Hide the Type dropdown when a dedicated type control lives elsewhere. */
+  hideType?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -84,16 +87,18 @@ export function LeadsFilters({
             ]}
           />
         ) : null}
-        <FilterSelect
-          value={params.get("type") ?? ALL}
-          onChange={(v) => setParam("type", v)}
-          placeholder="Type"
-          options={[
-            { value: ALL, label: "All types" },
-            { value: "call", label: "Call" },
-            { value: "form", label: "Form" },
-          ]}
-        />
+        {hideType ? null : (
+          <FilterSelect
+            value={params.get("type") ?? ALL}
+            onChange={(v) => setParam("type", v)}
+            placeholder="Type"
+            options={[
+              { value: ALL, label: "All types" },
+              { value: "call", label: "Call" },
+              { value: "form", label: "Form" },
+            ]}
+          />
+        )}
         <FilterSelect
           value={params.get("source") ?? ALL}
           onChange={(v) => setParam("source", v)}

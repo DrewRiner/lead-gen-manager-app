@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 
 import { AppNav } from "@/components/app-nav";
+import { DeveloperCredit } from "@/components/developer-credit";
 import { Button } from "@/components/ui/button";
 import { signOutAction } from "@/lib/actions/auth";
 import { getProfile, requireUser } from "@/lib/auth";
@@ -18,9 +19,9 @@ export default async function AppLayout({
       <aside className="hidden w-60 shrink-0 flex-col border-r bg-muted/20 md:flex">
         <div className="flex h-16 items-center border-b px-6">
           <span className="text-sm font-semibold leading-tight">
-            LeadGen
+            Blue Carrot Solutions
             <span className="block text-xs font-normal text-muted-foreground">
-              Property Manager
+              Command Center
             </span>
           </span>
         </div>
@@ -51,7 +52,7 @@ export default async function AppLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
         <header className="flex h-14 items-center justify-between border-b px-4 md:hidden">
-          <span className="text-sm font-semibold">LeadGen</span>
+          <span className="text-sm font-semibold">Blue Carrot Solutions</span>
           <form action={signOutAction}>
             <Button type="submit" variant="ghost" size="sm">
               <LogOut className="h-4 w-4" />
@@ -59,6 +60,9 @@ export default async function AppLayout({
           </form>
         </header>
         <main className="flex-1 overflow-x-hidden p-4 md:p-8">{children}</main>
+        <footer className="border-t px-4 py-4 md:px-8">
+          <DeveloperCredit />
+        </footer>
       </div>
     </div>
   );

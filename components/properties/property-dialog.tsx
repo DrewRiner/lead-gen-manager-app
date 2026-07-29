@@ -64,6 +64,7 @@ export interface PropertyDialogValue {
   trackingPhone: string | null;
   ghlLeadSource: string | null;
   ghlFormId: string | null;
+  shortCode: string | null;
   clientId: string | null;
   billingType: BillingType;
   monthlyRate: string;
@@ -392,6 +393,18 @@ export function PropertyDialog({
                 The exact value to put in the GHL form&rsquo;s{" "}
                 <strong>Lead Source</strong> hidden field. Inbound leads carrying
                 this value are matched to this property (case-insensitive).
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Short code</Label>
+              <Input
+                name="shortCode"
+                placeholder="Optional — a stable routing code, e.g. ROOF-ATL-01"
+                defaultValue={property?.shortCode ?? ""}
+              />
+              <p className="text-xs text-muted-foreground">
+                A second Lead Source value that also routes here (case-insensitive).
+                Use it to migrate forms from a brand name to a stable code.
               </p>
             </div>
             <div className="space-y-1.5">

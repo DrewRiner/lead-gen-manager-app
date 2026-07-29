@@ -25,6 +25,7 @@ import { profiles } from "@/lib/db/schema";
 import { titleCase } from "@/lib/format";
 import {
   getPropertyLeadSources,
+  getRecentUnmatchedLeads,
   getWebhookEvents,
 } from "@/lib/queries/webhooks";
 import { getAppSettings } from "@/lib/settings";
@@ -61,13 +62,15 @@ function timezoneOptions(current: string): string[] {
 }
 
 export default async function SettingsPage() {
-  const [settings, users, leadSources, events, hdrs] = await Promise.all([
-    getAppSettings(),
-    db.select().from(profiles).orderBy(asc(profiles.email)),
-    getPropertyLeadSources(),
-    getWebhookEvents(100),
-    headers(),
-  ]);
+  const [settings, users, leadSources, unmatchedLeads, events, hdrs] =
+    await Promise.all([
+      getAppSettings(),
+      db.select().from(profiles).orderBy(asc(profiles.email)),
+      getPropertyLeadSources(),
+      getRecentUnmatchedLeads(20),
+      getWebhookEvents(100),
+      headers(),
+    ]);
 
   const tz = settings.orgTimezone;
 
@@ -89,7 +92,7 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>Organization</CardTitle>
             <CardDescription>
-              Timezone and default billing threshold.
+              Timezone, default billing threshold, and producing-health signal.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -99,6 +102,9 @@ export default async function SettingsPage() {
               defaultBillableThresholdSeconds={
                 settings.defaultBillableThresholdSeconds
               }
+              producingMinBillableLeads={settings.producingMinBillableLeads}
+              producingMonthsRequired={settings.producingMonthsRequired}
+              spamScoreThreshold={settings.spamScoreThreshold}
             />
           </CardContent>
         </Card>
@@ -170,6 +176,7 @@ export default async function SettingsPage() {
             webhookUrl={webhookUrl}
             secret={settings.webhookSecret}
             leadSources={leadSources}
+            unmatchedLeads={unmatchedLeads}
             events={events}
             tz={tz}
           />

@@ -5,6 +5,9 @@ import { eq } from "drizzle-orm";
 const DEFAULTS = {
   orgTimezone: "America/New_York",
   defaultBillableThresholdSeconds: 60,
+  producingMinBillableLeads: 4,
+  producingMonthsRequired: 2,
+  spamScoreThreshold: 70,
 } as const;
 
 /**
@@ -12,7 +15,14 @@ const DEFAULTS = {
  * this normally hits a row; DEFAULTS are a safety net only.
  */
 export async function getAppSettings(): Promise<
-  Pick<AppSettings, "orgTimezone" | "defaultBillableThresholdSeconds"> & {
+  Pick<
+    AppSettings,
+    | "orgTimezone"
+    | "defaultBillableThresholdSeconds"
+    | "producingMinBillableLeads"
+    | "producingMonthsRequired"
+    | "spamScoreThreshold"
+  > & {
     id: number;
     updatedAt: Date | null;
     webhookSecret: string | null;

@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { Check, Copy, Eye, EyeOff, RefreshCw } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
-import { StatusBadge } from "@/components/status-badge";
+import { AssignLeadDialog } from "@/components/leads/assign-lead-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -18,18 +18,29 @@ import {
   regenerateWebhookSecret,
   replayWebhookEvent,
 } from "@/lib/actions/webhooks";
-import type { PropertyLeadSourceRow, WebhookEventRow } from "@/lib/queries/webhooks";
+import {
+  computeRoutingStatuses,
+  type RoutingStatus,
+} from "@/lib/routing-status";
+import type {
+  PropertyLeadSourceRow,
+  UnmatchedLeadRow,
+  WebhookEventRow,
+} from "@/lib/queries/webhooks";
+import { cn } from "@/lib/utils";
 
 export function WebhooksPanel({
   webhookUrl,
   secret,
   leadSources,
+  unmatchedLeads,
   events,
   tz,
 }: {
   webhookUrl: string;
   secret: string | null;
   leadSources: PropertyLeadSourceRow[];
+  unmatchedLeads: UnmatchedLeadRow[];
   events: WebhookEventRow[];
   tz: string;
 }) {
@@ -44,7 +55,23 @@ export function WebhooksPanel({
         }).format(new Date(d))
       : "—";
 
-  const missing = leadSources.filter((p) => !p.ghlLeadSource).length;
+  // Duplicate detection is case-insensitive/trimmed — the same way routing
+  // matches — so it catches "Acme" vs "acme" collisions the DB unique index
+  // (case-sensitive) would miss.
+  const statusByProperty = useMemo(
+    () => computeRoutingStatuses(leadSources),
+    [leadSources],
+  );
+
+  const missing = leadSources.filter(
+    (p) => statusByProperty.get(p.id) === "missing",
+  ).length;
+  const duplicate = leadSources.filter(
+    (p) => statusByProperty.get(p.id) === "duplicate",
+  ).length;
+
+  // Property options for the "assign to property" dropdown on unmatched leads.
+  const assignableProperties = leadSources.map((p) => ({ id: p.id, name: p.name }));
 
   return (
     <div className="space-y-6">
@@ -62,26 +89,41 @@ export function WebhooksPanel({
         </Labeled>
       </div>
 
-      {/* Property -> Lead Source mapping */}
+      {/* Routing table — the source of truth for what GHL forms must send */}
       <div>
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Property Lead Source values</h3>
-          {missing > 0 ? (
-            <span className="text-xs font-medium text-red-600 dark:text-red-400">
-              {missing} without a Lead Source
-            </span>
-          ) : null}
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">Routing table</h3>
+          <div className="flex items-center gap-3 text-xs font-medium">
+            {missing > 0 ? (
+              <span className="text-red-600 dark:text-red-400">
+                {missing} missing
+              </span>
+            ) : null}
+            {duplicate > 0 ? (
+              <span className="text-amber-600 dark:text-amber-400">
+                {duplicate} duplicate
+              </span>
+            ) : null}
+            {missing === 0 && duplicate === 0 ? (
+              <span className="text-emerald-600 dark:text-emerald-400">
+                All mapped
+              </span>
+            ) : null}
+          </div>
         </div>
         <p className="mb-3 text-xs text-muted-foreground">
-          Put the exact Lead Source value into each GHL form&rsquo;s hidden
-          field. A blank value can&rsquo;t be matched by lead source.
+          This is exactly what each GHL form must send in its{" "}
+          <strong>Lead Source</strong> hidden field. Copy the value and paste it
+          into the matching form. Matching is case-insensitive and trimmed.
         </p>
         <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Status</TableHead>
                 <TableHead>Property</TableHead>
                 <TableHead>Lead Source</TableHead>
+                <TableHead>Short code</TableHead>
                 <TableHead>Form ID</TableHead>
                 <TableHead>Domain</TableHead>
               </TableRow>
@@ -89,6 +131,11 @@ export function WebhooksPanel({
             <TableBody>
               {leadSources.map((p) => (
                 <TableRow key={p.id}>
+                  <TableCell>
+                    <RoutingStatusBadge
+                      status={statusByProperty.get(p.id) ?? "missing"}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell>
                     {p.ghlLeadSource ? (
@@ -97,6 +144,13 @@ export function WebhooksPanel({
                       <span className="text-xs font-medium text-red-600 dark:text-red-400">
                         not set
                       </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {p.shortCode ? (
+                      <InlineCopy value={p.shortCode} />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -111,6 +165,71 @@ export function WebhooksPanel({
                   </TableCell>
                 </TableRow>
               ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Recent unmatched leads — what GHL actually sent vs what's expected */}
+      <div>
+        <h3 className="mb-2 text-sm font-semibold">Recent unmatched leads</h3>
+        <p className="mb-3 text-xs text-muted-foreground">
+          The last {unmatchedLeads.length} leads that arrived without a matching
+          property, with the raw Lead Source each one carried. Compare it against
+          the routing table above to spot a mismatch, then assign.
+        </p>
+        <div className="overflow-x-auto rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Received</TableHead>
+                <TableHead>Raw Lead Source sent</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead className="text-right">Assign</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {unmatchedLeads.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                    No unmatched leads. Everything is routing cleanly.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                unmatchedLeads.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {fmt(l.occurredAt)}
+                    </TableCell>
+                    <TableCell>
+                      {l.ghlLeadSourceRaw ? (
+                        <span className="font-mono text-xs">
+                          {l.ghlLeadSourceRaw}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          (none sent)
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {l.callerName ?? l.callerEmail ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <AssignLeadDialog
+                        leadId={l.id}
+                        leadSourceRaw={l.ghlLeadSourceRaw}
+                        properties={assignableProperties}
+                        trigger={
+                          <Button size="sm" variant="outline">
+                            Assign to property
+                          </Button>
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
@@ -175,6 +294,45 @@ export function WebhooksPanel({
         </div>
       </div>
     </div>
+  );
+}
+
+const ROUTING_BADGE: Record<
+  RoutingStatus,
+  { label: string; cls: string; title: string }
+> = {
+  mapped: {
+    label: "Mapped",
+    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+    title: "Lead Source is set and unique — routes cleanly.",
+  },
+  missing: {
+    label: "Missing",
+    cls: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
+    title:
+      "No Lead Source set — can only route by form id or page url fallback.",
+  },
+  duplicate: {
+    label: "Duplicate",
+    cls: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+    title:
+      "Another property uses the same Lead Source — inbound leads route ambiguously.",
+  },
+};
+
+function RoutingStatusBadge({ status }: { status: RoutingStatus }) {
+  const b = ROUTING_BADGE[status];
+  return (
+    <span
+      title={b.title}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
+        b.cls,
+      )}
+    >
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+      {b.label}
+    </span>
   );
 }
 

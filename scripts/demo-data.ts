@@ -448,7 +448,7 @@ async function seed() {
         const stampClient = iv?.clientId ?? null;
         // A trial (or unrented period) bills as flat $0; paid intervals charge.
         const chargePerLead = iv !== null && !iv.isTrial;
-        const decision = evaluateLead(
+        const decision = await evaluateLead(
           { type, callDurationSeconds },
           {
             billingType: chargePerLead ? iv.billingType : "flat_monthly",
@@ -508,7 +508,7 @@ async function seed() {
       const iv = billingAt(prop.id, dayISO);
       const chargePerLead = iv !== null && !iv.isTrial;
       const est = estForNiche(prop.niche);
-      const decision = evaluateLead(
+      const decision = await evaluateLead(
         { type: "form", callDurationSeconds: null },
         {
           billingType: chargePerLead ? iv!.billingType : "flat_monthly",

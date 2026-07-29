@@ -4,9 +4,11 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, Download } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { HealthDot, MomentumArrow } from "@/components/producing-health";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import type { HealthSignal, Momentum } from "@/lib/producing-health";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -54,14 +56,23 @@ const BILLING_LABEL: Record<string, string> = {
   hybrid: "Hybrid",
 };
 
+export interface ReportRowHealth {
+  signal: HealthSignal;
+  momentum: Momentum;
+  reason: string | null;
+}
+
 export function ReportView({
   rows,
   monthLabel,
   monthKey,
+  health = {},
 }: {
   rows: MonthlyReportRow[];
   monthLabel: string;
   monthKey: string;
+  /** Current producing-health per property id (independent of the report month). */
+  health?: Record<string, ReportRowHealth>;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("estimatedValue");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -185,6 +196,23 @@ export function ReportView({
         </Button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="font-medium">Producing health (current):</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
+          Confirmed
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
+          Overstated
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" />
+          Understated (ready to sell)
+        </span>
+        <span>· Arrow = 3-month billable trend</span>
+      </div>
+
       <div className="rounded-lg border">
         <div className="overflow-x-auto">
           <Table>
@@ -215,7 +243,9 @@ export function ReportView({
                   </TableCell>
                 </TableRow>
               ) : (
-                sorted.map((r) => (
+                sorted.map((r) => {
+                  const h = health[r.propertyId];
+                  return (
                   <TableRow key={r.propertyId}>
                     <TableCell className="font-medium">
                       <Link
@@ -232,7 +262,10 @@ export function ReportView({
                       {r.city ?? "—"}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={r.status} />
+                      <span className="flex items-center gap-1.5">
+                        {h ? <HealthDot signal={h.signal} reason={h.reason} /> : null}
+                        <StatusBadge status={r.status} />
+                      </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {BILLING_LABEL[r.billingType] ?? titleCase(r.billingType)}
@@ -247,7 +280,10 @@ export function ReportView({
                       {formatNumber(r.total)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatNumber(r.billable)}
+                      <span className="inline-flex items-center justify-end gap-1">
+                        {formatNumber(r.billable)}
+                        {h ? <MomentumArrow momentum={h.momentum} /> : null}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatCurrency(r.estimatedValue)}
@@ -259,7 +295,8 @@ export function ReportView({
                       {formatCurrency(r.gap)}
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
             <TableFooter>

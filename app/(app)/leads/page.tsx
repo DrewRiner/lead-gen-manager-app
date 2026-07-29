@@ -13,7 +13,11 @@ import Link from "next/link";
 import { nowLocalInputValue } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, properties } from "@/lib/db/schema";
-import { getLeads, getUnmatchedLeadCount } from "@/lib/queries/leads";
+import {
+  getLeads,
+  getSpamLeadCount,
+  getUnmatchedLeadCount,
+} from "@/lib/queries/leads";
 import { getAppSettings } from "@/lib/settings";
 
 export const metadata = { title: "Leads — LeadGen" };
@@ -28,7 +32,7 @@ export default async function LeadsPage({
   const { orgTimezone: tz } = await getAppSettings();
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const [leadsPage, propertyList, clientList, unmatchedCount] =
+  const [leadsPage, propertyList, clientList, unmatchedCount, spamCount] =
     await Promise.all([
       getLeads(
         tz,
@@ -57,6 +61,7 @@ export default async function LeadsPage({
         .where(isNull(clients.deletedAt))
         .orderBy(asc(clients.businessName)),
       getUnmatchedLeadCount(),
+      getSpamLeadCount(tz, 30),
     ]);
 
   return (
@@ -93,9 +98,25 @@ export default async function LeadsPage({
         </Link>
       ) : null}
 
-      <div className="mb-4">
+      <div className="mb-2 flex flex-wrap items-center gap-3">
         <LeadsFilters properties={propertyList} clients={clientList} />
       </div>
+
+      <p className="mb-4 text-xs text-muted-foreground">
+        {spamCount > 0 ? (
+          <>
+            <Link
+              href="/leads?billableStatus=spam"
+              className="font-medium text-foreground underline underline-offset-2"
+            >
+              {spamCount} lead{spamCount === 1 ? "" : "s"} flagged spam
+            </Link>{" "}
+            in the last 30 days.
+          </>
+        ) : (
+          "No leads flagged spam in the last 30 days."
+        )}
+      </p>
 
       <div className="rounded-lg border">
         <LeadsTable rows={leadsPage.rows} tz={tz} properties={propertyList} />

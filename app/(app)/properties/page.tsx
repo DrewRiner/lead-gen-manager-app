@@ -257,6 +257,7 @@ export default async function PropertiesPage({
                             trackingPhone: p.trackingPhone,
                             ghlLeadSource: p.ghlLeadSource,
                             ghlFormId: p.ghlFormId,
+                            shortCode: p.shortCode,
                             clientId: p.clientId,
                             billingType: p.billingType,
                             monthlyRate: p.monthlyRate,

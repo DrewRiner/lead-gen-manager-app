@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Phone } from "lucide-react";
 import { Fragment, useState } from "react";
 
 import { AssignLeadDialog } from "@/components/leads/assign-lead-dialog";
 import { LeadOverrideDialog } from "@/components/leads/lead-override-dialog";
+import { NotSpamButton } from "@/components/leads/not-spam-button";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -109,7 +110,19 @@ export function LeadsTable({
                         )}
                       </TableCell>
                     )}
-                    <TableCell className="capitalize">{r.type}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {r.type === "call" ? (
+                          <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="capitalize">{r.type}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {r.sourceSystem}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {r.callerName ?? formatPhone(r.callerPhone) ?? "—"}
                     </TableCell>
@@ -171,11 +184,28 @@ export function LeadsTable({
                               </Detail>
                             </div>
                           ) : null}
-                          <div className="col-span-2 md:col-span-4">
-                            <Detail label="Message">
-                              {r.message ?? "—"}
-                            </Detail>
-                          </div>
+                          {r.formAnswers && Object.keys(r.formAnswers).length > 0 ? (
+                            <div className="col-span-2 md:col-span-4">
+                              <Detail label="Form answers">
+                                <dl className="space-y-1">
+                                  {Object.entries(r.formAnswers).map(([label, value]) => (
+                                    <div key={label} className="flex gap-2">
+                                      <dt className="shrink-0 text-muted-foreground">
+                                        {label}:
+                                      </dt>
+                                      <dd className="break-words font-medium">{value}</dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </Detail>
+                            </div>
+                          ) : (
+                            <div className="col-span-2 md:col-span-4">
+                              <Detail label="Message">
+                                {r.message ?? "—"}
+                              </Detail>
+                            </div>
+                          )}
                           {r.recordingUrl ? (
                             <div className="col-span-2 md:col-span-4">
                               <Detail label="Recording">
@@ -205,6 +235,9 @@ export function LeadsTable({
                                   </Button>
                                 }
                               />
+                            ) : null}
+                            {r.billableStatus === "spam" ? (
+                              <NotSpamButton leadId={r.id} />
                             ) : null}
                             <LeadOverrideDialog
                               leadId={r.id}

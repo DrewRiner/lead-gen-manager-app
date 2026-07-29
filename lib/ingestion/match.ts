@@ -6,13 +6,18 @@ import type { CanonicalLead } from "@/lib/ingestion/types";
 // ---------------------------------------------------------------------------
 
 /** How a lead was matched to a property (for logging / debugging). */
-export type MatchStrategy = "lead_source" | "ghl_form_id" | "page_url";
+export type MatchStrategy =
+  | "lead_source"
+  | "short_code"
+  | "ghl_form_id"
+  | "page_url";
 
 /** The subset of a property needed to both match and bill an ingested lead. */
 export interface PropertyCandidate {
   id: string;
   clientId: string | null;
   ghlLeadSource: string | null;
+  shortCode: string | null;
   ghlFormId: string | null;
   domain: string | null;
   billingType: "flat_monthly" | "per_lead" | "hybrid";
@@ -77,9 +82,12 @@ function isIgnoredHost(host: string): boolean {
 /**
  * Pure matcher. Tries, in order:
  *   1. lead_source  vs property.ghl_lead_source (case-insensitive, trimmed)
- *   2. ghl_form_id  vs property.ghl_form_id (case-insensitive, trimmed) — the
+ *   2. lead_source  vs property.short_code (case-insensitive, trimmed) — the
+ *      same incoming Lead Source value, so forms can migrate to a stable code
+ *      without breaking anything
+ *   3. ghl_form_id  vs property.ghl_form_id (case-insensitive, trimmed) — the
  *      lead's ghlFormId comes from attributionSource.mediumId
- *   3. page_url host vs property.domain (both normalized) — treated as
+ *   4. page_url host vs property.domain (both normalized) — treated as
  *      unreliable: GHL-hosted forms always report a leadconnectorhq.com /
  *      gohighlevel.com host, which is explicitly ignored here.
  * Returns the first match, or null when nothing matches.
@@ -88,21 +96,27 @@ export function matchProperty(
   candidates: PropertyCandidate[],
   lead: Pick<CanonicalLead, "leadSourceRaw" | "ghlFormId" | "pageUrl">,
 ): PropertyMatch | null {
-  // 1. Lead Source.
+  // 1. Lead Source vs ghl_lead_source.
   const sourceKey = key(lead.leadSourceRaw);
   if (sourceKey) {
     const hit = candidates.find((c) => key(c.ghlLeadSource) === sourceKey);
     if (hit) return { property: hit, strategy: "lead_source" };
   }
 
-  // 2. GHL form id.
+  // 2. Lead Source vs short_code (same incoming value, stable-code fallback).
+  if (sourceKey) {
+    const hit = candidates.find((c) => key(c.shortCode) === sourceKey);
+    if (hit) return { property: hit, strategy: "short_code" };
+  }
+
+  // 3. GHL form id.
   const formKey = key(lead.ghlFormId);
   if (formKey) {
     const hit = candidates.find((c) => key(c.ghlFormId) === formKey);
     if (hit) return { property: hit, strategy: "ghl_form_id" };
   }
 
-  // 3. Page URL host vs property domain. GHL-hosted form hosts are ignored —
+  // 4. Page URL host vs property domain. GHL-hosted form hosts are ignored —
   // they identify the provider, not the property.
   const host = normalizeDomain(lead.pageUrl);
   if (host && !isIgnoredHost(host)) {

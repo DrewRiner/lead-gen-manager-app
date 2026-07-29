@@ -1,0 +1,2 @@
+ALTER TABLE "properties" ADD COLUMN "short_code" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "properties_short_code_uniq" ON "properties" USING btree (lower("short_code")) WHERE "properties"."short_code" is not null;

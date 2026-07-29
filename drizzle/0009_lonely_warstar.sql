@@ -1,0 +1,2 @@
+ALTER TABLE "app_settings" ADD COLUMN "producing_min_billable_leads" integer DEFAULT 4 NOT NULL;--> statement-breakpoint
+ALTER TABLE "app_settings" ADD COLUMN "producing_months_required" integer DEFAULT 2 NOT NULL;

@@ -63,6 +63,7 @@ const propertySchema = z.object({
   // GoHighLevel ingestion keys.
   ghlLeadSource: optionalText,
   ghlFormId: optionalText,
+  shortCode: optionalText,
   // client_id is intentionally NOT here: it changes only via assign/unassign.
   billingType: z.enum(billingTypeEnum.enumValues),
   monthlyRate: money,
@@ -89,6 +90,7 @@ function parseForm(formData: FormData) {
     trackingPhone: formData.get("trackingPhone"),
     ghlLeadSource: formData.get("ghlLeadSource"),
     ghlFormId: formData.get("ghlFormId"),
+    shortCode: formData.get("shortCode"),
     billingType: formData.get("billingType"),
     monthlyRate: formData.get("monthlyRate"),
     targetMonthlyRent: formData.get("targetMonthlyRent"),
@@ -140,6 +142,9 @@ function ghlUniqueConflict(err: unknown): string | null {
   }
   if (e.constraint === "properties_ghl_form_id_uniq") {
     return "Another property already uses that GHL form ID.";
+  }
+  if (e.constraint === "properties_short_code_uniq") {
+    return "Another property already uses that short code.";
   }
   return "That value is already in use by another property.";
 }

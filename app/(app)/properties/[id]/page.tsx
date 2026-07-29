@@ -7,11 +7,13 @@ import { MetricCard } from "@/components/dashboard/metric-card";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
 import { LeadsFilters } from "@/components/leads/leads-filters";
+import { LeadTypeChips } from "@/components/leads/lead-type-chips";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
 import { ChangeRateDialog } from "@/components/properties/change-rate-dialog";
+import { ProducingHealthCard } from "@/components/properties/producing-health-card";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
 import { StartTrialDialog } from "@/components/properties/start-trial-dialog";
@@ -49,7 +51,8 @@ import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
-import { getLeads } from "@/lib/queries/leads";
+import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
+import { getPropertyProducingHealth } from "@/lib/queries/producing-health";
 import { getPropertyMonthlySeries, getRangeMetrics } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
 import { TabLink, TabNav } from "@/components/tab-link";
@@ -75,7 +78,12 @@ export default async function PropertyDetailPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const { orgTimezone: tz } = await getAppSettings();
+  const settings = await getAppSettings();
+  const tz = settings.orgTimezone;
+  const producingThresholds = {
+    minBillableLeads: settings.producingMinBillableLeads,
+    monthsRequired: settings.producingMonthsRequired,
+  };
   const tab = sp.tab === "lifetime" ? "lifetime" : "activity";
 
   const [row] = await db
@@ -176,6 +184,7 @@ export default async function PropertyDetailPage({
     trackingPhone: p.trackingPhone,
     ghlLeadSource: p.ghlLeadSource,
     ghlFormId: p.ghlFormId,
+    shortCode: p.shortCode,
     clientId: p.clientId,
     billingType: p.billingType,
     monthlyRate: p.monthlyRate,
@@ -330,6 +339,7 @@ export default async function PropertyDetailPage({
           tz={tz}
           sp={sp}
           totalLeadCount={totalLeadCount}
+          producingThresholds={producingThresholds}
         />
       ) : (
         <LifetimeTab propertyId={id} property={p} tz={tz} />
@@ -348,18 +358,33 @@ async function ActivityTab({
   tz,
   sp,
   totalLeadCount,
+  producingThresholds,
 }: {
   propertyId: string;
   property: typeof properties.$inferSelect;
   tz: string;
   sp: Record<string, string | undefined>;
   totalLeadCount: number;
+  producingThresholds: { minBillableLeads: number; monthsRequired: number };
 }) {
   const page = Math.max(1, Number(sp.page) || 1);
   const dayW = comparativeCalendarWindow("day", tz);
   const weekW = comparativeCalendarWindow("week", tz);
   const monthW = comparativeCalendarWindow("month", tz);
   const opts = { propertyId };
+
+  // Shared filter scope for both the list and the type-split counts. The counts
+  // helper ignores `type` so the split stays visible while the chips filter.
+  const leadFilters = {
+    propertyId,
+    type: sp.type,
+    source: sp.source,
+    billableStatus: sp.billableStatus,
+    deliveryStatus: sp.deliveryStatus,
+    from: sp.from,
+    to: sp.to,
+    q: sp.q,
+  };
 
   const [
     todayCur,
@@ -369,6 +394,8 @@ async function ActivityTab({
     monthCur,
     monthPrev,
     leadsPage,
+    typeCounts,
+    producingHealth,
   ] = await Promise.all([
     getRangeMetrics(dayW.current, opts),
     getRangeMetrics(dayW.previous, opts),
@@ -376,21 +403,9 @@ async function ActivityTab({
     getRangeMetrics(weekW.previous, opts),
     getRangeMetrics(monthW.current, opts),
     getRangeMetrics(monthW.previous, opts),
-    getLeads(
-      tz,
-      {
-        propertyId,
-        type: sp.type,
-        source: sp.source,
-        billableStatus: sp.billableStatus,
-        deliveryStatus: sp.deliveryStatus,
-        from: sp.from,
-        to: sp.to,
-        q: sp.q,
-      },
-      page,
-      25,
-    ),
+    getLeads(tz, leadFilters, page, 25),
+    getLeadTypeCounts(tz, leadFilters),
+    getPropertyProducingHealth(tz, propertyId, producingThresholds),
   ]);
 
   return (
@@ -415,6 +430,8 @@ async function ActivityTab({
           previous={monthPrev}
         />
       </div>
+
+      {producingHealth ? <ProducingHealthCard detail={producingHealth} /> : null}
 
       <Card>
         <CardHeader>
@@ -461,7 +478,12 @@ async function ActivityTab({
           />
         </CardHeader>
         <CardContent className="space-y-4">
-          <LeadsFilters />
+          <LeadTypeChips
+            total={typeCounts.total}
+            calls={typeCounts.calls}
+            forms={typeCounts.forms}
+          />
+          <LeadsFilters hideType />
           <LeadsTable rows={leadsPage.rows} tz={tz} hideProperty />
           <Pagination
             page={leadsPage.page}

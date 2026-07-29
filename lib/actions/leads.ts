@@ -92,7 +92,8 @@ export async function createLead(formData: FormData): Promise<ActionResult> {
     billableThresholdSeconds: property.billableThresholdSeconds,
   };
 
-  const decision = evaluateLead(
+  // Manual entry doesn't run spam scoring (no bot signals; staff-entered).
+  const decision = await evaluateLead(
     { type: data.type, callDurationSeconds },
     evalProperty,
   );
@@ -210,6 +211,73 @@ export async function overrideLeadBillableStatus(
   return { ok: true, message: "Lead updated." };
 }
 
+/**
+ * "Not spam" — clear a spam flag by re-running the lead as a normal lead. This
+ * is a manual override (qualified_by = 'manual'), so the automated spam rule can
+ * never re-flag it. Value is re-derived from the property's current rates.
+ */
+export async function markLeadNotSpam(leadId: string): Promise<ActionResult> {
+  if (!z.string().uuid().safeParse(leadId).success) {
+    return { ok: false, error: "Invalid lead id." };
+  }
+
+  const [lead] = await db
+    .select({
+      id: leads.id,
+      type: leads.type,
+      billableStatus: leads.billableStatus,
+      callDurationSeconds: leads.callDurationSeconds,
+      propertyId: leads.propertyId,
+      billingType: properties.billingType,
+      perLeadCallRate: properties.perLeadCallRate,
+      perLeadFormRate: properties.perLeadFormRate,
+      estimatedCallValue: properties.estimatedCallValue,
+      estimatedFormValue: properties.estimatedFormValue,
+      billableThresholdSeconds: properties.billableThresholdSeconds,
+    })
+    .from(leads)
+    .innerJoin(properties, eq(properties.id, leads.propertyId))
+    .where(and(eq(leads.id, leadId), isNull(leads.deletedAt)))
+    .limit(1);
+  if (!lead) return { ok: false, error: "Lead not found." };
+  if (lead.billableStatus !== "spam") {
+    return { ok: false, error: "Lead is not flagged as spam." };
+  }
+
+  // Re-evaluate WITHOUT spam scoring, then stamp it as a manual decision.
+  const decision = await evaluateLead(
+    {
+      type: lead.type as "call" | "form",
+      callDurationSeconds: lead.type === "call" ? lead.callDurationSeconds : null,
+    },
+    {
+      billingType: lead.billingType,
+      perLeadCallRate: lead.perLeadCallRate,
+      perLeadFormRate: lead.perLeadFormRate,
+      estimatedCallValue: lead.estimatedCallValue,
+      estimatedFormValue: lead.estimatedFormValue,
+      billableThresholdSeconds: lead.billableThresholdSeconds,
+    },
+  );
+
+  await db
+    .update(leads)
+    .set({
+      billableStatus: decision.billableStatus,
+      billableReason: "Manually marked not spam",
+      qualifiedBy: "manual",
+      billedAmount: decision.billedAmount,
+      estimatedValue: decision.estimatedValue,
+      updatedAt: new Date(),
+    })
+    .where(eq(leads.id, leadId));
+
+  revalidatePath("/leads");
+  revalidatePath("/");
+  if (lead.propertyId) revalidatePath(`/properties/${lead.propertyId}`);
+  return { ok: true, message: "Lead restored — no longer marked spam." };
+}
+
 const assignSchema = z.object({
   propertyId: z.string().uuid("Select a property."),
   // When true, remember this lead's raw source on the property so future leads
@@ -272,7 +340,9 @@ export async function assignLeadToProperty(
     estimatedFormValue: property.estimatedFormValue,
     billableThresholdSeconds: property.billableThresholdSeconds,
   };
-  const decision = evaluateLead(
+  // Assigning an unmatched lead re-bills it for the chosen property; spam
+  // scoring already ran at ingestion, so it isn't repeated here.
+  const decision = await evaluateLead(
     { type: lead.type as "call" | "form", callDurationSeconds },
     evalProperty,
   );

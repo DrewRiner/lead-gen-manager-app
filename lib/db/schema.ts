@@ -74,6 +74,8 @@ export const qualifiedByEnum = pgEnum("qualified_by", [
   "duration_rule",
   "manual",
   "ai",
+  // Automated non-AI spam scorer flagged the lead (lib/spam/score-form-lead.ts).
+  "spam_rule",
 ]);
 
 export const deliveryStatusEnum = pgEnum("delivery_status", [
@@ -133,6 +135,18 @@ export const appSettings = pgTable(
     )
       .notNull()
       .default(60),
+    // Producing-health signal thresholds (advisory only; never mutate status).
+    // Min billable leads a property needs — both in the trailing 30 days and in
+    // each qualifying calendar month — to count as derived-producing.
+    producingMinBillableLeads: integer("producing_min_billable_leads")
+      .notNull()
+      .default(4),
+    // How many of the last 3 complete calendar months must clear that bar.
+    producingMonthsRequired: integer("producing_months_required")
+      .notNull()
+      .default(2),
+    // Form-lead spam score at/above which a lead is flagged 'spam' (still saved).
+    spamScoreThreshold: integer("spam_score_threshold").notNull().default(70),
     // Shared secret for inbound webhooks (checked against the X-Webhook-Secret
     // header). Nullable so a fresh install has none until one is generated.
     webhookSecret: text("webhook_secret"),
@@ -182,6 +196,10 @@ export const properties = pgTable(
     // Either resolves an inbound webhook to this property (see lib/ingestion).
     ghlLeadSource: text("ghl_lead_source"),
     ghlFormId: text("ghl_form_id"),
+    // Optional stable routing code. A second key matched (case-insensitive,
+    // trimmed) against the incoming Lead Source, so forms can migrate from
+    // brand-name matching to a short code without changing ghl_lead_source.
+    shortCode: text("short_code"),
     clientId: uuid("client_id").references(() => clients.id, {
       onDelete: "set null",
     }),
@@ -212,6 +230,11 @@ export const properties = pgTable(
     uniqueIndex("properties_ghl_form_id_uniq")
       .on(t.ghlFormId)
       .where(sql`${t.ghlFormId} is not null`),
+    // Short code is a routing key too, so it must be unique. Compared
+    // case-insensitively at match time, so enforce uniqueness case-folded.
+    uniqueIndex("properties_short_code_uniq")
+      .on(sql`lower(${t.shortCode})`)
+      .where(sql`${t.shortCode} is not null`),
   ],
 );
 
@@ -242,13 +265,15 @@ export const leads = pgTable(
     // GoHighLevel form-ingestion context (null for manually-entered leads).
     ghlContactId: text("ghl_contact_id"),
     ghlLocationId: text("ghl_location_id"),
+    // Submitter IP (from attributionSource.ip), kept for spam rate signals.
+    submitterIp: text("submitter_ip"),
     // The raw Lead Source value as it arrived on the form (before resolution).
     ghlLeadSourceRaw: text("ghl_lead_source_raw"),
     pageUrl: text("page_url"),
     formName: text("form_name"),
     // Swept custom form fields (label -> value) that don't map to a standard
     // column. Composed into `message` for display, kept structured here.
-    formAnswers: jsonb("form_answers"),
+    formAnswers: jsonb("form_answers").$type<Record<string, string>>(),
     billableStatus: billableStatusEnum("billable_status").notNull(),
     billableReason: text("billable_reason"),
     qualifiedBy: qualifiedByEnum("qualified_by"),
@@ -277,6 +302,10 @@ export const leads = pgTable(
       .where(sql`${t.externalId} is not null`),
     index("leads_property_id_occurred_at_idx").on(t.propertyId, t.occurredAt),
     index("leads_occurred_at_idx").on(t.occurredAt),
+    // Spam rate-signal lookups: same email/phone/ip within a recent window.
+    index("leads_caller_email_occurred_at_idx").on(t.callerEmail, t.occurredAt),
+    index("leads_caller_phone_occurred_at_idx").on(t.callerPhone, t.occurredAt),
+    index("leads_submitter_ip_occurred_at_idx").on(t.submitterIp, t.occurredAt),
   ],
 );
 

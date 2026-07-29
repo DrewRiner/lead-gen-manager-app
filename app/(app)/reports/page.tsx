@@ -7,6 +7,8 @@ import {
   recentMonths,
 } from "@/lib/dates";
 import { getMonthlyReport } from "@/lib/queries/metrics";
+import { getProducingHealthMap } from "@/lib/queries/producing-health";
+import type { ReportRowHealth } from "@/components/reports/report-view";
 import { getAppSettings } from "@/lib/settings";
 
 export const metadata = { title: "Reports — LeadGen" };
@@ -18,11 +20,28 @@ export default async function ReportsPage({
   searchParams: Promise<{ month?: string }>;
 }) {
   const sp = await searchParams;
-  const { orgTimezone: tz } = await getAppSettings();
+  const settings = await getAppSettings();
+  const tz = settings.orgTimezone;
   const now = new Date();
 
   const selected = parseMonthKey(sp.month, tz, now);
-  const report = await getMonthlyReport(tz, selected);
+  const [report, healthResult] = await Promise.all([
+    getMonthlyReport(tz, selected),
+    getProducingHealthMap(tz, {
+      minBillableLeads: settings.producingMinBillableLeads,
+      monthsRequired: settings.producingMonthsRequired,
+    }),
+  ]);
+
+  // Current producing-health per property (independent of the selected month).
+  const health: Record<string, ReportRowHealth> = {};
+  for (const [id, h] of healthResult.map) {
+    health[id] = {
+      signal: h.health.signal,
+      momentum: h.health.momentum,
+      reason: h.health.reason,
+    };
+  }
 
   // This month + previous 12 = 13 options; covers "this", "last", "previous 12".
   const monthOptions = recentMonths(tz, 13, now).map((m) => ({
@@ -53,6 +72,7 @@ export default async function ReportsPage({
         rows={report.rows}
         monthLabel={selected.label}
         monthKey={selected.key}
+        health={health}
       />
     </div>
   );

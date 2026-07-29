@@ -188,10 +188,10 @@ describe("free trials", () => {
     expect(trialConversionDates("2024-03-01").trialEndedOn).toBe("2024-02-29");
   });
 
-  it("estimated value accrues normally during a trial (billed 0, estimated market)", () => {
+  it("estimated value accrues normally during a trial (billed 0, estimated market)", async () => {
     // A property on trial is billed as flat_monthly at $0, so the lead's per-lead
     // billed_amount is 0 but its estimated market value still books.
-    const dec = evaluateLead(
+    const dec = await evaluateLead(
       { type: "form", callDurationSeconds: null },
       {
         billingType: "flat_monthly",

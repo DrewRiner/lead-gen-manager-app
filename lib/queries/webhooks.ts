@@ -1,7 +1,7 @@
-import { asc, desc, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db";
-import { properties, webhookEvents } from "@/lib/db/schema";
+import { leads, properties, webhookEvents } from "@/lib/db/schema";
 
 export interface WebhookEventRow {
   id: string;
@@ -56,11 +56,12 @@ export interface PropertyLeadSourceRow {
   name: string;
   status: string;
   ghlLeadSource: string | null;
+  shortCode: string | null;
   ghlFormId: string | null;
   domain: string | null;
 }
 
-/** Every live property's ingestion keys, for the Settings mapping table. */
+/** Every live property's ingestion keys, for the Settings routing table. */
 export async function getPropertyLeadSources(): Promise<PropertyLeadSourceRow[]> {
   return db
     .select({
@@ -68,10 +69,43 @@ export async function getPropertyLeadSources(): Promise<PropertyLeadSourceRow[]>
       name: properties.name,
       status: properties.status,
       ghlLeadSource: properties.ghlLeadSource,
+      shortCode: properties.shortCode,
       ghlFormId: properties.ghlFormId,
       domain: properties.domain,
     })
     .from(properties)
     .where(isNull(properties.deletedAt))
     .orderBy(asc(properties.name));
+}
+
+export interface UnmatchedLeadRow {
+  id: string;
+  ghlLeadSourceRaw: string | null;
+  callerName: string | null;
+  callerEmail: string | null;
+  pageUrl: string | null;
+  occurredAt: Date;
+}
+
+/**
+ * The most recent leads that arrived unmatched (no property). Shows exactly what
+ * GHL actually sent as its Lead Source, so a mismatch against the routing table
+ * is easy to spot.
+ */
+export async function getRecentUnmatchedLeads(
+  limit = 20,
+): Promise<UnmatchedLeadRow[]> {
+  return db
+    .select({
+      id: leads.id,
+      ghlLeadSourceRaw: leads.ghlLeadSourceRaw,
+      callerName: leads.callerName,
+      callerEmail: leads.callerEmail,
+      pageUrl: leads.pageUrl,
+      occurredAt: leads.occurredAt,
+    })
+    .from(leads)
+    .where(and(isNull(leads.deletedAt), eq(leads.billableStatus, "unmatched")))
+    .orderBy(desc(leads.occurredAt))
+    .limit(limit);
 }

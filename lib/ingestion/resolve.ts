@@ -24,6 +24,7 @@ export async function resolveProperty(
       id: properties.id,
       clientId: properties.clientId,
       ghlLeadSource: properties.ghlLeadSource,
+      shortCode: properties.shortCode,
       ghlFormId: properties.ghlFormId,
       domain: properties.domain,
       billingType: properties.billingType,

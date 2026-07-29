@@ -6,6 +6,13 @@ import {
   qualifiedByEnum,
 } from "@/lib/db/schema";
 import { toMoneyString } from "@/lib/money";
+import {
+  scoreFormLead,
+  spamReason,
+  type SpamDeps,
+  type SpamResult,
+  type SpamScoreInput,
+} from "@/lib/spam/score-form-lead";
 
 // ---------------------------------------------------------------------------
 // THE single place that decides whether a lead is billable and what it is
@@ -50,6 +57,19 @@ export interface EvaluateLeadResult {
   billedAmount: string;
   /** Snapshotted onto leads.estimated_value. Money string, 2 decimals. */
   estimatedValue: string;
+  /** Present only for form leads that ran spam scoring, for logging/telemetry. */
+  spam?: SpamResult;
+}
+
+/**
+ * Optional spam-scoring context for a form lead. When provided, the form path
+ * runs the (non-AI) spam scorer; a flagged lead becomes 'spam' (still saved,
+ * zero billed/estimated). The async I/O (MX lookup, rate counts) lives behind
+ * deps so this stays the one place the decision is made.
+ */
+export interface EvaluateLeadSpamContext {
+  input: SpamScoreInput;
+  deps: SpamDeps;
 }
 
 /** Per-lead rate applies only to per_lead and hybrid billing. */
@@ -69,12 +89,40 @@ function chargesPerLead(billingType: BillingType): boolean {
  * estimated_value is recorded on every billable lead regardless of billing
  * type — a flat_monthly property still books market value with $0 billed.
  */
-export function evaluateLead(
+export async function evaluateLead(
   lead: EvaluateLeadInput,
   property: EvaluateLeadProperty,
-): EvaluateLeadResult {
-  // -- Form leads: always billable -----------------------------------------
+  spam?: EvaluateLeadSpamContext,
+): Promise<EvaluateLeadResult> {
+  // -- Form leads ----------------------------------------------------------
   if (lead.type === "form") {
+    // Optional spam scoring. Flagged => 'spam', but still saved with zero value
+    // so it stays reviewable (never a hard block). Conservative by design.
+    if (spam) {
+      const result = await scoreFormLead(spam.input, spam.deps);
+      if (result.isSpam) {
+        return {
+          billableStatus: "spam",
+          billableReason: spamReason(result),
+          qualifiedBy: "spam_rule",
+          billedAmount: "0.00",
+          estimatedValue: "0.00",
+          spam: result,
+        };
+      }
+      // Not spam: fall through to the normal billable-form decision, but keep
+      // the score for telemetry.
+      return {
+        billableStatus: "billable",
+        billableReason: BILLABLE_REASON.FORM_LEAD,
+        qualifiedBy: "duration_rule",
+        billedAmount: chargesPerLead(property.billingType)
+          ? toMoneyString(property.perLeadFormRate)
+          : "0.00",
+        estimatedValue: toMoneyString(property.estimatedFormValue),
+        spam: result,
+      };
+    }
     return {
       billableStatus: "billable",
       billableReason: BILLABLE_REASON.FORM_LEAD,

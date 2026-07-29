@@ -222,6 +222,7 @@ export function normalizeGhlForm(payload: unknown, now: Date = new Date()): Cano
     "attributionSource.sessionSource",
     "contact.attributionSource.sessionSource",
   );
+  const ip = pick(p, "attributionSource.ip", "contact.attributionSource.ip");
 
   const formAnswers = collectFormAnswers(p);
   const message = composeMessage(formAnswers);
@@ -275,6 +276,7 @@ export function normalizeGhlForm(payload: unknown, now: Date = new Date()): Cano
     formName: null,
     ghlContactId,
     ghlLocationId,
+    ip,
     formAnswers,
     occurredAt,
     occurredAtFallback,

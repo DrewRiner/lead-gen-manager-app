@@ -64,6 +64,27 @@
       "when": 1785276282129,
       "tag": "0008_mighty_spiral",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785335339897,
+      "tag": "0009_lonely_warstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785335924840,
+      "tag": "0010_rich_captain_universe",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785336793574,
+      "tag": "0011_purple_wendell_rand",
+      "breakpoints": true
     }
   ]
 }

@@ -31,6 +31,8 @@ export interface CanonicalLead {
   formName: string | null;
   ghlContactId: string | null;
   ghlLocationId: string | null;
+  /** Submitter IP (attributionSource.ip); persisted for spam rate signals. */
+  ip: string | null;
   /**
    * Custom form fields keyed by their form label, e.g.
    * { "Property Type": "Residential" }. Empty-valued fields are dropped. Null
