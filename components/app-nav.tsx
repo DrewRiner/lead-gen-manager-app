@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  BookOpen,
   Building2,
   LayoutDashboard,
   PhoneCall,
@@ -19,6 +20,7 @@ const NAV = [
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/leads", label: "Leads", icon: PhoneCall },
   { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/guides", label: "Guides", icon: BookOpen },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

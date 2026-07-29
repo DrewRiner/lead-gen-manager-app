@@ -32,20 +32,6 @@ const settingsSchema = z.object({
     .refine((n) => Number.isFinite(n) && n >= 0, {
       message: "Threshold must be a non-negative number.",
     }),
-  producingMinBillableLeads: z
-    .string()
-    .trim()
-    .transform((v) => Math.round(Number(v)))
-    .refine((n) => Number.isFinite(n) && n >= 1, {
-      message: "Min billable leads must be at least 1.",
-    }),
-  producingMonthsRequired: z
-    .string()
-    .trim()
-    .transform((v) => Math.round(Number(v)))
-    .refine((n) => Number.isFinite(n) && n >= 1 && n <= 3, {
-      message: "Months required must be between 1 and 3.",
-    }),
   spamScoreThreshold: z
     .string()
     .trim()
@@ -63,8 +49,6 @@ export async function updateSettings(
     defaultBillableThresholdSeconds: formData.get(
       "defaultBillableThresholdSeconds",
     ),
-    producingMinBillableLeads: formData.get("producingMinBillableLeads"),
-    producingMonthsRequired: formData.get("producingMonthsRequired"),
     spamScoreThreshold: formData.get("spamScoreThreshold"),
   });
   if (!parsed.success) {
@@ -73,13 +57,8 @@ export async function updateSettings(
       error: parsed.error.errors[0]?.message ?? "Invalid input.",
     };
   }
-  const {
-    orgTimezone,
-    defaultBillableThresholdSeconds,
-    producingMinBillableLeads,
-    producingMonthsRequired,
-    spamScoreThreshold,
-  } = parsed.data;
+  const { orgTimezone, defaultBillableThresholdSeconds, spamScoreThreshold } =
+    parsed.data;
 
   await db
     .insert(appSettings)
@@ -87,8 +66,6 @@ export async function updateSettings(
       id: 1,
       orgTimezone,
       defaultBillableThresholdSeconds,
-      producingMinBillableLeads,
-      producingMonthsRequired,
       spamScoreThreshold,
       updatedAt: new Date(),
     })
@@ -97,8 +74,6 @@ export async function updateSettings(
       set: {
         orgTimezone,
         defaultBillableThresholdSeconds,
-        producingMinBillableLeads,
-        producingMonthsRequired,
         spamScoreThreshold,
         updatedAt: new Date(),
       },

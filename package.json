@@ -15,6 +15,7 @@
     "db:seed:danger": "node --env-file=.env.local --import tsx scripts/seed.ts",
     "demo:seed": "node --env-file=.env.local --import tsx scripts/demo-data.ts seed",
     "demo:clear": "node --env-file=.env.local --import tsx scripts/demo-data.ts clear",
+    "guides:seed": "node --env-file=.env.local --import tsx scripts/seed-guides.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

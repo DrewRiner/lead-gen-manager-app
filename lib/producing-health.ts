@@ -38,6 +38,13 @@ export interface ProducingHealthInput {
   minBillableLeads: number;
   /** producing_months_required — how many of the 3 months must clear the bar. */
   monthsRequired: number;
+  /**
+   * Whether the property has EVER received a real ingested lead (from a webhook
+   * provider), at any time. A property that has never received one can't be
+   * "overstated" — it simply hasn't started — so the overstated signal is
+   * suppressed until there's real history. Defaults to true when omitted.
+   */
+  hasEverReceivedLead?: boolean;
 }
 
 export interface ProducingHealth {
@@ -116,9 +123,15 @@ export function evaluateProducingHealth(
   let signal: HealthSignal = "neutral";
   let reason: string | null = null;
 
+  // A property that has never received a real ingested lead hasn't started, so
+  // it can't be "overstated" — only a property with real history that then fell
+  // below the bar is. Defaults to true so callers that don't supply history
+  // keep the full signal.
+  const hasHistory = input.hasEverReceivedLead ?? true;
+
   if (PRODUCING_LIKE.has(status) && derivedProducing) {
     signal = "match";
-  } else if (status === "producing" && !derivedProducing) {
+  } else if (status === "producing" && !derivedProducing && hasHistory) {
     // Overstated: manually marked producing, but the lead flow doesn't back it.
     signal = "overstated";
     reason = meets30d

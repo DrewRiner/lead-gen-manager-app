@@ -38,7 +38,8 @@ import {
   getTopProperties,
 } from "@/lib/queries/metrics";
 import { getLifetimeRollup, getTrialSummary } from "@/lib/queries/lifetime";
-import { getPipelineSummary, getReviewFlags } from "@/lib/queries/pipeline";
+import { getPipelineSummary } from "@/lib/queries/pipeline";
+import { getConnectionSummary } from "@/lib/queries/connection";
 import { getAppSettings } from "@/lib/settings";
 
 export const metadata = { title: "Dashboard — LeadGen" };
@@ -95,7 +96,7 @@ async function ActivityTab({ tz }: { tz: string }) {
     dailyVolume,
     topProperties,
     pipeline,
-    reviewFlags,
+    connection,
   ] = await Promise.all([
     getRangeMetrics(today.current),
     getRangeMetrics(today.previous),
@@ -106,7 +107,7 @@ async function ActivityTab({ tz }: { tz: string }) {
     getDailyVolume(tz, chartRange),
     getTopProperties(tz, chartRange),
     getPipelineSummary(tz),
-    getReviewFlags(tz),
+    getConnectionSummary(),
   ]);
 
   const volumeByDay = new Map(dailyVolume.map((d) => [d.day, d]));
@@ -117,7 +118,17 @@ async function ActivityTab({ tz }: { tz: string }) {
 
   return (
     <div>
-      <PipelineStrip summary={pipeline} reviewCount={reviewFlags.size} />
+      <PipelineStrip summary={pipeline} />
+
+      {connection.notConnected > 0 ? (
+        <Link
+          href="/properties?connected=not_connected"
+          className="mb-4 block text-sm text-muted-foreground hover:text-foreground"
+        >
+          {connection.notConnected} propert
+          {connection.notConnected === 1 ? "y" : "ies"} not connected →
+        </Link>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <MetricCard title="Today" current={todayCur} previous={todayPrev} />

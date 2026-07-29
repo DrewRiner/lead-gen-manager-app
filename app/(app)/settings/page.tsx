@@ -92,7 +92,7 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>Organization</CardTitle>
             <CardDescription>
-              Timezone, default billing threshold, and producing-health signal.
+              Timezone, default billing threshold, and spam scoring.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -102,8 +102,6 @@ export default async function SettingsPage() {
               defaultBillableThresholdSeconds={
                 settings.defaultBillableThresholdSeconds
               }
-              producingMinBillableLeads={settings.producingMinBillableLeads}
-              producingMonthsRequired={settings.producingMonthsRequired}
               spamScoreThreshold={settings.spamScoreThreshold}
             />
           </CardContent>

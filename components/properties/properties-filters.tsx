@@ -101,6 +101,19 @@ export function PropertiesFilters({
           ))}
         </SelectContent>
       </Select>
+      <Select
+        value={params.get("connected") ?? ALL}
+        onValueChange={(v) => setParam("connected", v)}
+      >
+        <SelectTrigger className="sm:w-44">
+          <SelectValue placeholder="Connection" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>All</SelectItem>
+          <SelectItem value="connected">Connected</SelectItem>
+          <SelectItem value="not_connected">Not connected</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

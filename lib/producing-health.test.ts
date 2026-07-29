@@ -17,6 +17,7 @@ function evaluate(over: Partial<ProducingHealthInput>) {
     monthlyBillable: [0, 0, 0],
     minBillableLeads: MIN,
     monthsRequired: MONTHS_REQ,
+    hasEverReceivedLead: true, // default: has real history (tests overstated logic)
     ...over,
   });
 }
@@ -108,6 +109,29 @@ describe("evaluateProducingHealth — signal vs manual status", () => {
     expect(evaluate({ status: "building", billable30d: 1, monthlyBillable: [0, 1, 1] }).signal).toBe(
       "neutral",
     );
+  });
+
+  it("neutral: a never-live property (no ingested lead ever) is NOT overstated", () => {
+    // Producing but below the bar — however it has never received a real lead,
+    // so it just hasn't started. Suppressed until there's real history.
+    const r = evaluate({
+      status: "producing",
+      billable30d: 0,
+      monthlyBillable: [0, 0, 0],
+      hasEverReceivedLead: false,
+    });
+    expect(r.signal).toBe("neutral");
+    expect(r.reason).toBeNull();
+  });
+
+  it("still overstated once it has real history and then drops below the bar", () => {
+    const r = evaluate({
+      status: "producing",
+      billable30d: 1,
+      monthlyBillable: [4, 0, 0],
+      hasEverReceivedLead: true,
+    });
+    expect(r.signal).toBe("overstated");
   });
 
   it("neutral: rented/trial that fall short are not flagged (assignment-driven)", () => {

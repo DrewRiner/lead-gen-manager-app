@@ -19,15 +19,11 @@ export function SettingsForm({
   timezones,
   orgTimezone,
   defaultBillableThresholdSeconds,
-  producingMinBillableLeads,
-  producingMonthsRequired,
   spamScoreThreshold,
 }: {
   timezones: string[];
   orgTimezone: string;
   defaultBillableThresholdSeconds: number;
-  producingMinBillableLeads: number;
-  producingMonthsRequired: number;
   spamScoreThreshold: number;
 }) {
   const router = useRouter();
@@ -89,54 +85,6 @@ export function SettingsForm({
           Default for new properties. Each property can override its own
           threshold.
         </p>
-      </div>
-
-      <div className="space-y-3 rounded-md border p-3">
-        <div>
-          <p className="text-sm font-medium">Producing-health signal</p>
-          <p className="text-xs text-muted-foreground">
-            An advisory read on whether a property is actually producing, from
-            billable lead flow. It never changes a property&rsquo;s status — it
-            only flags mismatches for review.
-          </p>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-sm" htmlFor="producingMinBillableLeads">
-            Min billable leads
-          </Label>
-          <Input
-            id="producingMinBillableLeads"
-            name="producingMinBillableLeads"
-            type="number"
-            min={1}
-            defaultValue={producingMinBillableLeads}
-          />
-          <p className="text-xs text-muted-foreground">
-            A property counts as producing when it clears this many{" "}
-            <span className="font-medium">billable</span> leads in the trailing
-            30 days (spam, non-billable, pending, and unmatched never count).
-          </p>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-sm" htmlFor="producingMonthsRequired">
-            Months required (of last 3)
-          </Label>
-          <Input
-            id="producingMonthsRequired"
-            name="producingMonthsRequired"
-            type="number"
-            min={1}
-            max={3}
-            defaultValue={producingMonthsRequired}
-          />
-          <p className="text-xs text-muted-foreground">
-            It must also clear that bar in at least this many of the last 3
-            complete calendar months, so one lucky or slow month can&rsquo;t flip
-            the signal.
-          </p>
-        </div>
       </div>
 
       <div className="space-y-1.5 rounded-md border p-3">

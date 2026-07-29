@@ -6,9 +6,9 @@ import {
   qualifiedByEnum,
 } from "@/lib/db/schema";
 import { toMoneyString } from "@/lib/money";
+import { classifyFormQuality } from "@/lib/billing/form-quality";
 import {
   scoreFormLead,
-  spamReason,
   type SpamDeps,
   type SpamResult,
   type SpamScoreInput,

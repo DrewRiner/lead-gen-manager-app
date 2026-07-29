@@ -1,18 +1,11 @@
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
 
 import { formatNumber } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import type { PipelineSummary } from "@/lib/queries/pipeline";
 import { cn } from "@/lib/utils";
 
-export function PipelineStrip({
-  summary,
-  reviewCount,
-}: {
-  summary: PipelineSummary;
-  reviewCount: number;
-}) {
+export function PipelineStrip({ summary }: { summary: PipelineSummary }) {
   const { counts } = summary;
 
   return (
@@ -56,18 +49,6 @@ export function PipelineStrip({
           lines={[`${formatCurrency(summary.rentedMonthlyRevenue)} / mo now`]}
         />
       </div>
-
-      {reviewCount > 0 ? (
-        <Link
-          href="/properties?review=1"
-          className="inline-flex items-center gap-1.5 text-xs text-amber-700 hover:underline dark:text-amber-400"
-        >
-          <AlertTriangle className="h-3.5 w-3.5" />
-          {formatNumber(reviewCount)}{" "}
-          {reviewCount === 1 ? "property needs" : "properties need"} a status
-          review
-        </Link>
-      ) : null}
     </div>
   );
 }

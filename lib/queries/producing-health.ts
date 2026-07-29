@@ -1,4 +1,4 @@
-import { and, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 
 import {
   localMonthExpr,
@@ -23,6 +23,24 @@ import {
 
 /** COUNT of billable leads. */
 const aggBillable = sql<number>`(count(*) filter (where ${leads.billableStatus} = 'billable'))::int`;
+
+/** Webhook-ingested lead sources. A property with none of these has never gone live. */
+const INGESTED_SOURCES = ["ghl", "callrail", "twilio"];
+
+/** Property ids that have EVER received a real ingested (webhook) lead. */
+async function loadPropertiesWithLeadHistory(): Promise<Set<string>> {
+  const rows = await db
+    .selectDistinct({ propertyId: leads.propertyId })
+    .from(leads)
+    .where(
+      and(
+        isNull(leads.deletedAt),
+        isNotNull(leads.propertyId),
+        inArray(leads.sourceSystem, INGESTED_SOURCES),
+      ),
+    );
+  return new Set(rows.flatMap((r) => (r.propertyId ? [r.propertyId] : [])));
+}
 
 export interface ProducingHealthThresholds {
   minBillableLeads: number;
@@ -65,7 +83,7 @@ export async function getProducingHealthMap(
   const dayRange = trailingDayRange(tz, 30);
   const monthExpr = localMonthExpr(tz, leads.occurredAt);
 
-  const [props, day30, monthly] = await Promise.all([
+  const [props, day30, monthly, withHistory] = await Promise.all([
     db
       .select({ id: properties.id, status: properties.status })
       .from(properties)
@@ -98,6 +116,7 @@ export async function getProducingHealthMap(
         ),
       )
       .groupBy(leads.propertyId, monthExpr),
+    loadPropertiesWithLeadHistory(),
   ]);
 
   const day30ByProperty = new Map(day30.map((r) => [r.propertyId, r.billable]));
@@ -124,6 +143,7 @@ export async function getProducingHealthMap(
       monthlyBillable,
       minBillableLeads: thresholds.minBillableLeads,
       monthsRequired: thresholds.monthsRequired,
+      hasEverReceivedLead: withHistory.has(p.id),
     });
     map.set(p.id, { billable30d, monthlyBillable, health });
   }
@@ -155,7 +175,7 @@ export async function getPropertyProducingHealth(
   const dayRange = trailingDayRange(tz, 30);
   const monthExpr = localMonthExpr(tz, leads.occurredAt);
 
-  const [propRow, day30, monthly] = await Promise.all([
+  const [propRow, day30, monthly, historyRow] = await Promise.all([
     db
       .select({ status: properties.status })
       .from(properties)
@@ -187,6 +207,17 @@ export async function getPropertyProducingHealth(
         ),
       )
       .groupBy(monthExpr),
+    db
+      .select({ id: leads.id })
+      .from(leads)
+      .where(
+        and(
+          isNull(leads.deletedAt),
+          eq(leads.propertyId, propertyId),
+          inArray(leads.sourceSystem, INGESTED_SOURCES),
+        ),
+      )
+      .limit(1),
   ]);
 
   if (propRow.length === 0) return null;
@@ -200,6 +231,7 @@ export async function getPropertyProducingHealth(
     monthlyBillable,
     minBillableLeads: thresholds.minBillableLeads,
     monthsRequired: thresholds.monthsRequired,
+    hasEverReceivedLead: historyRow.length > 0,
   });
 
   return {

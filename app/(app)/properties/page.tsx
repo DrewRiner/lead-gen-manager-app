@@ -5,6 +5,7 @@ import { and, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 import { PageHeader } from "@/components/page-header";
 import { PropertiesFilters } from "@/components/properties/properties-filters";
 import { PropertyDialog } from "@/components/properties/property-dialog";
+import { ConnectionDot } from "@/components/properties/connection-dot";
 import { PropertyRowActions } from "@/components/properties/property-row-actions";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency, toMoneyNumber } from "@/lib/money";
 import { getPropertyLifetimeMap } from "@/lib/queries/assignments";
 import { getPropertyRangeCounts } from "@/lib/queries/metrics";
-import { getReviewFlags } from "@/lib/queries/pipeline";
+import { isConnected } from "@/lib/connection";
 import { getAppSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,6 @@ export default async function PropertiesPage({
 }) {
   const sp = await searchParams;
   const { orgTimezone: tz } = await getAppSettings();
-  const review = sp.review === "1";
 
   const conds: SQL[] = [isNull(properties.deletedAt)];
   if (sp.q) {
@@ -66,7 +66,7 @@ export default async function PropertiesPage({
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
 
-  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, reviewFlags] =
+  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap] =
     await Promise.all([
       db
         .select({ property: properties, clientName: clients.businessName })
@@ -85,7 +85,6 @@ export default async function PropertiesPage({
         .orderBy(properties.niche),
       getPropertyRangeCounts(trailingDayRange(tz, 30)),
       getPropertyLifetimeMap(tz),
-      getReviewFlags(tz),
     ]);
 
   const niches = nicheRows.map((n) => n.niche).filter((n): n is string => !!n);
@@ -114,7 +113,11 @@ export default async function PropertiesPage({
   const sortDir: "asc" | "desc" = sp.dir === "asc" ? "asc" : "desc";
 
   let rows = [...rowsRaw];
-  if (review) rows = rows.filter((r) => reviewFlags.has(r.property.id));
+  // Connection filter (derived; no SQL column): can a form route here now?
+  if (sp.connected === "connected" || sp.connected === "not_connected") {
+    const want = sp.connected === "connected";
+    rows = rows.filter((r) => isConnected(r.property) === want);
+  }
   rows.sort((a, b) => {
     const av = val(a.property.id, a.property, sortKey);
     const bv = val(b.property.id, b.property, sortKey);
@@ -152,19 +155,9 @@ export default async function PropertiesPage({
         />
       </PageHeader>
 
-      {review ? (
-        <div className="mb-4 flex items-center gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
-          Showing {formatNumber(rows.length)} propert
-          {rows.length === 1 ? "y" : "ies"} that need a status review.
-          <Link href="/properties" className="ml-auto font-medium underline">
-            Clear
-          </Link>
-        </div>
-      ) : (
-        <div className="mb-4">
-          <PropertiesFilters niches={niches} clients={clientList} />
-        </div>
-      )}
+      <div className="mb-4">
+        <PropertiesFilters niches={niches} clients={clientList} />
+      </div>
 
       <div className="rounded-lg border">
         <div className="overflow-x-auto">
@@ -189,21 +182,21 @@ export default async function PropertiesPage({
               {rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
-                    {review
-                      ? "No properties need a status review."
-                      : "No properties match these filters."}
+                    No properties match these filters.
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map(({ property: p, clientName }) => {
                   const count = counts.get(p.id);
-                  const flag = reviewFlags.get(p.id);
                   return (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">
-                        <Link href={`/properties/${p.id}`} className="hover:underline">
-                          {p.name}
-                        </Link>
+                        <span className="flex items-center gap-2">
+                          <ConnectionDot property={p} />
+                          <Link href={`/properties/${p.id}`} className="hover:underline">
+                            {p.name}
+                          </Link>
+                        </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{p.domain ?? "—"}</TableCell>
                       <TableCell className="capitalize text-muted-foreground">{p.niche ?? "—"}</TableCell>
@@ -211,17 +204,7 @@ export default async function PropertiesPage({
                         {[p.city, p.state].filter(Boolean).join(", ") || "—"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col items-start gap-1">
-                          <StatusBadge status={p.status} />
-                          {flag ? (
-                            <span
-                              title={flag.reason}
-                              className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                            >
-                              {flag.badge}
-                            </span>
-                          ) : null}
-                        </div>
+                        <StatusBadge status={p.status} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">{clientName ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">

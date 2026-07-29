@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
 import { ChangeRateDialog } from "@/components/properties/change-rate-dialog";
-import { ProducingHealthCard } from "@/components/properties/producing-health-card";
+import { ConnectionDot } from "@/components/properties/connection-dot";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
 import { StartTrialDialog } from "@/components/properties/start-trial-dialog";
@@ -52,7 +52,6 @@ import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
-import { getPropertyProducingHealth } from "@/lib/queries/producing-health";
 import { getPropertyMonthlySeries, getRangeMetrics } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
 import { TabLink, TabNav } from "@/components/tab-link";
@@ -78,12 +77,7 @@ export default async function PropertyDetailPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const settings = await getAppSettings();
-  const tz = settings.orgTimezone;
-  const producingThresholds = {
-    minBillableLeads: settings.producingMinBillableLeads,
-    monthsRequired: settings.producingMonthsRequired,
-  };
+  const { orgTimezone: tz } = await getAppSettings();
   const tab = sp.tab === "lifetime" ? "lifetime" : "activity";
 
   const [row] = await db
@@ -206,7 +200,15 @@ export default async function PropertyDetailPage({
         <ArrowLeft className="mr-1 h-4 w-4" /> Properties
       </Link>
 
-      <PageHeader title={p.name} description={p.domain ?? undefined}>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            <ConnectionDot property={p} className="h-3 w-3" />
+            {p.name}
+          </span>
+        }
+        description={p.domain ?? undefined}
+      >
         <PropertyDialog
           mode="edit"
           property={editValue}
@@ -339,7 +341,6 @@ export default async function PropertyDetailPage({
           tz={tz}
           sp={sp}
           totalLeadCount={totalLeadCount}
-          producingThresholds={producingThresholds}
         />
       ) : (
         <LifetimeTab propertyId={id} property={p} tz={tz} />
@@ -358,14 +359,12 @@ async function ActivityTab({
   tz,
   sp,
   totalLeadCount,
-  producingThresholds,
 }: {
   propertyId: string;
   property: typeof properties.$inferSelect;
   tz: string;
   sp: Record<string, string | undefined>;
   totalLeadCount: number;
-  producingThresholds: { minBillableLeads: number; monthsRequired: number };
 }) {
   const page = Math.max(1, Number(sp.page) || 1);
   const dayW = comparativeCalendarWindow("day", tz);
@@ -395,7 +394,6 @@ async function ActivityTab({
     monthPrev,
     leadsPage,
     typeCounts,
-    producingHealth,
   ] = await Promise.all([
     getRangeMetrics(dayW.current, opts),
     getRangeMetrics(dayW.previous, opts),
@@ -405,7 +403,6 @@ async function ActivityTab({
     getRangeMetrics(monthW.previous, opts),
     getLeads(tz, leadFilters, page, 25),
     getLeadTypeCounts(tz, leadFilters),
-    getPropertyProducingHealth(tz, propertyId, producingThresholds),
   ]);
 
   return (
@@ -430,8 +427,6 @@ async function ActivityTab({
           previous={monthPrev}
         />
       </div>
-
-      {producingHealth ? <ProducingHealthCard detail={producingHealth} /> : null}
 
       <Card>
         <CardHeader>

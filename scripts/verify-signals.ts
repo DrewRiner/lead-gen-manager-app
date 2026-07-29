@@ -13,6 +13,7 @@ import { db } from "@/lib/db";
 import { appSettings, properties } from "@/lib/db/schema";
 import { computeRoutingStatuses } from "@/lib/routing-status";
 import { getProducingHealthMap } from "@/lib/queries/producing-health";
+import { isConnected } from "@/lib/connection";
 
 async function main() {
   // Org timezone — select ONLY this column so the not-yet-migrated producing_*
@@ -31,6 +32,7 @@ async function main() {
       status: properties.status,
       ghlLeadSource: properties.ghlLeadSource,
       ghlFormId: properties.ghlFormId,
+      trackingPhone: properties.trackingPhone,
       domain: properties.domain,
     })
     .from(properties)
@@ -58,7 +60,19 @@ async function main() {
     console.log(`  [${s.toUpperCase().padEnd(9)}] ${p.name} — lead_source ${src}`);
   }
 
-  // -- Producing-health verification ----------------------------------------
+  // -- Connection verification -----------------------------------------------
+  const connected: string[] = [];
+  const notConnected: string[] = [];
+  for (const p of props) {
+    if (isConnected(p)) connected.push(p.name);
+    else notConnected.push(p.name);
+  }
+  console.log(`\n=== CONNECTION (forms only) ===`);
+  console.log(`Connected (green): ${connected.length}  |  Not connected (red): ${notConnected.length}`);
+  for (const n of connected) console.log(`  [GREEN] ${n}`);
+  for (const n of notConnected) console.log(`  [RED  ] ${n}`);
+
+  // -- Producing-health verification (removed from UI; script only) ---------
   const health = await getProducingHealthMap(tz, {
     minBillableLeads: 4,
     monthsRequired: 2,

@@ -76,6 +76,8 @@ export const qualifiedByEnum = pgEnum("qualified_by", [
   "ai",
   // Automated non-AI spam scorer flagged the lead (lib/spam/score-form-lead.ts).
   "spam_rule",
+  // Form leads: contact-info + quality validation (lib/billing/form-quality.ts).
+  "form_validation",
 ]);
 
 export const deliveryStatusEnum = pgEnum("delivery_status", [
@@ -391,6 +393,66 @@ export const webhookEvents = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// guides — in-app how-to guides, authored in a block editor. Media lives in the
+// Supabase Storage "guide-media" bucket; blocks reference public URLs.
+// ---------------------------------------------------------------------------
+
+export const guideStatusEnum = pgEnum("guide_status", ["draft", "published"]);
+
+export const guideBlockTypeEnum = pgEnum("guide_block_type", [
+  "heading",
+  "text",
+  "image",
+  "video",
+  "embed",
+]);
+
+export const guides = pgTable(
+  "guides",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    // Auto-derived from the title, unique among live guides.
+    slug: text("slug").notNull(),
+    category: text("category"),
+    summary: text("summary"),
+    status: guideStatusEnum("status").notNull().default("draft"),
+    // Manual ordering within a category on the index.
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: uuid("created_by").references(() => profiles.id, {
+      onDelete: "set null",
+    }),
+    createdAt,
+    updatedAt,
+    deletedAt,
+  },
+  (t) => [
+    // Slug unique among non-deleted guides (soft-deletes free the slug).
+    uniqueIndex("guides_slug_uniq")
+      .on(t.slug)
+      .where(sql`${t.deletedAt} is null`),
+    index("guides_status_idx").on(t.status),
+  ],
+);
+
+export const guideBlocks = pgTable(
+  "guide_blocks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    guideId: uuid("guide_id")
+      .notNull()
+      .references(() => guides.id, { onDelete: "cascade" }),
+    type: guideBlockTypeEnum("type").notNull(),
+    // Shape depends on type (heading/text/image/video/embed); see lib/guides.
+    content: jsonb("content").notNull(),
+    position: integer("position").notNull().default(0),
+    createdAt,
+    updatedAt,
+  },
+  (t) => [index("guide_blocks_guide_id_position_idx").on(t.guideId, t.position)],
+);
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 
@@ -406,3 +468,7 @@ export type PropertyAssignment = typeof propertyAssignments.$inferSelect;
 export type NewPropertyAssignment = typeof propertyAssignments.$inferInsert;
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type NewWebhookEvent = typeof webhookEvents.$inferInsert;
+export type Guide = typeof guides.$inferSelect;
+export type NewGuide = typeof guides.$inferInsert;
+export type GuideBlock = typeof guideBlocks.$inferSelect;
+export type NewGuideBlock = typeof guideBlocks.$inferInsert;
