@@ -35,10 +35,11 @@ export function secretMatches(
 }
 
 /**
- * Verify CallRail's HMAC-SHA256 signature over the RAW request body using
- * CALLRAIL_WEBHOOK_SECRET. CallRail's docs don't pin the digest encoding, so we
- * accept both hex and base64 and compare constant-time. Returns false on any
- * missing input.
+ * Verify CallRail's HMAC-SHA256 signature over the RAW request body. NOTE: only
+ * CallRail's higher tiers sign webhooks; our plan can't, so the CallRail
+ * endpoint authenticates via a ?secret= URL query param instead (see the
+ * route). This helper is kept for the signed-webhook path if we ever upgrade.
+ * Accepts hex or base64 digests; constant-time; false on any missing input.
  */
 export function callrailSignatureValid(
   rawBody: string,

@@ -10,9 +10,8 @@ import {
 } from "@/lib/ingestion/adapters/callrail";
 import { ingestCanonicalLead } from "@/lib/ingestion/ingest";
 import {
-  CALLRAIL_SIGNATURE_HEADER,
-  callrailSignatureValid,
   headersToObject,
+  secretMatches,
   signatureVerificationEnabled,
 } from "@/lib/ingestion/webhook-auth";
 
@@ -49,13 +48,15 @@ export async function POST(req: Request): Promise<Response> {
     .returning({ id: webhookEvents.id });
   const eventId = event.id;
 
-  // -- 2. Verify CallRail's HMAC signature (unless disabled in dev) -----------
+  // -- 2. Authenticate via the ?secret= URL query param -----------------------
+  // CallRail on our plan can't sign request headers (that's a higher tier), so
+  // we authenticate with a shared secret on the webhook URL itself, compared
+  // constant-time against CALLRAIL_WEBHOOK_SECRET. The raw event is already
+  // logged above, so a rejected request still leaves a trace.
   const verify = signatureVerificationEnabled();
-  const provided = req.headers.get(CALLRAIL_SIGNATURE_HEADER);
+  const provided = new URL(req.url).searchParams.get("secret");
   const secret = process.env.CALLRAIL_WEBHOOK_SECRET ?? null;
-  const authValid = verify
-    ? callrailSignatureValid(rawText, provided, secret)
-    : true;
+  const authValid = verify ? secretMatches(provided, secret) : true;
 
   await db
     .update(webhookEvents)
@@ -65,10 +66,10 @@ export async function POST(req: Request): Promise<Response> {
   if (verify && !authValid) {
     await db
       .update(webhookEvents)
-      .set({ error: secret ? "invalid_signature" : "no_secret_configured" })
+      .set({ error: secret ? "invalid_secret" : "no_secret_configured" })
       .where(eq(webhookEvents.id, eventId));
     return NextResponse.json(
-      { ok: false, error: "invalid_signature" },
+      { ok: false, error: "invalid_secret" },
       { status: 401 },
     );
   }

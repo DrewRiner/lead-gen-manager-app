@@ -182,7 +182,9 @@ export async function ingestCanonicalLead(
         .values(values)
         .onConflictDoUpdate({
           target: [leads.sourceSystem, leads.externalId],
-          where: sql`${leads.externalId} is not null`,
+          // Partial unique index predicate — must be targetWhere (NOT where,
+          // which onConflictDoUpdate ignores) so ON CONFLICT matches the index.
+          targetWhere: sql`${leads.externalId} is not null`,
           set: {
             recordingUrl: sql`coalesce(excluded.recording_url, ${leads.recordingUrl})`,
             transcript: sql`coalesce(excluded.transcript, ${leads.transcript})`,
