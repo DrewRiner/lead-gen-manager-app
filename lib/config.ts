@@ -9,3 +9,13 @@ export const DEVELOPER = {
   name: "Engine Evolve",
   url: "https://engineevolve.com",
 } as const;
+
+/**
+ * The white-labeled platform our team uses to run forms and automations. It is
+ * GoHighLevel underneath, but the team only ever sees the Engine Evolve brand —
+ * guides and any platform-facing copy reference this, never "GoHighLevel"/"GHL".
+ */
+export const PLATFORM = {
+  name: "Engine Evolve",
+  url: "https://app.enginevolve.com",
+} as const;

@@ -50,6 +50,7 @@ export interface LeadListRow {
   estimatedValue: string;
   deliveryStatus: string;
   sourceSystem: string;
+  externalId: string | null;
   // GoHighLevel ingestion context (null for manual leads).
   ghlLeadSourceRaw: string | null;
   pageUrl: string | null;
@@ -131,6 +132,7 @@ export async function getLeads(
         estimatedValue: leads.estimatedValue,
         deliveryStatus: leads.deliveryStatus,
         sourceSystem: leads.sourceSystem,
+        externalId: leads.externalId,
         ghlLeadSourceRaw: leads.ghlLeadSourceRaw,
         pageUrl: leads.pageUrl,
         formName: leads.formName,

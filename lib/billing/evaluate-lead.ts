@@ -27,9 +27,14 @@ export type LeadType = (typeof leadTypeEnum.enumValues)[number];
 export type LeadSource = (typeof leadSourceEnum.enumValues)[number];
 export type QualifiedBy = (typeof qualifiedByEnum.enumValues)[number];
 
-/** Reasons the engine can attach to a decision. */
+/** Reasons the engine can attach to a decision (raw; mapped to plain language in the UI). */
 export const BILLABLE_REASON = {
-  FORM_LEAD: "form_lead",
+  // Form path (never shares logic with calls).
+  VALID_CONTACT: "valid_contact",
+  NO_CONTACT: "no_contact_info",
+  LOW_QUALITY: "low_quality",
+  SPAM: "spam_detected",
+  // Call path.
   DURATION_MET_THRESHOLD: "duration_met_threshold",
   DURATION_UNDER_THRESHOLD: "duration_under_threshold",
   MISSING_DURATION: "missing_duration",
@@ -38,6 +43,17 @@ export const BILLABLE_REASON = {
 export interface EvaluateLeadInput {
   type: LeadType;
   callDurationSeconds: number | null;
+  /**
+   * Form contact fields. When present, the form path validates contact info and
+   * screens for low-quality/junk. Omit for seed/demo (legacy: billable).
+   */
+  form?: {
+    email: string | null;
+    phone: string | null;
+    name: string | null;
+    message: string | null;
+    hasFormAnswers: boolean;
+  };
 }
 
 export interface EvaluateLeadProperty {
@@ -78,13 +94,17 @@ function chargesPerLead(billingType: BillingType): boolean {
 }
 
 /**
- * Evaluate a single lead against its property's billing config.
+ * Evaluate a single lead against its property's billing config. Branches at the
+ * TOP by lead type — forms and calls NEVER share qualification logic.
  *
- * Phase 1 implements only the duration rule:
- * - Form leads are always billable.
- * - Call leads are billable when duration >= the property's threshold.
- * - Call leads under the threshold are not billable.
- * - Call leads with no duration go to pending_review.
+ * Form leads (qualified_by = 'form_validation'):
+ *  - spam (when scored)            -> 'spam', reason 'spam_detected'
+ *  - no valid email/phone          -> not_billable, reason 'no_contact_info'
+ *  - two+ junk/test signals        -> not_billable, reason 'low_quality'
+ *  - otherwise                     -> billable, reason 'valid_contact'
+ *
+ * Call leads (qualified_by = 'duration_rule'):
+ *  - duration >= threshold -> billable; under -> not_billable; missing -> pending.
  *
  * estimated_value is recorded on every billable lead regardless of billing
  * type — a flat_monthly property still books market value with $0 billed.
@@ -94,47 +114,64 @@ export async function evaluateLead(
   property: EvaluateLeadProperty,
   spam?: EvaluateLeadSpamContext,
 ): Promise<EvaluateLeadResult> {
-  // -- Form leads ----------------------------------------------------------
+  // ========================================================================
+  // FORM PATH — dedicated. Never returns qualified_by 'duration_rule'.
+  // ========================================================================
   if (lead.type === "form") {
-    // Optional spam scoring. Flagged => 'spam', but still saved with zero value
-    // so it stays reviewable (never a hard block). Conservative by design.
+    const formBillable = (): EvaluateLeadResult => ({
+      billableStatus: "billable",
+      billableReason: BILLABLE_REASON.VALID_CONTACT,
+      qualifiedBy: "form_validation",
+      billedAmount: chargesPerLead(property.billingType)
+        ? toMoneyString(property.perLeadFormRate)
+        : "0.00",
+      estimatedValue: toMoneyString(property.estimatedFormValue),
+    });
+
+    // Spam (when scored): flagged => 'spam', still saved with zero value so it
+    // stays reviewable. Never a hard block.
     if (spam) {
       const result = await scoreFormLead(spam.input, spam.deps);
       if (result.isSpam) {
         return {
           billableStatus: "spam",
-          billableReason: spamReason(result),
-          qualifiedBy: "spam_rule",
+          billableReason: BILLABLE_REASON.SPAM,
+          qualifiedBy: "form_validation",
           billedAmount: "0.00",
           estimatedValue: "0.00",
           spam: result,
         };
       }
-      // Not spam: fall through to the normal billable-form decision, but keep
-      // the score for telemetry.
-      return {
-        billableStatus: "billable",
-        billableReason: BILLABLE_REASON.FORM_LEAD,
-        qualifiedBy: "duration_rule",
-        billedAmount: chargesPerLead(property.billingType)
-          ? toMoneyString(property.perLeadFormRate)
-          : "0.00",
-        estimatedValue: toMoneyString(property.estimatedFormValue),
-        spam: result,
-      };
     }
-    return {
-      billableStatus: "billable",
-      billableReason: BILLABLE_REASON.FORM_LEAD,
-      qualifiedBy: "duration_rule",
-      billedAmount: chargesPerLead(property.billingType)
-        ? toMoneyString(property.perLeadFormRate)
-        : "0.00",
-      estimatedValue: toMoneyString(property.estimatedFormValue),
-    };
+
+    // Contact + quality validation (pure). Omitted for seed/demo -> billable.
+    if (lead.form) {
+      const quality = classifyFormQuality(lead.form);
+      if (!quality.hasContact) {
+        return {
+          billableStatus: "not_billable",
+          billableReason: BILLABLE_REASON.NO_CONTACT,
+          qualifiedBy: "form_validation",
+          billedAmount: "0.00",
+          estimatedValue: "0.00",
+        };
+      }
+      if (quality.lowQuality) {
+        return {
+          billableStatus: "not_billable",
+          billableReason: BILLABLE_REASON.LOW_QUALITY,
+          qualifiedBy: "form_validation",
+          billedAmount: "0.00",
+          estimatedValue: "0.00",
+        };
+      }
+    }
+    return formBillable();
   }
 
-  // -- Call leads ----------------------------------------------------------
+  // ========================================================================
+  // CALL PATH — dedicated. Never uses form validation.
+  // ========================================================================
   const duration = lead.callDurationSeconds;
 
   // Missing duration -> can't apply the rule yet.

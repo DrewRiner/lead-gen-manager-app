@@ -70,7 +70,20 @@ export async function ingestCanonicalLead(
           }
         : undefined;
     const decision = await evaluateLead(
-      { type: lead.type, callDurationSeconds: null },
+      {
+        type: lead.type,
+        callDurationSeconds: null,
+        form:
+          lead.type === "form"
+            ? {
+                email: lead.email,
+                phone: lead.phone,
+                name: lead.fullName,
+                message: lead.message,
+                hasFormAnswers: !!lead.formAnswers,
+              }
+            : undefined,
+      },
       {
         billingType: property.billingType,
         perLeadCallRate: property.perLeadCallRate,

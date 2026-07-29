@@ -4,11 +4,8 @@ import Link from "next/link";
 import { ChevronDown, ChevronRight, FileText, Phone } from "lucide-react";
 import { Fragment, useState } from "react";
 
-import { AssignLeadDialog } from "@/components/leads/assign-lead-dialog";
-import { LeadOverrideDialog } from "@/components/leads/lead-override-dialog";
-import { NotSpamButton } from "@/components/leads/not-spam-button";
+import { LeadDetailPanel } from "@/components/leads/lead-detail-panel";
 import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -18,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { LeadListRow } from "@/lib/queries/leads";
-import { formatDuration, titleCase } from "@/lib/format";
+import { formatDuration } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 
@@ -57,7 +54,7 @@ export function LeadsTable({
             <TableHead>Date</TableHead>
             {hideProperty ? null : <TableHead>Property</TableHead>}
             <TableHead>Type</TableHead>
-            <TableHead>Caller</TableHead>
+            <TableHead>Lead</TableHead>
             <TableHead className="text-right">Duration</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Billed</TableHead>
@@ -140,120 +137,9 @@ export function LeadsTable({
                     </TableCell>
                   </TableRow>
                   {isOpen ? (
-                    <TableRow className="bg-muted/30">
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
                       <TableCell colSpan={colCount + 1}>
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-3 p-2 text-sm md:grid-cols-4">
-                          <Detail label="Source">{titleCase(r.source)}</Detail>
-                          <Detail label="Delivery">
-                            <StatusBadge status={r.deliveryStatus} />
-                          </Detail>
-                          <Detail label="Qualified by">
-                            {r.qualifiedBy ? titleCase(r.qualifiedBy) : "—"}
-                          </Detail>
-                          <Detail label="Source system">
-                            {r.sourceSystem}
-                          </Detail>
-                          <Detail label="Caller phone">
-                            {formatPhone(r.callerPhone)}
-                          </Detail>
-                          <Detail label="Caller email">
-                            {r.callerEmail ?? "—"}
-                          </Detail>
-                          <Detail label="Client">
-                            {r.clientName ?? "—"}
-                          </Detail>
-                          <Detail label="Billable reason">
-                            {r.billableReason ?? "—"}
-                          </Detail>
-                          {r.ghlLeadSourceRaw ? (
-                            <Detail label="Lead source (raw)">
-                              <span className="font-mono text-xs">
-                                {r.ghlLeadSourceRaw}
-                              </span>
-                            </Detail>
-                          ) : null}
-                          {r.formName ? (
-                            <Detail label="Form">{r.formName}</Detail>
-                          ) : null}
-                          {r.pageUrl ? (
-                            <div className="col-span-2 md:col-span-4">
-                              <Detail label="Page URL">
-                                <span className="break-all font-mono text-xs">
-                                  {r.pageUrl}
-                                </span>
-                              </Detail>
-                            </div>
-                          ) : null}
-                          {r.formAnswers && Object.keys(r.formAnswers).length > 0 ? (
-                            <div className="col-span-2 md:col-span-4">
-                              <Detail label="Form answers">
-                                <dl className="space-y-1">
-                                  {Object.entries(r.formAnswers).map(([label, value]) => (
-                                    <div key={label} className="flex gap-2">
-                                      <dt className="shrink-0 text-muted-foreground">
-                                        {label}:
-                                      </dt>
-                                      <dd className="break-words font-medium">{value}</dd>
-                                    </div>
-                                  ))}
-                                </dl>
-                              </Detail>
-                            </div>
-                          ) : (
-                            <div className="col-span-2 md:col-span-4">
-                              <Detail label="Message">
-                                {r.message ?? "—"}
-                              </Detail>
-                            </div>
-                          )}
-                          {r.recordingUrl ? (
-                            <div className="col-span-2 md:col-span-4">
-                              <Detail label="Recording">
-                                <a
-                                  href={r.recordingUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-primary hover:underline"
-                                >
-                                  {r.recordingUrl}
-                                </a>
-                              </Detail>
-                            </div>
-                          ) : null}
-                          <div className="col-span-2 flex flex-wrap items-end gap-2 md:col-span-4">
-                            {r.propertyId == null ? (
-                              <AssignLeadDialog
-                                leadId={r.id}
-                                leadSourceRaw={r.ghlLeadSourceRaw}
-                                properties={properties}
-                                trigger={
-                                  <Button
-                                    size="sm"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    Assign to property
-                                  </Button>
-                                }
-                              />
-                            ) : null}
-                            {r.billableStatus === "spam" ? (
-                              <NotSpamButton leadId={r.id} />
-                            ) : null}
-                            <LeadOverrideDialog
-                              leadId={r.id}
-                              current={r.billableStatus}
-                              trigger={
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  Override billable status
-                                </Button>
-                              }
-                            />
-                          </div>
-                        </div>
+                        <LeadDetailPanel row={r} tz={tz} properties={properties} />
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -263,23 +149,6 @@ export function LeadsTable({
           )}
         </TableBody>
       </Table>
-    </div>
-  );
-}
-
-function Detail({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-0.5">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <div className="font-medium">{children}</div>
     </div>
   );
 }

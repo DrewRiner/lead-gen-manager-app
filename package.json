@@ -16,6 +16,8 @@
     "demo:seed": "node --env-file=.env.local --import tsx scripts/demo-data.ts seed",
     "demo:clear": "node --env-file=.env.local --import tsx scripts/demo-data.ts clear",
     "guides:seed": "node --env-file=.env.local --import tsx scripts/seed-guides.ts",
+    "backfill:form-qual": "node --env-file=.env.local --import tsx scripts/backfill-form-qualification.ts",
+    "verify:form-qual": "node --env-file=.env.local --import tsx scripts/verify-form-qual.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
