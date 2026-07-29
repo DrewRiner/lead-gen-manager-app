@@ -23,6 +23,7 @@ import {
   computeRoutingStatuses,
   type RoutingStatus,
 } from "@/lib/routing-status";
+import { formatPhone } from "@/lib/phone";
 import type {
   PropertyLeadSourceRow,
   UnmatchedLeadRow,
@@ -32,6 +33,7 @@ import { cn } from "@/lib/utils";
 
 export function WebhooksPanel({
   webhookUrl,
+  callrailUrl,
   secret,
   leadSources,
   unmatchedLeads,
@@ -39,6 +41,7 @@ export function WebhooksPanel({
   tz,
 }: {
   webhookUrl: string;
+  callrailUrl: string;
   secret: string | null;
   leadSources: PropertyLeadSourceRow[];
   unmatchedLeads: UnmatchedLeadRow[];
@@ -79,10 +82,17 @@ export function WebhooksPanel({
       {/* Endpoint + secret */}
       <div className="space-y-4">
         <Labeled
-          label="Endpoint URL"
+          label="Form endpoint URL"
           hint={`Point the ${PLATFORM.name} workflow's webhook action here (POST).`}
         >
           <CopyRow value={webhookUrl} mono />
+        </Labeled>
+
+        <Labeled
+          label="CallRail endpoint URL"
+          hint="Add this as a CallRail webhook (post_call and call_modified). Signed with CALLRAIL_WEBHOOK_SECRET."
+        >
+          <CopyRow value={callrailUrl} mono />
         </Labeled>
 
         <Labeled
@@ -118,7 +128,10 @@ export function WebhooksPanel({
         <p className="mb-3 text-xs text-muted-foreground">
           This is exactly what each {PLATFORM.name} form must send in its{" "}
           <strong>Lead Source</strong> hidden field. Copy the value and paste it
-          into the matching form. Matching is case-insensitive and trimmed.
+          into the matching form. Matching is case-insensitive and trimmed.{" "}
+          Calls route by the property&rsquo;s <strong>tracking number</strong>{" "}
+          instead — a property in red has no tracking number and can&rsquo;t
+          receive CallRail calls.
         </p>
         <div className="overflow-x-auto rounded-lg border">
           <Table>
@@ -127,6 +140,7 @@ export function WebhooksPanel({
                 <TableHead>Status</TableHead>
                 <TableHead>Property</TableHead>
                 <TableHead>Lead Source</TableHead>
+                <TableHead>Tracking number</TableHead>
                 <TableHead>Short code</TableHead>
                 <TableHead>Form ID</TableHead>
                 <TableHead>Domain</TableHead>
@@ -147,6 +161,17 @@ export function WebhooksPanel({
                     ) : (
                       <span className="text-xs font-medium text-red-600 dark:text-red-400">
                         not set
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {p.trackingPhone ? (
+                      <span className="font-mono text-xs">
+                        {formatPhone(p.trackingPhone)}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                        no tracking #
                       </span>
                     )}
                   </TableCell>

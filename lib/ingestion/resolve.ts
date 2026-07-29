@@ -17,7 +17,10 @@ export {
 
 /** Load all live properties as candidates and match the lead against them. */
 export async function resolveProperty(
-  lead: Pick<CanonicalLead, "leadSourceRaw" | "ghlFormId" | "pageUrl">,
+  lead: Pick<
+    CanonicalLead,
+    "type" | "leadSourceRaw" | "ghlFormId" | "pageUrl" | "trackingPhone"
+  >,
 ): Promise<PropertyMatch | null> {
   const candidates = await db
     .select({
@@ -27,6 +30,7 @@ export async function resolveProperty(
       shortCode: properties.shortCode,
       ghlFormId: properties.ghlFormId,
       domain: properties.domain,
+      trackingPhone: properties.trackingPhone,
       billingType: properties.billingType,
       perLeadCallRate: properties.perLeadCallRate,
       perLeadFormRate: properties.perLeadFormRate,

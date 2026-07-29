@@ -43,6 +43,9 @@ export interface LeadListRow {
   message: string | null;
   callDurationSeconds: number | null;
   recordingUrl: string | null;
+  callAnswered: boolean | null;
+  isRepeatCaller: boolean | null;
+  transcript: string | null;
   billableStatus: string;
   billableReason: string | null;
   qualifiedBy: string | null;
@@ -125,6 +128,9 @@ export async function getLeads(
         message: leads.message,
         callDurationSeconds: leads.callDurationSeconds,
         recordingUrl: leads.recordingUrl,
+        callAnswered: leads.callAnswered,
+        isRepeatCaller: leads.isRepeatCaller,
+        transcript: leads.transcript,
         billableStatus: leads.billableStatus,
         billableReason: leads.billableReason,
         qualifiedBy: leads.qualifiedBy,

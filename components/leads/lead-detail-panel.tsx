@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, ChevronRight, FileText, Phone } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Phone,
+  PhoneIncoming,
+  PhoneMissed,
+} from "lucide-react";
 import { useState } from "react";
 
 import { AssignLeadDialog } from "@/components/leads/assign-lead-dialog";
@@ -32,6 +39,7 @@ export function LeadDetailPanel({
   properties: { id: string; name: string }[];
 }) {
   const [showDetails, setShowDetails] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
 
   const isForm = row.type === "form";
   const isCall = row.type === "call";
@@ -43,8 +51,6 @@ export function LeadDetailPanel({
     timeStyle: "short",
     timeZone: tz,
   }).format(new Date(row.occurredAt));
-
-  const answered = (row.callDurationSeconds ?? 0) > 0;
 
   return (
     <div className="space-y-5 p-1 text-sm">
@@ -129,7 +135,13 @@ export function LeadDetailPanel({
         {isCall ? (
           <>
             <Field label="Duration" value={formatDuration(row.callDurationSeconds)} />
-            <Field label="Call" value={answered ? "Answered" : "Missed"} />
+            <Field label="Call" value={<CallOutcome answered={row.callAnswered} />} />
+            {row.isRepeatCaller != null ? (
+              <Field
+                label="Caller"
+                value={row.isRepeatCaller ? "Repeat caller" : "First-time caller"}
+              />
+            ) : null}
           </>
         ) : null}
       </Section>
@@ -139,6 +151,31 @@ export function LeadDetailPanel({
           <FieldLabel>Recording</FieldLabel>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <audio controls src={row.recordingUrl} className="h-8 w-full max-w-md" />
+        </div>
+      ) : null}
+
+      {isCall && row.transcript ? (
+        <div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowTranscript((v) => !v);
+            }}
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            {showTranscript ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+            Transcript
+          </button>
+          {showTranscript ? (
+            <p className="mt-2 whitespace-pre-wrap rounded-md border bg-background p-3 text-sm leading-relaxed">
+              {row.transcript}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -232,4 +269,18 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Mono({ children }: { children: React.ReactNode }) {
   return <span className="break-all font-mono text-xs">{children}</span>;
+}
+
+/** Answered / Missed indicator (green / red). Null answered -> em dash. */
+function CallOutcome({ answered }: { answered: boolean | null }) {
+  if (answered == null) return <span className="text-muted-foreground">—</span>;
+  return answered ? (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+      <PhoneIncoming className="h-3 w-3" /> Answered
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-400">
+      <PhoneMissed className="h-3 w-3" /> Missed
+    </span>
+  );
 }

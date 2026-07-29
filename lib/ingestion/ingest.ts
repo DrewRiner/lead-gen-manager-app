@@ -69,10 +69,12 @@ export async function ingestCanonicalLead(
             ),
           }
         : undefined;
+    // Calls carry a real duration and take evaluateLead's CALL path (60s
+    // threshold / null-duration pending_review). Forms take the form path.
     const decision = await evaluateLead(
       {
         type: lead.type,
-        callDurationSeconds: null,
+        callDurationSeconds: lead.type === "call" ? lead.callDurationSeconds : null,
         form:
           lead.type === "form"
             ? {
@@ -103,6 +105,12 @@ export async function ingestCanonicalLead(
       callerPhone: lead.phone,
       callerEmail: lead.email,
       message: lead.message,
+      callDurationSeconds: lead.callDurationSeconds,
+      recordingUrl: lead.recordingUrl,
+      callAnswered: lead.callAnswered,
+      isRepeatCaller: lead.isRepeatCaller,
+      transcript: lead.transcript,
+      callrailCallId: lead.callrailCallId,
       billableStatus: decision.billableStatus,
       billableReason: (decision.billableReason ?? "") + fallbackNote || null,
       qualifiedBy: decision.qualifiedBy,
@@ -132,6 +140,12 @@ export async function ingestCanonicalLead(
       callerPhone: lead.phone,
       callerEmail: lead.email,
       message: lead.message,
+      callDurationSeconds: lead.callDurationSeconds,
+      recordingUrl: lead.recordingUrl,
+      callAnswered: lead.callAnswered,
+      isRepeatCaller: lead.isRepeatCaller,
+      transcript: lead.transcript,
+      callrailCallId: lead.callrailCallId,
       billableStatus: "unmatched",
       billableReason: UNMATCHED_REASON + fallbackNote,
       qualifiedBy: null,
@@ -152,36 +166,66 @@ export async function ingestCanonicalLead(
     };
   }
 
-  return db.transaction(async (tx) => {
-    const inserted = await tx
-      .insert(leads)
-      .values(values)
-      .onConflictDoNothing({
-        target: [leads.sourceSystem, leads.externalId],
-        where: sql`${leads.externalId} is not null`,
-      })
-      .returning({ id: leads.id });
+  // CallRail fires post_call then call_modified for the same call id. The
+  // second delivery MERGES its later fields (recording, transcript, answered,
+  // duration) into the SAME lead — never a new row. It preserves the billing
+  // decision and any manual override, only filling in the enrichment fields.
+  const merge = lead.provider === "callrail";
 
+  return db.transaction(async (tx) => {
     let leadId: string;
     let duplicate: boolean;
-    if (inserted.length > 0) {
-      leadId = inserted[0].id;
-      duplicate = false;
+
+    if (merge) {
+      const rows = await tx
+        .insert(leads)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [leads.sourceSystem, leads.externalId],
+          where: sql`${leads.externalId} is not null`,
+          set: {
+            recordingUrl: sql`coalesce(excluded.recording_url, ${leads.recordingUrl})`,
+            transcript: sql`coalesce(excluded.transcript, ${leads.transcript})`,
+            callAnswered: sql`coalesce(excluded.call_answered, ${leads.callAnswered})`,
+            isRepeatCaller: sql`coalesce(excluded.is_repeat_caller, ${leads.isRepeatCaller})`,
+            callDurationSeconds: sql`coalesce(excluded.call_duration_seconds, ${leads.callDurationSeconds})`,
+            rawPayload: sql`excluded.raw_payload`,
+            updatedAt: sql`now()`,
+          },
+        })
+        // (xmax = 0) is true for a fresh insert, non-zero for an ON CONFLICT update.
+        .returning({ id: leads.id, inserted: sql<boolean>`(xmax = 0)` });
+      leadId = rows[0]?.id ?? "";
+      duplicate = !(rows[0]?.inserted ?? true);
     } else {
-      // Conflict: the lead already exists. Fetch its id so we can still link
-      // the (replayed) webhook event to it.
-      const [existing] = await tx
-        .select({ id: leads.id })
-        .from(leads)
-        .where(
-          and(
-            eq(leads.sourceSystem, lead.provider),
-            eq(leads.externalId, lead.externalId),
-          ),
-        )
-        .limit(1);
-      leadId = existing?.id ?? "";
-      duplicate = true;
+      const inserted = await tx
+        .insert(leads)
+        .values(values)
+        .onConflictDoNothing({
+          target: [leads.sourceSystem, leads.externalId],
+          where: sql`${leads.externalId} is not null`,
+        })
+        .returning({ id: leads.id });
+
+      if (inserted.length > 0) {
+        leadId = inserted[0].id;
+        duplicate = false;
+      } else {
+        // Conflict: the lead already exists. Fetch its id so we can still link
+        // the (replayed) webhook event to it.
+        const [existing] = await tx
+          .select({ id: leads.id })
+          .from(leads)
+          .where(
+            and(
+              eq(leads.sourceSystem, lead.provider),
+              eq(leads.externalId, lead.externalId),
+            ),
+          )
+          .limit(1);
+        leadId = existing?.id ?? "";
+        duplicate = true;
+      }
     }
 
     if (webhookEventId && leadId) {

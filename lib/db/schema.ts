@@ -264,6 +264,11 @@ export const leads = pgTable(
     message: text("message"),
     callDurationSeconds: integer("call_duration_seconds"),
     recordingUrl: text("recording_url"),
+    // CallRail call-ingestion context (null for forms / manual leads).
+    callAnswered: boolean("call_answered"),
+    isRepeatCaller: boolean("is_repeat_caller"),
+    transcript: text("transcript"),
+    callrailCallId: text("callrail_call_id"),
     // GoHighLevel form-ingestion context (null for manually-entered leads).
     ghlContactId: text("ghl_contact_id"),
     ghlLocationId: text("ghl_location_id"),

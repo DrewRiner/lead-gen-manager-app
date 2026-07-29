@@ -20,6 +20,19 @@ export interface CanonicalLead {
   leadSourceRaw: string | null;
   ghlFormId: string | null;
   pageUrl: string | null;
+  /**
+   * Dialed CallRail tracking number in E.164 — the ONLY routing key for calls
+   * (never the caller's number). Null for form leads.
+   */
+  trackingPhone: string | null;
+
+  // -- Call fields (CallRail); all null for form leads --------------------
+  callDurationSeconds: number | null;
+  callAnswered: boolean | null;
+  isRepeatCaller: boolean | null;
+  recordingUrl: string | null;
+  transcript: string | null;
+  callrailCallId: string | null;
 
   // -- Contact / content --------------------------------------------------
   fullName: string | null;

@@ -59,6 +59,8 @@ export interface PropertyLeadSourceRow {
   shortCode: string | null;
   ghlFormId: string | null;
   domain: string | null;
+  /** CallRail tracking number — the call routing key. */
+  trackingPhone: string | null;
 }
 
 /** Every live property's ingestion keys, for the Settings routing table. */
@@ -72,6 +74,7 @@ export async function getPropertyLeadSources(): Promise<PropertyLeadSourceRow[]>
       shortCode: properties.shortCode,
       ghlFormId: properties.ghlFormId,
       domain: properties.domain,
+      trackingPhone: properties.trackingPhone,
     })
     .from(properties)
     .where(isNull(properties.deletedAt))

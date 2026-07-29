@@ -10,6 +10,7 @@ function candidate(over: Partial<PropertyCandidate>): PropertyCandidate {
     shortCode: null,
     ghlFormId: null,
     domain: null,
+    trackingPhone: null,
     billingType: "flat_monthly",
     perLeadCallRate: "0",
     perLeadFormRate: "0",
@@ -36,13 +37,17 @@ const POOL = [FENCE, ROOF];
 
 describe("matchProperty", () => {
   it("matches by lead_source (exact)", () => {
-    const m = matchProperty(POOL, { leadSourceRaw: "Atlanta Roofing", ghlFormId: null, pageUrl: null });
+    const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null, leadSourceRaw: "Atlanta Roofing", ghlFormId: null, pageUrl: null });
     expect(m?.property.id).toBe("roof");
     expect(m?.strategy).toBe("lead_source");
   });
 
   it("matches by lead_source case-insensitively and trimmed", () => {
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: "  brunswick FENCE company  ",
       ghlFormId: null,
       pageUrl: null,
@@ -55,6 +60,8 @@ describe("matchProperty", () => {
     const coded = candidate({ id: "coded", shortCode: "ROOF-ATL-01" });
     const pool = [...POOL, coded];
     const m = matchProperty(pool, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: "  roof-atl-01 ",
       ghlFormId: null,
       pageUrl: null,
@@ -68,6 +75,8 @@ describe("matchProperty", () => {
     const byName = candidate({ id: "byName", ghlLeadSource: "Acme Co" });
     const byCode = candidate({ id: "byCode", shortCode: "Acme Co" });
     const m = matchProperty([byName, byCode], {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: "acme co",
       ghlFormId: null,
       pageUrl: null,
@@ -83,6 +92,8 @@ describe("matchProperty", () => {
       ghlFormId: "other_form",
     });
     const m = matchProperty([coded, FENCE], {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: "code9",
       ghlFormId: "form_fence",
       pageUrl: "https://brunswickfence.com",
@@ -92,13 +103,17 @@ describe("matchProperty", () => {
   });
 
   it("falls back to ghl_form_id when lead_source is absent", () => {
-    const m = matchProperty(POOL, { leadSourceRaw: null, ghlFormId: "form_roof", pageUrl: null });
+    const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null, leadSourceRaw: null, ghlFormId: "form_roof", pageUrl: null });
     expect(m?.property.id).toBe("roof");
     expect(m?.strategy).toBe("ghl_form_id");
   });
 
   it("falls back to ghl_form_id when lead_source doesn't match anything", () => {
-    const m = matchProperty(POOL, { leadSourceRaw: "Unknown Brand", ghlFormId: "form_fence", pageUrl: null });
+    const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null, leadSourceRaw: "Unknown Brand", ghlFormId: "form_fence", pageUrl: null });
     expect(m?.property.id).toBe("fence");
     expect(m?.strategy).toBe("ghl_form_id");
   });
@@ -106,6 +121,8 @@ describe("matchProperty", () => {
   it("prefers lead_source over form_id when both would match", () => {
     // lead_source points at fence, form_id points at roof -> lead_source wins.
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: "Brunswick Fence Company",
       ghlFormId: "form_roof",
       pageUrl: null,
@@ -116,6 +133,8 @@ describe("matchProperty", () => {
 
   it("matches by page_url hostname when source and form id are absent", () => {
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: null,
       ghlFormId: null,
       pageUrl: "https://WWW.BrunswickFence.com/contact?utm=abc",
@@ -126,6 +145,8 @@ describe("matchProperty", () => {
 
   it("normalizes both sides of the page_url comparison (property domain has scheme + www + slash)", () => {
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: null,
       ghlFormId: null,
       pageUrl: "atlantaroofing.com/quote",
@@ -138,6 +159,8 @@ describe("matchProperty", () => {
     // GHL-hosted forms always report a leadconnectorhq.com host, which
     // identifies the provider, not the property — so it must never match.
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: null,
       ghlFormId: null,
       pageUrl: "https://api.leadconnectorhq.com/widget/form/abc",
@@ -148,6 +171,8 @@ describe("matchProperty", () => {
   it("ignores gohighlevel.com and its subdomains as page_url hosts", () => {
     expect(
       matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
         leadSourceRaw: null,
         ghlFormId: null,
         pageUrl: "https://link.gohighlevel.com/x",
@@ -157,6 +182,8 @@ describe("matchProperty", () => {
 
   it("still matches a real property domain even though GHL hosts are ignored", () => {
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: null,
       ghlFormId: null,
       pageUrl: "https://brunswickfence.com/contact",
@@ -168,6 +195,8 @@ describe("matchProperty", () => {
   it("falls back to a GHL-hosted page_url producing no match => unmatched", () => {
     // contact_source absent, mediumId doesn't match, host is GHL-hosted.
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: null,
       ghlFormId: "unknown_form",
       pageUrl: "https://api.leadconnectorhq.com/widget/form/xyz",
@@ -177,6 +206,8 @@ describe("matchProperty", () => {
 
   it("returns null when nothing matches (=> unmatched lead)", () => {
     const m = matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null,
       leadSourceRaw: "Totally Unknown",
       ghlFormId: "nope",
       pageUrl: "https://someoneelse.com",
@@ -185,8 +216,59 @@ describe("matchProperty", () => {
   });
 
   it("returns null when all hints are empty", () => {
-    expect(matchProperty(POOL, { leadSourceRaw: null, ghlFormId: null, pageUrl: null })).toBeNull();
-    expect(matchProperty(POOL, { leadSourceRaw: "   ", ghlFormId: "", pageUrl: "" })).toBeNull();
+    expect(matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null, leadSourceRaw: null, ghlFormId: null, pageUrl: null })).toBeNull();
+    expect(matchProperty(POOL, {
+      type: "form",
+      trackingPhone: null, leadSourceRaw: "   ", ghlFormId: "", pageUrl: "" })).toBeNull();
+  });
+});
+
+describe("matchProperty — CallRail calls (by dialed tracking number)", () => {
+  const CALL_FENCE = candidate({ id: "fence", trackingPhone: "+19045550100" });
+  const CALL_ROOF = candidate({ id: "roof", trackingPhone: "+14045550200" });
+  const CALL_POOL = [CALL_FENCE, CALL_ROOF];
+
+  function callLead(over: {
+    trackingPhone?: string | null;
+    leadSourceRaw?: string | null;
+  }) {
+    return {
+      type: "call" as const,
+      trackingPhone: over.trackingPhone ?? null,
+      leadSourceRaw: over.leadSourceRaw ?? null,
+      ghlFormId: null,
+      pageUrl: null,
+    };
+  }
+
+  it("resolves by the dialed tracking number", () => {
+    const m = matchProperty(CALL_POOL, callLead({ trackingPhone: "+19045550100" }));
+    expect(m?.property.id).toBe("fence");
+    expect(m?.strategy).toBe("tracking_phone");
+  });
+
+  it("normalizes messy tracking-number formats to match (E.164)", () => {
+    // Property stored as E.164; inbound formatted differently -> still matches.
+    for (const messy of ["(404) 555-0200", "404-555-0200", "4045550200", "+1 404 555 0200"]) {
+      const m = matchProperty(CALL_POOL, callLead({ trackingPhone: messy }));
+      expect(m?.property.id).toBe("roof");
+      expect(m?.strategy).toBe("tracking_phone");
+    }
+  });
+
+  it("returns null (unmatched) when no property owns the dialed number", () => {
+    expect(matchProperty(CALL_POOL, callLead({ trackingPhone: "+19998887777" }))).toBeNull();
+  });
+
+  it("never matches a call by anything but the tracking number", () => {
+    // Even if a lead_source-like value is present, a call only routes by number.
+    const m = matchProperty(
+      [candidate({ id: "fence", ghlLeadSource: "Brunswick Fence Company", trackingPhone: null })],
+      callLead({ trackingPhone: null, leadSourceRaw: "Brunswick Fence Company" }),
+    );
+    expect(m).toBeNull();
   });
 });
 

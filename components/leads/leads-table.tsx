@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, ChevronRight, FileText, Phone } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Phone, PhoneMissed } from "lucide-react";
 import { Fragment, useState } from "react";
 
 import { LeadDetailPanel } from "@/components/leads/lead-detail-panel";
@@ -115,6 +115,14 @@ export function LeadsTable({
                           <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                         )}
                         <span className="capitalize">{r.type}</span>
+                        {r.type === "call" && r.callAnswered === false ? (
+                          <span
+                            title="Missed call"
+                            className="inline-flex items-center gap-1 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950 dark:text-red-400"
+                          >
+                            <PhoneMissed className="h-3 w-3" /> Missed
+                          </span>
+                        ) : null}
                         <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                           {r.sourceSystem}
                         </span>

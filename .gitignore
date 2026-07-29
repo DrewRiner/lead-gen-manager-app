@@ -38,3 +38,6 @@ yarn-error.log*
 
 # demo-data snapshot (local restore state)
 scripts/.demo-snapshot.json
+
+# local guide reference material (not app content — guides use Supabase Storage)
+guide-content/

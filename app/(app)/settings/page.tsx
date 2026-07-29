@@ -80,6 +80,7 @@ export default async function SettingsPage() {
   const proto =
     hdrs.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const webhookUrl = `${proto}://${host}/api/webhooks/ghl-form`;
+  const callrailUrl = `${proto}://${host}/api/webhooks/callrail`;
 
   return (
     <div>
@@ -164,15 +165,16 @@ export default async function SettingsPage() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Webhooks · {PLATFORM.name} form ingestion</CardTitle>
+          <CardTitle>Webhooks · form & call ingestion</CardTitle>
           <CardDescription>
-            Inbound form leads. Configure an {PLATFORM.name} workflow to POST
-            submissions to the endpoint below with the shared secret header.
+            Inbound leads. Configure an {PLATFORM.name} workflow to POST form
+            submissions, and CallRail to POST calls, to the endpoints below.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <WebhooksPanel
             webhookUrl={webhookUrl}
+            callrailUrl={callrailUrl}
             secret={settings.webhookSecret}
             leadSources={leadSources}
             unmatchedLeads={unmatchedLeads}

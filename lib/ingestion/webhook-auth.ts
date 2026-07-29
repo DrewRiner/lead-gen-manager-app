@@ -1,15 +1,23 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 // ---------------------------------------------------------------------------
 // Shared-secret verification for inbound webhooks. Constant-time so a caller
 // can't learn the secret by timing responses.
 // ---------------------------------------------------------------------------
 
-/** Header carrying the shared secret on inbound webhook requests. */
+/** Header carrying the shared secret on inbound webhook requests (GHL). */
 export const WEBHOOK_SECRET_HEADER = "x-webhook-secret";
 
+/** Header carrying CallRail's HMAC signature over the raw body. */
+export const CALLRAIL_SIGNATURE_HEADER = "x-callrail-signature";
+
 /** Header names whose values must never be stored/displayed in cleartext. */
-const SENSITIVE_HEADERS = new Set([WEBHOOK_SECRET_HEADER, "authorization", "cookie"]);
+const SENSITIVE_HEADERS = new Set([
+  WEBHOOK_SECRET_HEADER,
+  CALLRAIL_SIGNATURE_HEADER,
+  "authorization",
+  "cookie",
+]);
 
 /**
  * Constant-time string comparison. Returns false when either value is missing
@@ -24,6 +32,35 @@ export function secretMatches(
   const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
+}
+
+/**
+ * Verify CallRail's HMAC-SHA256 signature over the RAW request body using
+ * CALLRAIL_WEBHOOK_SECRET. CallRail's docs don't pin the digest encoding, so we
+ * accept both hex and base64 and compare constant-time. Returns false on any
+ * missing input.
+ */
+export function callrailSignatureValid(
+  rawBody: string,
+  provided: string | null | undefined,
+  secret: string | null | undefined,
+): boolean {
+  if (!provided || !secret) return false;
+  const digest = createHmac("sha256", secret).update(rawBody, "utf8").digest();
+  return (
+    secretMatches(provided.trim(), digest.toString("hex")) ||
+    secretMatches(provided.trim(), digest.toString("base64"))
+  );
+}
+
+/**
+ * Whether inbound webhook signatures must be verified. ON by default; only a dev
+ * override (WEBHOOK_SIGNATURE_VERIFICATION=false|0|off) disables it. Production
+ * should never set the override.
+ */
+export function signatureVerificationEnabled(): boolean {
+  const v = (process.env.WEBHOOK_SIGNATURE_VERIFICATION ?? "").trim().toLowerCase();
+  return !(v === "false" || v === "0" || v === "off" || v === "no");
 }
 
 /** Snapshot request headers to a plain object, redacting sensitive values. */
