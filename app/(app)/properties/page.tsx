@@ -171,7 +171,7 @@ export default async function PropertiesPage({
                 <TableHead>Status</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Billing</TableHead>
-                <SortHead label="Target rent" k="targetRent" href={sortHref("targetRent")} active={sortKey === "targetRent"} dir={sortDir} numeric />
+                <SortHead label="Estimated Monthly Rental Value" k="targetRent" href={sortHref("targetRent")} active={sortKey === "targetRent"} dir={sortDir} numeric />
                 <SortHead label="30d leads" k="leads30" href={sortHref("leads30")} active={sortKey === "leads30"} dir={sortDir} numeric />
                 <SortHead label="30d est. value" k="estValue30" href={sortHref("estValue30")} active={sortKey === "estValue30"} dir={sortDir} numeric />
                 <SortHead label="Rev/mo rented" k="revPerMonth" href={sortHref("revPerMonth")} active={sortKey === "revPerMonth"} dir={sortDir} numeric />
