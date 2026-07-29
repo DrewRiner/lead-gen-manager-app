@@ -275,6 +275,7 @@ export function normalizeGhlForm(payload: unknown, now: Date = new Date()): Cano
     recordingUrl: null,
     transcript: null,
     callrailCallId: null,
+    twilioCallSid: null,
     fullName: fullName(p),
     phone: normalizePhone(rawPhone),
     email,

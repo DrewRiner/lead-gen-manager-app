@@ -125,6 +125,7 @@ export function normalizeCallRail(payload: unknown, now: Date = new Date()): Can
     recordingUrl: str(p, "recording", "recording_url"),
     transcript: str(p, "transcription_text", "transcription"),
     callrailCallId: callId,
+    twilioCallSid: null,
 
     // Contact / content.
     fullName: str(p, "customer_name"),

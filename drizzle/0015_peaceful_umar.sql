@@ -1,0 +1,1 @@
+ALTER TABLE "leads" ADD COLUMN "twilio_call_sid" text;

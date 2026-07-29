@@ -269,6 +269,9 @@ export const leads = pgTable(
     isRepeatCaller: boolean("is_repeat_caller"),
     transcript: text("transcript"),
     callrailCallId: text("callrail_call_id"),
+    // Twilio call-ingestion context: CallSid, parallel to callrail_call_id
+    // (null for CallRail / form / manual leads).
+    twilioCallSid: text("twilio_call_sid"),
     // GoHighLevel form-ingestion context (null for manually-entered leads).
     ghlContactId: text("ghl_contact_id"),
     ghlLocationId: text("ghl_location_id"),

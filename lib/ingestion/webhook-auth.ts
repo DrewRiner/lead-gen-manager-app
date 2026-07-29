@@ -11,10 +11,14 @@ export const WEBHOOK_SECRET_HEADER = "x-webhook-secret";
 /** Header carrying CallRail's HMAC signature over the raw body. */
 export const CALLRAIL_SIGNATURE_HEADER = "x-callrail-signature";
 
+/** Header carrying Twilio's HMAC-SHA1 request signature. */
+export const TWILIO_SIGNATURE_HEADER = "x-twilio-signature";
+
 /** Header names whose values must never be stored/displayed in cleartext. */
 const SENSITIVE_HEADERS = new Set([
   WEBHOOK_SECRET_HEADER,
   CALLRAIL_SIGNATURE_HEADER,
+  TWILIO_SIGNATURE_HEADER,
   "authorization",
   "cookie",
 ]);
@@ -52,6 +56,37 @@ export function callrailSignatureValid(
     secretMatches(provided.trim(), digest.toString("hex")) ||
     secretMatches(provided.trim(), digest.toString("base64"))
   );
+}
+
+/**
+ * Verify Twilio's X-Twilio-Signature over a webhook request, per Twilio's
+ * documented algorithm (proper request signing — NOT the CallRail ?secret= URL
+ * shortcut):
+ *   1. Start with the exact full request URL (protocol → end of query string)
+ *      that Twilio was configured to call.
+ *   2. For a POST, sort the POST params by name (case-sensitive Unix order) and
+ *      append each name immediately followed by its value, with no delimiters.
+ *   3. HMAC-SHA1 the resulting string, keyed with the account's auth token.
+ *   4. Base64-encode the digest and constant-time compare to the header.
+ *
+ * @param url       The exact public URL Twilio posted to (incl. query string).
+ * @param params    The POST params (form-decoded).
+ * @param provided  The X-Twilio-Signature header value.
+ * @param authToken TWILIO_AUTH_TOKEN. Missing token or signature => false.
+ */
+export function twilioSignatureValid(
+  url: string,
+  params: Record<string, string>,
+  provided: string | null | undefined,
+  authToken: string | null | undefined,
+): boolean {
+  if (!provided || !authToken) return false;
+  let data = url;
+  for (const name of Object.keys(params).sort()) {
+    data += name + params[name];
+  }
+  const expected = createHmac("sha1", authToken).update(data, "utf8").digest("base64");
+  return secretMatches(provided.trim(), expected);
 }
 
 /**

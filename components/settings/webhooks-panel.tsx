@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 export function WebhooksPanel({
   webhookUrl,
   callrailUrl,
+  twilioUrl,
   secret,
   leadSources,
   unmatchedLeads,
@@ -42,6 +43,7 @@ export function WebhooksPanel({
 }: {
   webhookUrl: string;
   callrailUrl: string;
+  twilioUrl: string;
   secret: string | null;
   leadSources: PropertyLeadSourceRow[];
   unmatchedLeads: UnmatchedLeadRow[];
@@ -96,6 +98,13 @@ export function WebhooksPanel({
         </Labeled>
 
         <Labeled
+          label="Twilio endpoint URL"
+          hint="Set as the number's call status callback (completed calls) in Twilio — or in WizCaller's Twilio config alongside the existing one. Signed with TWILIO_AUTH_TOKEN (X-Twilio-Signature)."
+        >
+          <CopyRow value={twilioUrl} mono />
+        </Labeled>
+
+        <Labeled
           label="Shared secret"
           hint={`Send it as the "X-Webhook-Secret" header on every request.`}
         >
@@ -130,8 +139,8 @@ export function WebhooksPanel({
           <strong>Lead Source</strong> hidden field. Copy the value and paste it
           into the matching form. Matching is case-insensitive and trimmed.{" "}
           Calls route by the property&rsquo;s <strong>tracking number</strong>{" "}
-          instead — a property in red has no tracking number and can&rsquo;t
-          receive CallRail calls.
+          instead — both CallRail and Twilio calls match on it, so a property in
+          red has no tracking number and can&rsquo;t receive calls from either.
         </p>
         <div className="overflow-x-auto rounded-lg border">
           <Table>

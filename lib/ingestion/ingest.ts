@@ -111,6 +111,7 @@ export async function ingestCanonicalLead(
       isRepeatCaller: lead.isRepeatCaller,
       transcript: lead.transcript,
       callrailCallId: lead.callrailCallId,
+      twilioCallSid: lead.twilioCallSid,
       billableStatus: decision.billableStatus,
       billableReason: (decision.billableReason ?? "") + fallbackNote || null,
       qualifiedBy: decision.qualifiedBy,
@@ -146,6 +147,7 @@ export async function ingestCanonicalLead(
       isRepeatCaller: lead.isRepeatCaller,
       transcript: lead.transcript,
       callrailCallId: lead.callrailCallId,
+      twilioCallSid: lead.twilioCallSid,
       billableStatus: "unmatched",
       billableReason: UNMATCHED_REASON + fallbackNote,
       qualifiedBy: null,
@@ -166,11 +168,13 @@ export async function ingestCanonicalLead(
     };
   }
 
-  // CallRail fires post_call then call_modified for the same call id. The
-  // second delivery MERGES its later fields (recording, transcript, answered,
-  // duration) into the SAME lead — never a new row. It preserves the billing
-  // decision and any manual override, only filling in the enrichment fields.
-  const merge = lead.provider === "callrail";
+  // Call providers can deliver the same call id more than once — CallRail fires
+  // post_call then call_modified; Twilio may retry a status callback. Those
+  // repeat deliveries MERGE their later fields (recording, answered, duration)
+  // into the SAME lead — never a new row — preserving the billing decision and
+  // any manual override, only filling in the enrichment fields. This is also
+  // what makes double-delivery idempotent (returns the existing lead id).
+  const merge = lead.provider === "callrail" || lead.provider === "twilio";
 
   return db.transaction(async (tx) => {
     let leadId: string;

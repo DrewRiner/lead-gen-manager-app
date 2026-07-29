@@ -81,6 +81,7 @@ export default async function SettingsPage() {
     hdrs.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const webhookUrl = `${proto}://${host}/api/webhooks/ghl-form`;
   const callrailUrl = `${proto}://${host}/api/webhooks/callrail`;
+  const twilioUrl = `${proto}://${host}/api/webhooks/twilio`;
 
   return (
     <div>
@@ -175,6 +176,7 @@ export default async function SettingsPage() {
           <WebhooksPanel
             webhookUrl={webhookUrl}
             callrailUrl={callrailUrl}
+            twilioUrl={twilioUrl}
             secret={settings.webhookSecret}
             leadSources={leadSources}
             unmatchedLeads={unmatchedLeads}

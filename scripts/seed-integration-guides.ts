@@ -156,38 +156,46 @@ const GUIDES: GuideSeed[] = [
     summary:
       "Route calls for numbers running on Twilio (including WizCaller-managed numbers) into the dashboard.",
     blocks: [
-      warn(
-        "PLACEHOLDER — pending the Twilio integration build. The dashboard does not yet expose a `/api/webhooks/twilio` endpoint, so these steps will not ingest calls until that endpoint ships. Use this guide to prepare; don't rely on it working end-to-end yet.",
-      ),
       h("Why this matters"),
       t(
-        "This serves the same purpose as CallRail, for numbers running on **Twilio** — including numbers managed through **WizCaller**, since those are Twilio numbers underneath. Once the integration is built, Twilio calls will route to the right property in the dashboard automatically.",
+        "This serves the same purpose as CallRail, for numbers running on **Twilio** — including numbers managed through **WizCaller**, since those are Twilio numbers underneath. Once set up, Twilio calls route to the right property in the dashboard automatically, matched by the **dialed number**.",
       ),
       h("Before you start"),
       t(
-        "Have on hand:\n- The property's **Twilio number**\n- Access to the **Twilio console** (and to WizCaller, if the number is managed there)\n- The Twilio **Auth Token** for the account",
+        "Have on hand:\n- The property's **Twilio number**\n- Access to the **Twilio console** (and to WizCaller, if the number is managed there)\n- The Twilio **Auth Token** for the account (Twilio console → Account Dashboard)",
       ),
       h("Steps"),
       t(
-        "**1.** Identify the **Twilio number** for the property, and set the dashboard's **Tracking Phone** for that property to match it.",
+        "**1.** Identify the **Twilio number** for the property, and set the dashboard's **Tracking Phone** for that property to match it exactly.",
+      ),
+      warn(
+        "the dialed number is the routing key. The dashboard's Tracking Phone must match the Twilio number, or the call can't be matched to a property.",
       ),
       img("Twilio number beside the dashboard Tracking Phone field"),
-      t("**2.** In the **Twilio console**, open the phone number's **configuration** page."),
-      img("Twilio console phone-number configuration page"),
       t(
-        `**3.** Set the call **status callback / webhook** to:\n\n\`${BASE}/api/webhooks/twilio\`\n\nfor **completed-call** events.`,
+        "**2.** In the dashboard, open **Settings → Webhooks** and copy the **Twilio endpoint URL**.",
       ),
-      img("Twilio status-callback URL set for completed calls"),
+      img("Dashboard Settings → Webhooks showing the Twilio endpoint URL"),
+      t(
+        `**3.** In the **Twilio console**, open the phone number's **configuration** page and set its **call status callback** (for **completed** calls, method **POST**) to:\n\n\`${BASE}/api/webhooks/twilio\``,
+      ),
+      img("Twilio console: status callback URL set for completed calls"),
       warn(
-        "if the number is managed through WizCaller, ADD this callback ALONGSIDE WizCaller's existing config — do not replace it — so WizCaller's own routing keeps working.",
+        "if the number is managed through **WizCaller**, add this callback in **WizCaller's Twilio config ALONGSIDE** its existing one — do not replace it — so WizCaller's own routing keeps working.",
       ),
       t(
-        "**4.** Set the Twilio **auth token / secret** in the dashboard environment as **`TWILIO_AUTH_TOKEN`**.",
+        "**4.** Set the Twilio **Auth Token** in the dashboard environment (Vercel → Project → Settings → Environment Variables) as **`TWILIO_AUTH_TOKEN`**. The dashboard uses it to verify Twilio's **X-Twilio-Signature** on every inbound call — this is proper request signing, so there is no secret in the URL.",
       ),
-      warn("changing an environment variable requires a redeploy to take effect."),
+      warn(
+        "changing an environment variable on Vercel requires a **redeploy** to take effect — a common reason a freshly-set token still rejects calls.",
+      ),
+      t("**5.** **Save** the Twilio number's configuration."),
       h("How to check it worked"),
       t(
-        "Place a **test call of 20+ seconds** and confirm it lands on the **property's page** in the dashboard with the **Twilio** badge. (This step depends on the Twilio endpoint being built — see the placeholder note at the top.)",
+        "Place a **test call of at least 20 seconds** to the number. Within a minute, in the dashboard open **Settings → Webhooks** and confirm an event appears with **auth valid** — and that the call shows on the **property's page** with the red **Twilio** badge.",
+      ),
+      warn(
+        "very short calls (under ~10 seconds) may not complete a status callback. Always test with a call of 20+ seconds.",
       ),
     ],
   },

@@ -26,13 +26,15 @@ export interface CanonicalLead {
    */
   trackingPhone: string | null;
 
-  // -- Call fields (CallRail); all null for form leads --------------------
+  // -- Call fields (CallRail / Twilio); all null for form leads -----------
   callDurationSeconds: number | null;
   callAnswered: boolean | null;
   isRepeatCaller: boolean | null;
   recordingUrl: string | null;
   transcript: string | null;
   callrailCallId: string | null;
+  /** Twilio CallSid, parallel to callrailCallId. Null for other providers. */
+  twilioCallSid: string | null;
 
   // -- Contact / content --------------------------------------------------
   fullName: string | null;
