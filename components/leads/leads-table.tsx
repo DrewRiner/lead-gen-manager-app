@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, FileText, Phone, PhoneMissed } from "lucide-
 import { Fragment, useState } from "react";
 
 import { LeadDetailPanel } from "@/components/leads/lead-detail-panel";
+import { SourceBadge } from "@/components/leads/source-badge";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Table,
@@ -123,9 +124,7 @@ export function LeadsTable({
                             <PhoneMissed className="h-3 w-3" /> Missed
                           </span>
                         ) : null}
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                          {r.sourceSystem}
-                        </span>
+                        <SourceBadge sourceSystem={r.sourceSystem} />
                       </div>
                     </TableCell>
                     <TableCell>

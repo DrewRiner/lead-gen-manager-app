@@ -14,6 +14,7 @@ import { useState } from "react";
 import { AssignLeadDialog } from "@/components/leads/assign-lead-dialog";
 import { LeadOverrideDialog } from "@/components/leads/lead-override-dialog";
 import { NotSpamButton } from "@/components/leads/not-spam-button";
+import { SourceBadge } from "@/components/leads/source-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { formatDuration, titleCase } from "@/lib/format";
@@ -198,7 +199,17 @@ export function LeadDetailPanel({
         </button>
         {showDetails ? (
           <div className="mt-2 grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3">
-            <Field label="Source system" value={sourceSystemLabel(row.sourceSystem)} />
+            <Field
+              label="Source system"
+              value={
+                <span className="inline-flex items-center gap-2">
+                  <SourceBadge sourceSystem={row.sourceSystem} />
+                  <span className="text-muted-foreground">
+                    {sourceSystemLabel(row.sourceSystem)}
+                  </span>
+                </span>
+              }
+            />
             <Field
               label="Lead source (raw)"
               value={<Mono>{row.ghlLeadSourceRaw ?? "—"}</Mono>}
