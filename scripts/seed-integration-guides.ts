@@ -202,6 +202,9 @@ const GUIDES: GuideSeed[] = [
 ];
 
 async function main() {
+  let created = 0;
+  let skipped = 0;
+
   for (const g of GUIDES) {
     const [existing] = await db
       .select({ id: guides.id })
@@ -209,49 +212,50 @@ async function main() {
       .where(and(eq(guides.slug, g.slug), isNull(guides.deletedAt)))
       .limit(1);
 
+    if (existing) {
+      // NON-DESTRUCTIVE: the guide already exists — leave it and its blocks and
+      // any uploaded images completely untouched. Content edits happen in the
+      // in-app editor, which is the source of truth once a guide is live.
+      skipped++;
+      console.log(`Exists, left untouched: ${g.title} [${existing.id}]`);
+      continue;
+    }
+
+    // Never seed an EMPTY image slot — guides read as clean, finished text plus
+    // only real (uploaded) images. Positions are packed after filtering.
+    const blocks = g.blocks.filter(
+      (b) => !(b.type === "image" && !((b.content.url as string | undefined) ?? "").trim()),
+    );
+
     const guideId = await db.transaction(async (tx) => {
-      let id: string;
-      if (existing) {
-        id = existing.id;
-        await tx
-          .update(guides)
-          .set({
-            title: g.title,
-            category: g.category,
-            summary: g.summary,
-            status: "published",
-            updatedAt: new Date(),
-          })
-          .where(eq(guides.id, id));
-        await tx.delete(guideBlocks).where(eq(guideBlocks.guideId, id));
-      } else {
-        const [row] = await tx
-          .insert(guides)
-          .values({
-            title: g.title,
-            slug: g.slug,
-            category: g.category,
-            summary: g.summary,
-            status: "published",
-          })
-          .returning({ id: guides.id });
-        id = row.id;
-      }
+      const [row] = await tx
+        .insert(guides)
+        .values({
+          title: g.title,
+          slug: g.slug,
+          category: g.category,
+          summary: g.summary,
+          status: "published",
+        })
+        .returning({ id: guides.id });
       await tx.insert(guideBlocks).values(
-        g.blocks.map((b, i) => ({
-          guideId: id,
+        blocks.map((b, i) => ({
+          guideId: row.id,
           type: b.type,
           content: b.content,
           position: i,
         })),
       );
-      return id;
+      return row.id;
     });
 
-    console.log(`${existing ? "Updated" : "Created"}: ${g.title} (${g.blocks.length} blocks) [${guideId}]`);
+    created++;
+    console.log(`Created: ${g.title} (${blocks.length} blocks) [${guideId}]`);
   }
 
-  console.log("\nDone. Open /guides to view them under Integrations.");
+  console.log(
+    `\nDone. ${created} created, ${skipped} left untouched. Open /guides (Integrations).`,
+  );
   process.exit(0);
 }
 
