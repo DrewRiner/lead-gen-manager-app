@@ -15,12 +15,13 @@ import type { CanonicalLead } from "@/lib/ingestion/types";
 // call_modified MERGES its later fields (recording, transcript, answered) into
 // that SAME lead in ingest.ts — it never creates a duplicate.
 //
-// Field names confirmed against CallRail's API attribute list + webhook docs:
-//   id, tracking_phone_number (dialed — the ROUTING key), customer_phone_number
+// Field names confirmed against a REAL CallRail webhook delivery:
+//   resource_id (the "CAL…" call id — NOT `id`, which isn't present),
+//   tracking_phone_number (dialed — the ROUTING key), customer_phone_number
 //   (caller — display only, NEVER routed), business_phone_number, duration,
 //   answered, first_call (true => first-time caller), recording (URL),
-//   recording_duration, transcription_text / transcription, tags, customer_name,
-//   start_time.
+//   recording_duration, transcription (real deliveries) / transcription_text,
+//   tags, customer_name, start_time.
 // ---------------------------------------------------------------------------
 
 export const PROVIDER = "callrail";
@@ -89,7 +90,11 @@ function parseDate(raw: string | null): Date | null {
 export function normalizeCallRail(payload: unknown, now: Date = new Date()): CanonicalLead {
   const p = asObject(payload);
 
-  const callId = str(p, "id", "call_id");
+  // Real CallRail webhooks identify the call with resource_id (a "CAL…" id),
+  // NOT id — confirmed against a live delivery. Fall back to id/call_id/
+  // session_uuid for other shapes. This is the de-dupe key and what post_call /
+  // call_modified share, so the merge into one lead hinges on getting it right.
+  const callId = str(p, "resource_id", "id", "call_id", "session_uuid");
   const tracking = normalizePhone(str(p, "tracking_phone_number"));
   const caller = normalizePhone(str(p, "customer_phone_number", "caller_number"));
   const durationRaw = num(p, "duration");

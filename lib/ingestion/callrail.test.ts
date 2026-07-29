@@ -9,10 +9,11 @@ import {
 const NOW = new Date("2026-07-29T14:10:00.000Z");
 const CALL_ID = "CAL8154748ae6cd49e5a2b2b5b6c8f1f9a1";
 
-// A realistic CallRail post_call payload.
+// A realistic CallRail post_call payload. Real deliveries identify the call with
+// resource_id (there is no `id`).
 function postCall(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    id: CALL_ID,
+    resource_id: CALL_ID,
     answered: true,
     business_phone_number: "+19045551000",
     customer_name: "Jane Caller",
@@ -27,10 +28,10 @@ function postCall(over: Record<string, unknown> = {}): Record<string, unknown> {
   };
 }
 
-// The later call_modified delivery: same id, enrichment fields appended.
+// The later call_modified delivery: same resource_id, enrichment fields appended.
 function callModified(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    id: CALL_ID,
+    resource_id: CALL_ID,
     answered: true,
     duration: 142,
     tracking_phone_number: "+19045550100",
@@ -67,6 +68,20 @@ describe("normalizeCallRail — post_call", () => {
     expect(c.email).toBeNull();
     expect(c.message).toBeNull();
     expect(c.leadSourceRaw).toBeNull();
+  });
+
+  it("keys off resource_id (the real CallRail call id)", () => {
+    const c = normalizeCallRail(postCall({ resource_id: "CALabc123" }), NOW);
+    expect(c.externalId).toBe("CALabc123");
+    expect(c.callrailCallId).toBe("CALabc123");
+  });
+
+  it("falls back to `id` when resource_id is absent", () => {
+    const base = postCall();
+    delete base.resource_id;
+    const c = normalizeCallRail({ ...base, id: "LEGACY_ID_1" }, NOW);
+    expect(c.externalId).toBe("LEGACY_ID_1");
+    expect(c.callrailCallId).toBe("LEGACY_ID_1");
   });
 
   it("maps a Google Organic source to 'organic'", () => {
