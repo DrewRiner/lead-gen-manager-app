@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+import { ConnectCallRailDesigned, ConnectCallRailPlain } from "./guides/connect-callrail";
+import { ConnectFormDesigned, ConnectFormPlain } from "./guides/connect-form";
+import { ConnectTwilioDesigned, ConnectTwilioPlain } from "./guides/connect-twilio";
 import { OnboardingDesigned, OnboardingPlain } from "./guides/onboarding";
 import { SwitchClientDesigned, SwitchClientPlain } from "./guides/switch-client";
 import { UpdateContactDesigned, UpdateContactPlain } from "./guides/update-contact";
@@ -24,6 +27,18 @@ export const DESIGNED_GUIDES: Record<string, DesignedGuideEntry> = {
   "update-a-clients-phone-or-email": {
     Designed: UpdateContactDesigned,
     Plain: UpdateContactPlain,
+  },
+  "connect-a-contact-form": {
+    Designed: ConnectFormDesigned,
+    Plain: ConnectFormPlain,
+  },
+  "connect-callrail-call-tracking": {
+    Designed: ConnectCallRailDesigned,
+    Plain: ConnectCallRailPlain,
+  },
+  "connect-twilio-call-tracking": {
+    Designed: ConnectTwilioDesigned,
+    Plain: ConnectTwilioPlain,
   },
 };
 

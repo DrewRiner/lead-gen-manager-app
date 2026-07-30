@@ -65,7 +65,7 @@ export const OPERATOR_GUIDES: OperatorGuideMeta[] = [
     eyebrow: "Internal runbook / Integrations",
     description:
       "Route a property's tracking-number calls into the dashboard automatically — with the exact gotchas.",
-    stepKeys: steps(7),
+    stepKeys: steps(6),
   },
   {
     slug: "connect-twilio-call-tracking",

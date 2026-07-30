@@ -478,7 +478,7 @@ export function PlainGuide({
   why: string;
   beforeLead?: string;
   before: string[];
-  steps: { title: string; body: string; warn?: string }[];
+  steps: { title: string; body: string; warn?: string; warns?: string[] }[];
   verify: string;
 }) {
   return (
@@ -505,6 +505,11 @@ export function PlainGuide({
           </h3>
           <p>{s.body}</p>
           {s.warn ? <p className="og-plain-warn">⚠️ WARNING: {s.warn}</p> : null}
+          {(s.warns ?? []).map((w, j) => (
+            <p key={j} className="og-plain-warn">
+              ⚠️ WARNING: {w}
+            </p>
+          ))}
         </div>
       ))}
 
