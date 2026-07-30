@@ -34,7 +34,7 @@ function useProgress(): ProgressValue {
   return ctx;
 }
 
-export function GuideRoot({
+export function GuideProgress({
   slug,
   stepKeys,
   initialDone,
@@ -59,14 +59,12 @@ export function GuideRoot({
     void toggleGuideStep({ guideSlug: slug, stepKey: key, done: willBeDone });
   }
 
+  // The `.og` paper shell + page container are provided by GuideTabs so the two
+  // tabs share one surface; here we add the progress context + the nav strip.
   return (
     <ProgressCtx.Provider value={{ done, toggle, stepKeys }}>
-      <div className="og">
-        <div className="og-page">
-          <GuideNav current={slug} />
-          {children}
-        </div>
-      </div>
+      <GuideNav current={slug} />
+      {children}
     </ProgressCtx.Provider>
   );
 }
@@ -105,14 +103,15 @@ export function GuideHeader({
   title,
   xl,
   sub,
-  meta,
+  pills,
 }: {
   eyebrow: string;
   alertEyebrow?: boolean;
   title: ReactNode;
   xl?: boolean;
-  sub: ReactNode;
-  meta?: ReactNode;
+  sub?: ReactNode;
+  /** Small count pills, e.g. ["5 steps", "2 systems"]. */
+  pills?: string[];
 }) {
   return (
     <header className="og-header">
@@ -121,10 +120,18 @@ export function GuideHeader({
           {eyebrow}
         </div>
         <h1 className={cn("og-h1", xl && "og-h1--xl")}>{title}</h1>
-        <p className="og-sub">{sub}</p>
+        {sub ? <p className="og-sub">{sub}</p> : null}
       </div>
       <div className="og-header-meta">
-        {meta}
+        {pills && pills.length > 0 ? (
+          <div style={{ display: "flex", gap: 8 }}>
+            {pills.map((p) => (
+              <span key={p} className="og-count-pill">
+                {p}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <StepCounter />
       </div>
     </header>

@@ -91,6 +91,197 @@
   color: var(--og-accent-dark);
 }
 
+/* ---- Back link + tab bar (our two-tab wrapper) ------------------------ */
+.og-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 0 0;
+  font-family: var(--og-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--og-faint);
+  border-bottom: none;
+}
+.og-back:hover {
+  color: var(--og-ink);
+}
+.og-tabbar {
+  display: flex;
+  gap: 7px;
+  padding: 18px 0 0;
+}
+.og-tab {
+  font-family: var(--og-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 8px 16px;
+  border: 1px solid var(--og-warm-border);
+  color: var(--og-muted);
+  background: #eae6dc;
+  cursor: pointer;
+}
+.og-tab:hover {
+  color: var(--og-ink);
+  background: #e2ddd1;
+}
+.og-tab--active {
+  color: #fff;
+  background: var(--og-ink-alt);
+  border-color: var(--og-ink-alt);
+}
+
+/* ---- Plain-text tab (clean, copyable/printable) ----------------------- */
+.og-plain {
+  background: #fff;
+  border: 1px solid var(--og-border);
+  border-radius: 12px;
+  padding: 40px 44px;
+  margin: 28px 0 0;
+  box-shadow: var(--og-shadow-card);
+  color: var(--og-body);
+}
+.og-plain h1 {
+  font-family: var(--og-serif);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1.05;
+  color: var(--og-ink);
+  margin: 0 0 8px;
+}
+.og-plain .og-plain-eyebrow {
+  font-family: var(--og-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--og-faint);
+  margin-bottom: 14px;
+}
+.og-plain h2 {
+  font-family: var(--og-serif);
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--og-ink);
+  margin: 30px 0 10px;
+}
+.og-plain h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--og-ink);
+  margin: 22px 0 8px;
+}
+.og-plain p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.og-plain ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+.og-plain li {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 4px 0;
+}
+.og-plain .og-plain-warn {
+  border-left: 3px solid var(--og-accent);
+  background: var(--og-accent-wash);
+  padding: 10px 14px;
+  margin: 12px 0;
+  color: var(--og-accent-deep);
+  font-size: 15px;
+  line-height: 1.5;
+  border-radius: 0 8px 8px 0;
+}
+.og-plain code {
+  font-family: var(--og-mono);
+  font-size: 13px;
+  background: var(--og-surface-warm);
+  border: 1px solid var(--og-border);
+  border-radius: 5px;
+  padding: 1px 5px;
+  word-break: break-all;
+}
+
+@media (max-width: 900px) {
+  .og-plain {
+    padding: 24px 20px;
+  }
+}
+
+/* ---- Guides index ----------------------------------------------------- */
+.og-index-head {
+  padding: 40px 0 24px;
+  border-bottom: 2px solid var(--og-ink);
+}
+.og-index-title {
+  font-family: var(--og-serif);
+  font-weight: 400;
+  font-size: 54px;
+  line-height: 1.03;
+  letter-spacing: -0.015em;
+  color: var(--og-ink);
+  margin: 10px 0 0;
+}
+.og-index-list {
+  display: block;
+}
+.og-index-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  padding: 26px 6px;
+  border-bottom: 1px solid var(--og-rule);
+  text-decoration: none;
+  border-bottom: 1px solid var(--og-rule);
+}
+a.og-index-card {
+  border-bottom: 1px solid var(--og-rule);
+}
+.og-index-card:hover .og-index-h {
+  color: var(--og-accent);
+}
+.og-index-num {
+  font-family: var(--og-serif);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--og-faint-2);
+}
+.og-index-h {
+  font-family: var(--og-serif);
+  font-size: 27px;
+  line-height: 1.12;
+  color: var(--og-ink);
+}
+.og-index-desc {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--og-muted);
+  margin-top: 5px;
+  max-width: 66ch;
+}
+.og-index-arrow {
+  font-family: var(--og-mono);
+  font-size: 18px;
+  color: var(--og-accent);
+}
+@media (max-width: 900px) {
+  .og-index-title {
+    font-size: 38px;
+  }
+  .og-index-card {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+  .og-index-arrow {
+    display: none;
+  }
+}
+
 /* ---- Nav strip -------------------------------------------------------- */
 .og-nav {
   display: flex;
@@ -175,6 +366,18 @@ a.og-pill:hover {
   font-family: var(--og-mono);
   font-size: 12px;
   color: var(--og-faint);
+}
+.og-count-pill {
+  font-family: var(--og-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--og-muted);
+  background: #eae6dc;
+  border-radius: 999px;
+  padding: 7px 13px;
+  white-space: nowrap;
 }
 
 /* ---- Section shell ---------------------------------------------------- */
