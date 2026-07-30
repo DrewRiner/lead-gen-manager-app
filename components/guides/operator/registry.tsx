@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
 import { OnboardingDesigned, OnboardingPlain } from "./guides/onboarding";
+import { SwitchClientDesigned, SwitchClientPlain } from "./guides/switch-client";
+import { UpdateContactDesigned, UpdateContactPlain } from "./guides/update-contact";
 
 // Maps a guide slug to its designed + plain-text renderings. Only guides that
 // have been built appear here; the reader falls back to the block reader for
@@ -14,6 +16,14 @@ export const DESIGNED_GUIDES: Record<string, DesignedGuideEntry> = {
   "onboard-a-new-client-to-a-property": {
     Designed: OnboardingDesigned,
     Plain: OnboardingPlain,
+  },
+  "switch-a-property-to-a-new-client": {
+    Designed: SwitchClientDesigned,
+    Plain: SwitchClientPlain,
+  },
+  "update-a-clients-phone-or-email": {
+    Designed: UpdateContactDesigned,
+    Plain: UpdateContactPlain,
   },
 };
 

@@ -463,6 +463,57 @@ export function MockSidebar({ active }: { active: string }) {
   );
 }
 
+/** The clean, copyable/printable "Plain text" tab, rendered from guide data. */
+export function PlainGuide({
+  eyebrow,
+  title,
+  why,
+  beforeLead = "Have on hand:",
+  before,
+  steps,
+  verify,
+}: {
+  eyebrow: string;
+  title: string;
+  why: string;
+  beforeLead?: string;
+  before: string[];
+  steps: { title: string; body: string; warn?: string }[];
+  verify: string;
+}) {
+  return (
+    <article className="og-plain">
+      <div className="og-plain-eyebrow">{eyebrow}</div>
+      <h1>{title}</h1>
+
+      <h2>Why this matters</h2>
+      <p>{why}</p>
+
+      <h2>Before you start</h2>
+      <p>{beforeLead}</p>
+      <ul>
+        {before.map((b) => (
+          <li key={b}>{b}</li>
+        ))}
+      </ul>
+
+      <h2>Steps</h2>
+      {steps.map((s, i) => (
+        <div key={i}>
+          <h3>
+            {i + 1}. {s.title}
+          </h3>
+          <p>{s.body}</p>
+          {s.warn ? <p className="og-plain-warn">⚠️ WARNING: {s.warn}</p> : null}
+        </div>
+      ))}
+
+      <h2>How to check it worked</h2>
+      <p>{verify}</p>
+    </article>
+  );
+}
+
 export function DiagramCard({
   tone,
   label,
