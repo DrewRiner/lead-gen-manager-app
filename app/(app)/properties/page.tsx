@@ -39,7 +39,6 @@ const BILLING_LABEL: Record<string, string> = {
 
 type SortKey =
   | "name"
-  | "targetRent"
   | "leads30"
   | "estValue30"
   | "revPerMonth";
@@ -94,8 +93,6 @@ export default async function PropertiesPage({
     switch (key) {
       case "name":
         return p.name.toLowerCase();
-      case "targetRent":
-        return toMoneyNumber(p.targetMonthlyRent);
       case "leads30":
         return counts.get(pid)?.total ?? 0;
       case "estValue30":
@@ -105,7 +102,7 @@ export default async function PropertiesPage({
     }
   };
 
-  const sortKey: SortKey = (["name", "targetRent", "leads30", "estValue30", "revPerMonth"] as const).includes(
+  const sortKey: SortKey = (["name", "leads30", "estValue30", "revPerMonth"] as const).includes(
     sp.sort as SortKey,
   )
     ? (sp.sort as SortKey)
@@ -171,7 +168,6 @@ export default async function PropertiesPage({
                 <TableHead>Status</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Billing</TableHead>
-                <SortHead label="Est. monthly value" k="targetRent" href={sortHref("targetRent")} active={sortKey === "targetRent"} dir={sortDir} numeric />
                 <SortHead label="30d leads" k="leads30" href={sortHref("leads30")} active={sortKey === "leads30"} dir={sortDir} numeric />
                 <SortHead label="30d est. value" k="estValue30" href={sortHref("estValue30")} active={sortKey === "estValue30"} dir={sortDir} numeric />
                 <SortHead label="Rev/mo rented" k="revPerMonth" href={sortHref("revPerMonth")} active={sortKey === "revPerMonth"} dir={sortDir} numeric />
@@ -181,7 +177,7 @@ export default async function PropertiesPage({
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
                     No properties match these filters.
                   </TableCell>
                 </TableRow>
@@ -209,9 +205,6 @@ export default async function PropertiesPage({
                       <TableCell className="text-muted-foreground">{clientName ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCurrency(p.targetMonthlyRent)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatNumber(count?.total ?? 0)}
