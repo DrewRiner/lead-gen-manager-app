@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { headers } from "next/headers";
+import { Users2 } from "lucide-react";
 import { asc } from "drizzle-orm";
 
 import { PageHeader } from "@/components/page-header";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { WebhooksPanel } from "@/components/settings/webhooks-panel";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getProfile } from "@/lib/auth";
 import { PLATFORM } from "@/lib/config";
 import { formatDateInTz } from "@/lib/dates";
 import { db } from "@/lib/db";
@@ -63,7 +67,7 @@ function timezoneOptions(current: string): string[] {
 }
 
 export default async function SettingsPage() {
-  const [settings, users, leadSources, unmatchedLeads, events, hdrs] =
+  const [settings, users, leadSources, unmatchedLeads, events, hdrs, profile] =
     await Promise.all([
       getAppSettings(),
       db.select().from(profiles).orderBy(asc(profiles.email)),
@@ -71,7 +75,9 @@ export default async function SettingsPage() {
       getRecentUnmatchedLeads(20),
       getWebhookEvents(100),
       headers(),
+      getProfile(),
     ]);
+  const isAdmin = profile?.role === "admin";
 
   const tz = settings.orgTimezone;
 
@@ -89,6 +95,24 @@ export default async function SettingsPage() {
         title="Settings"
         description="Organization configuration and app users."
       />
+
+      {isAdmin ? (
+        <Card className="mb-6">
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>User management</CardTitle>
+              <CardDescription>
+                Add, edit, and deactivate the staff who can access this app.
+              </CardDescription>
+            </div>
+            <Link href="/settings/users">
+              <Button>
+                <Users2 className="mr-2 h-4 w-4" /> Manage users
+              </Button>
+            </Link>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

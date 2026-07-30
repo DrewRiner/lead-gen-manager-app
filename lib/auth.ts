@@ -37,3 +37,15 @@ export async function requireUser() {
   if (!user) redirect("/login");
   return user;
 }
+
+/**
+ * Require an ACTIVE, ADMIN profile in a Server Component (the /settings/users
+ * page). Non-admins are bounced to the dashboard; deactivated or missing
+ * profiles to /login. Server-side gate — never rely on hidden UI alone.
+ */
+export async function requireAdmin(): Promise<Profile> {
+  const profile = await getProfile();
+  if (!profile || profile.deactivatedAt) redirect("/login");
+  if (profile.role !== "admin") redirect("/");
+  return profile;
+}

@@ -119,6 +119,12 @@ export const profiles = pgTable("profiles", {
   email: text("email").notNull(),
   fullName: text("full_name"),
   role: roleEnum("role").notNull().default("admin"),
+  // Soft-deactivation: non-null => the user is disabled. Never hard-delete a
+  // profile, so historical actions/attribution survive. Enforced server-side.
+  deactivatedAt: timestamp("deactivated_at", {
+    withTimezone: true,
+    mode: "date",
+  }),
   createdAt,
   updatedAt,
 });
@@ -458,6 +464,30 @@ export const guideBlocks = pgTable(
     updatedAt,
   },
   (t) => [index("guide_blocks_guide_id_position_idx").on(t.guideId, t.position)],
+);
+
+// Per-user "Done" progress on the designed operator guides. A row's PRESENCE
+// means that step is checked; toggling off deletes it. Keyed by the app user
+// (profile), the guide slug, and a stable step key.
+export const guideStepProgress = pgTable(
+  "guide_step_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: uuid("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    guideSlug: text("guide_slug").notNull(),
+    stepKey: text("step_key").notNull(),
+    createdAt,
+  },
+  (t) => [
+    uniqueIndex("guide_step_progress_uniq").on(
+      t.profileId,
+      t.guideSlug,
+      t.stepKey,
+    ),
+    index("guide_step_progress_user_guide_idx").on(t.profileId, t.guideSlug),
+  ],
 );
 
 // ---------------------------------------------------------------------------

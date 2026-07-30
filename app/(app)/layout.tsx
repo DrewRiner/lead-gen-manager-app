@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 import { AppNav } from "@/components/app-nav";
@@ -13,6 +14,10 @@ export default async function AppLayout({
 }) {
   await requireUser();
   const profile = await getProfile();
+  // Defense-in-depth: a deactivated profile is bounced from every app route,
+  // even mid-session. (Banning also makes requireUser's getUser() fail, so a
+  // deactivated user usually never gets this far.)
+  if (profile?.deactivatedAt) redirect("/login");
 
   return (
     <div className="flex min-h-screen">
