@@ -338,6 +338,25 @@ export function FieldMatters({
   );
 }
 
+/** A framed, captioned screenshot (real uploaded image) inside a step. */
+export function GuideShot({
+  src,
+  alt,
+  caption,
+}: {
+  src: string;
+  alt: string;
+  caption?: string;
+}) {
+  return (
+    <figure className="og-shot">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} />
+      {caption ? <figcaption>{caption}</figcaption> : null}
+    </figure>
+  );
+}
+
 export function MockTable({ children }: { children: ReactNode }) {
   return (
     <div className="og-table-scroll">
@@ -467,6 +486,7 @@ export function MockSidebar({ active }: { active: string }) {
 export function PlainGuide({
   eyebrow,
   title,
+  note,
   why,
   beforeLead = "Have on hand:",
   before,
@@ -475,6 +495,8 @@ export function PlainGuide({
 }: {
   eyebrow: string;
   title: string;
+  /** Optional muted note rendered under the title (e.g. a tooling caveat). */
+  note?: string;
   why: string;
   beforeLead?: string;
   before: string[];
@@ -485,6 +507,7 @@ export function PlainGuide({
     <article className="og-plain">
       <div className="og-plain-eyebrow">{eyebrow}</div>
       <h1>{title}</h1>
+      {note ? <p className="og-plain-note">{note}</p> : null}
 
       <h2>Why this matters</h2>
       <p>{why}</p>

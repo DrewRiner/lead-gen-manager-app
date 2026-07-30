@@ -77,6 +77,15 @@ export const OPERATOR_GUIDES: OperatorGuideMeta[] = [
     stepKeys: steps(5),
   },
   {
+    slug: "embed-a-contact-form-on-a-website",
+    title: "Embed a contact form on a website",
+    navLabel: "Embed form",
+    eyebrow: "Internal runbook / Integrations",
+    description:
+      "Put an Engine Evolve form live on the property's site so real visitors can submit leads.",
+    stepKeys: steps(5),
+  },
+  {
     slug: "change-how-a-client-gets-notified",
     title: "Change how or where a client gets notified",
     navLabel: "Notifications",

@@ -4,6 +4,7 @@ import { ChangeNotificationDesigned, ChangeNotificationPlain } from "./guides/ch
 import { ConnectCallRailDesigned, ConnectCallRailPlain } from "./guides/connect-callrail";
 import { ConnectFormDesigned, ConnectFormPlain } from "./guides/connect-form";
 import { ConnectTwilioDesigned, ConnectTwilioPlain } from "./guides/connect-twilio";
+import { EmbedFormDesigned, EmbedFormPlain } from "./guides/embed-form";
 import { NewPropertyDesigned, NewPropertyPlain } from "./guides/new-property";
 import { NoLeadsDesigned, NoLeadsPlain } from "./guides/no-leads";
 import { OnboardingDesigned, OnboardingPlain } from "./guides/onboarding";
@@ -42,6 +43,10 @@ export const DESIGNED_GUIDES: Record<string, DesignedGuideEntry> = {
   "connect-twilio-call-tracking": {
     Designed: ConnectTwilioDesigned,
     Plain: ConnectTwilioPlain,
+  },
+  "embed-a-contact-form-on-a-website": {
+    Designed: EmbedFormDesigned,
+    Plain: EmbedFormPlain,
   },
   "change-how-a-client-gets-notified": {
     Designed: ChangeNotificationDesigned,

@@ -819,6 +819,39 @@ a.og-pill:hover {
   color: var(--og-faint-2);
 }
 
+/* ---- Screenshot figure ------------------------------------------------ */
+.og-shot {
+  background: #fff;
+  border: 1px solid var(--og-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--og-shadow-deep);
+  margin: 0;
+}
+.og-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.og-shot figcaption {
+  padding: 10px 14px;
+  background: var(--og-panel-subtle);
+  border-top: 1px solid var(--og-hairline);
+  font-family: var(--og-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--og-faint);
+}
+.og-plain .og-plain-note {
+  font-size: 14px;
+  color: var(--og-muted-2);
+  background: var(--og-surface-warm);
+  border: 1px solid var(--og-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 8px;
+}
+
 /* ---- Code / URL block ------------------------------------------------- */
 .og-code {
   background: var(--og-ink-alt);
