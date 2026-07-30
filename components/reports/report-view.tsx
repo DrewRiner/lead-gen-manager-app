@@ -132,7 +132,7 @@ export function ReportView({
       { key: "billable", label: "Billable" },
       { key: "estimatedValue", label: "Estimated Value" },
       { key: "actualRevenue", label: "Actual Revenue" },
-      { key: "effectivePerLead", label: "Effective $/Lead" },
+      { key: "effectivePerLead", label: "Actual cost/lead" },
       { key: "marketPerLead", label: "Market $/Lead (blended)" },
       { key: "gap", label: "Gap" },
     ];
@@ -212,7 +212,7 @@ export function ReportView({
                 <SortHead label="Billable" k="billable" numeric {...{ sortKey, sortDir, toggleSort }} />
                 <SortHead label="Est. value" k="estimatedValue" numeric {...{ sortKey, sortDir, toggleSort }} />
                 <SortHead label="Revenue" k="actualRevenue" numeric {...{ sortKey, sortDir, toggleSort }} />
-                <SortHead label="Eff. $/lead" k="effLead" numeric {...{ sortKey, sortDir, toggleSort }} />
+                <SortHead label="Actual cost/lead" title="Your actual cost per lead" k="effLead" numeric {...{ sortKey, sortDir, toggleSort }} />
                 <SortHead label="Market $/lead" k="marketLead" numeric {...{ sortKey, sortDir, toggleSort }} />
                 <SortHead label="Gap" k="gap" numeric {...{ sortKey, sortDir, toggleSort }} />
               </TableRow>
@@ -277,7 +277,7 @@ export function ReportView({
                       )}
                       title={
                         r.economics.underpriced
-                          ? "Effective cost per lead is well below market — a candidate to move to pay-per-lead."
+                          ? "Your actual cost per lead is well below market — a candidate to move to pay-per-lead."
                           : undefined
                       }
                     >
@@ -358,6 +358,7 @@ function numeric(r: MonthlyReportRow, key: SortKey): number {
 
 function SortHead({
   label,
+  title,
   k,
   numeric: isNumeric = false,
   sortKey,
@@ -365,6 +366,7 @@ function SortHead({
   toggleSort,
 }: {
   label: string;
+  title?: string;
   k: SortKey;
   numeric?: boolean;
   sortKey: SortKey;
@@ -373,7 +375,7 @@ function SortHead({
 }) {
   const active = sortKey === k;
   return (
-    <TableHead className={isNumeric ? "text-right" : undefined}>
+    <TableHead className={isNumeric ? "text-right" : undefined} title={title}>
       <button
         type="button"
         onClick={() => toggleSort(k)}

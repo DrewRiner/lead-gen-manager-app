@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { asc, eq, isNull, sql } from "drizzle-orm";
+import { Plus, Trash2 } from "lucide-react";
+import { asc, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { ClientDialog } from "@/components/clients/client-dialog";
 import { ClientRowActions } from "@/components/clients/client-row-actions";
@@ -26,14 +26,20 @@ import { getAppSettings } from "@/lib/settings";
 export const metadata = { title: "Clients — LeadGen" };
 export const dynamic = "force-dynamic";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ deleted?: string }>;
+}) {
+  const sp = await searchParams;
+  const showDeleted = sp.deleted === "1";
   const { orgTimezone: tz } = await getAppSettings();
 
-  const [rows, propCountRows, leadCounts] = await Promise.all([
+  const [rows, propCountRows, leadCounts, deletedCountRow] = await Promise.all([
     db
       .select()
       .from(clients)
-      .where(isNull(clients.deletedAt))
+      .where(showDeleted ? isNotNull(clients.deletedAt) : isNull(clients.deletedAt))
       .orderBy(asc(clients.businessName)),
     db
       .select({
@@ -44,7 +50,12 @@ export default async function ClientsPage() {
       .where(isNull(properties.deletedAt))
       .groupBy(properties.clientId),
     getClientRangeCounts(trailingDayRange(tz, 30)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(clients)
+      .where(isNotNull(clients.deletedAt)),
   ]);
+  const deletedCount = deletedCountRow[0]?.count ?? 0;
 
   const propCount = new Map<string, number>();
   for (const r of propCountRows) {
@@ -54,17 +65,36 @@ export default async function ClientsPage() {
   return (
     <div>
       <PageHeader
-        title="Clients"
-        description="Business owners renting leads."
+        title={showDeleted ? "Deleted clients" : "Clients"}
+        description={
+          showDeleted
+            ? "Soft-deleted clients. Restore to return them to lists and pickers."
+            : "Business owners renting leads."
+        }
       >
-        <ClientDialog
-          mode="create"
-          trigger={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add client
-            </Button>
-          }
-        />
+        {showDeleted ? (
+          <Button asChild variant="outline">
+            <Link href="/clients">Back to active</Link>
+          </Button>
+        ) : (
+          <>
+            <ClientDialog
+              mode="create"
+              trigger={
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> Add client
+                </Button>
+              }
+            />
+            {deletedCount > 0 ? (
+              <Button asChild variant="outline">
+                <Link href="/clients?deleted=1">
+                  <Trash2 className="mr-2 h-4 w-4" /> Deleted ({deletedCount})
+                </Link>
+              </Button>
+            ) : null}
+          </>
+        )}
       </PageHeader>
 
       <div className="rounded-lg border">
@@ -89,19 +119,26 @@ export default async function ClientsPage() {
                     colSpan={8}
                     className="py-10 text-center text-muted-foreground"
                   >
-                    No clients yet.
+                    {showDeleted ? "No deleted clients." : "No clients yet."}
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">
-                      <Link
-                        href={`/clients/${c.id}`}
-                        className="hover:underline"
-                      >
-                        {c.businessName}
-                      </Link>
+                      <span className="flex items-center gap-2">
+                        <Link
+                          href={`/clients/${c.id}`}
+                          className="hover:underline"
+                        >
+                          {c.businessName}
+                        </Link>
+                        {c.deletedAt ? (
+                          <span className="rounded-full border border-dashed px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Deleted
+                          </span>
+                        ) : null}
+                      </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {c.contactName ?? "—"}
@@ -132,6 +169,7 @@ export default async function ClientsPage() {
                           status: c.status,
                           notes: c.notes,
                         }}
+                        deleted={showDeleted}
                       />
                     </TableCell>
                   </TableRow>

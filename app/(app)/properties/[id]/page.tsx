@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import { MetricCard } from "@/components/dashboard/metric-card";
@@ -15,6 +15,7 @@ import { CostPerLead } from "@/components/properties/cost-per-lead";
 import { PropertyActionsMenu } from "@/components/properties/property-actions-menu";
 import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { PropertyDialog } from "@/components/properties/property-dialog";
+import { RevenueStrip, type RevenueStripProps } from "@/components/properties/revenue-strip";
 import { TrialBanner } from "@/components/properties/trial-banner";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import {
   comparativeCalendarWindow,
+  currentMonthKey,
   daysBetween,
   localDateStr,
   nowLocalInputValue,
@@ -51,6 +53,7 @@ import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
 import {
   getPropertyCostPerLead,
+  getPropertyEconomics,
   getPropertyMonthlySeries,
   getRangeMetrics,
 } from "@/lib/queries/metrics";
@@ -168,6 +171,33 @@ export default async function PropertyDetailPage({
     };
   }
 
+  // Revenue strip — only for a property with an active assignment (rented or
+  // trial). Reuses the existing economics / revenue / lifetime queries.
+  let strip: RevenueStripProps | null = null;
+  if (activeAssignment) {
+    const monthKey = currentMonthKey(tz);
+    const [econ, monthSeries, lifetime] = await Promise.all([
+      getPropertyEconomics(tz, id, monthKey),
+      getPropertyMonthlySeries(tz, id, [monthKey]),
+      getPropertyLifetime(tz, id),
+    ]);
+    strip = {
+      clientName: row.clientName,
+      billingType: activeAssignment.billingType,
+      monthlyRate: activeAssignment.monthlyRate,
+      perLeadCallRate: activeAssignment.perLeadCallRate,
+      perLeadFormRate: activeAssignment.perLeadFormRate,
+      isTrial: onTrial,
+      revenueThisMonth: monthSeries[0]?.actualRevenue ?? "0.00",
+      lifetimeRevenue: lifetime.lifetimeRevenue,
+      actualPerLead: econ.economics.effectiveValue,
+      marketPerLead: econ.economics.marketBlended,
+      underpriced: econ.economics.underpriced,
+      daysRemaining: trial?.daysRemaining ?? null,
+      expired: trial?.expired ?? false,
+    };
+  }
+
   const editValue = {
     id: p.id,
     name: p.name,
@@ -197,14 +227,9 @@ export default async function PropertyDetailPage({
 
   return (
     <div>
-      <Link
-        href="/properties"
-        className="mb-3 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" /> Properties
-      </Link>
-
       <PageHeader
+        backHref="/properties"
+        backLabel="Properties"
         title={
           <span className="flex items-center gap-2">
             <ConnectionDot connection={connection} className="h-3 w-3" />
@@ -216,7 +241,7 @@ export default async function PropertyDetailPage({
         <PropertyDialog
           mode="edit"
           property={editValue}
-          trigger={<Button variant="outline">Edit property</Button>}
+          trigger={<Button>Edit property</Button>}
         />
         <PropertyActionsMenu
           propertyId={p.id}
@@ -280,6 +305,8 @@ export default async function PropertyDetailPage({
         </CardContent>
       </Card>
 
+      {strip ? <RevenueStrip {...strip} /> : null}
+
       {/* Tabs (server-rendered via ?tab=) */}
       <TabNav>
         <TabLink href={`/properties/${id}?tab=activity`} active={tab === "activity"}>
@@ -339,6 +366,7 @@ async function ActivityTab({
     from: sp.from,
     to: sp.to,
     q: sp.q,
+    deleted: sp.deleted === "1",
   };
 
   const [

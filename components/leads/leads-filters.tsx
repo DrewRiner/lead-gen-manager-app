@@ -137,6 +137,15 @@ export function LeadsFilters({
             { value: "billed", label: "Billed" },
           ]}
         />
+        <FilterSelect
+          value={params.get("deleted") === "1" ? "1" : "active"}
+          onChange={(v) => setParam("deleted", v === "1" ? "1" : "")}
+          placeholder="View"
+          options={[
+            { value: "active", label: "Active" },
+            { value: "1", label: "Deleted" },
+          ]}
+        />
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <div className="space-y-1">

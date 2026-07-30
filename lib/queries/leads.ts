@@ -4,6 +4,7 @@ import {
   eq,
   gte,
   ilike,
+  isNotNull,
   isNull,
   lt,
   or,
@@ -26,6 +27,8 @@ export interface LeadFilters {
   from?: string; // YYYY-MM-DD (org tz)
   to?: string; // YYYY-MM-DD (org tz)
   q?: string;
+  /** Show soft-deleted leads instead of active ones (the "Deleted" view). */
+  deleted?: boolean;
 }
 
 export interface LeadListRow {
@@ -33,6 +36,12 @@ export interface LeadListRow {
   propertyId: string | null;
   propertyName: string | null;
   niche: string | null;
+  /** Property's CURRENT billing/rental state — for the "Billed" display only
+      (not the lead's historical snapshot). Null when unmatched. */
+  propertyBillingType: string | null;
+  propertyStatus: string | null;
+  propertyCurrentClientId: string | null;
+  propertyBillableThresholdSeconds: number | null;
   clientId: string | null;
   clientName: string | null;
   type: string;
@@ -62,10 +71,14 @@ export interface LeadListRow {
   formAnswers: Record<string, string> | null;
   occurredAt: Date;
   createdAt: Date;
+  deletedAt: Date | null;
 }
 
 function buildConditions(tz: string, filters: LeadFilters): SQL {
-  const conds: SQL[] = [isNull(leads.deletedAt)];
+  // The "Deleted" view flips the soft-delete filter to show swept-up leads.
+  const conds: SQL[] = [
+    filters.deleted ? isNotNull(leads.deletedAt) : isNull(leads.deletedAt),
+  ];
   if (filters.propertyId) conds.push(eq(leads.propertyId, filters.propertyId));
   if (filters.clientId) conds.push(eq(leads.clientId, filters.clientId));
   if (filters.type) conds.push(eq(leads.type, filters.type as never));
@@ -118,6 +131,10 @@ export async function getLeads(
         propertyId: leads.propertyId,
         propertyName: properties.name,
         niche: properties.niche,
+        propertyBillingType: properties.billingType,
+        propertyStatus: properties.status,
+        propertyCurrentClientId: properties.clientId,
+        propertyBillableThresholdSeconds: properties.billableThresholdSeconds,
         clientId: leads.clientId,
         clientName: clients.businessName,
         type: leads.type,
@@ -145,6 +162,7 @@ export async function getLeads(
         formAnswers: leads.formAnswers,
         occurredAt: leads.occurredAt,
         createdAt: leads.createdAt,
+        deletedAt: leads.deletedAt,
       })
       .from(leads)
       // Left join: unmatched leads have a null property and must still show.

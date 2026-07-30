@@ -15,10 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { billedDisplay } from "@/lib/leads/billed-display";
 import type { LeadListRow } from "@/lib/queries/leads";
 import { formatDuration } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { cn } from "@/lib/utils";
 
 export function LeadsTable({
   rows,
@@ -75,6 +77,7 @@ export function LeadsTable({
           ) : (
             rows.map((r) => {
               const isOpen = expanded === r.id;
+              const billed = billedDisplay(r);
               return (
                 <Fragment key={r.id}>
                   <TableRow
@@ -134,10 +137,22 @@ export function LeadsTable({
                       {r.type === "call" ? formatDuration(r.callDurationSeconds) : "—"}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={r.billableStatus} />
+                      <div className="flex items-center gap-1.5">
+                        <StatusBadge status={r.billableStatus} />
+                        {r.deletedAt ? (
+                          <span className="rounded-full border border-dashed px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Deleted
+                          </span>
+                        ) : null}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatCurrency(r.billedAmount)}
+                      <span
+                        title={billed.tooltip}
+                        className={cn(billed.muted && "text-muted-foreground")}
+                      >
+                        {billed.text}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatCurrency(r.estimatedValue)}

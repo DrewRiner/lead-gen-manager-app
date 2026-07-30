@@ -4,11 +4,14 @@ import { useSearchParams } from "next/navigation";
 import { Download } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { ActionsMenu } from "@/components/actions-menu";
 import { exportLeadsCsv } from "@/lib/actions/export";
 import type { LeadFilters } from "@/lib/queries/leads";
 
-export function ExportCsvButton({
+// Secondary leads-page actions, in the shared ActionsMenu dropdown so the header
+// follows the standard "primary button + Actions menu" pattern. Currently just
+// CSV export (respecting the active filters); future actions land here too.
+export function LeadsActionsMenu({
   fixed = {},
 }: {
   /** Filters forced on regardless of URL (e.g. propertyId on a detail page). */
@@ -30,7 +33,6 @@ export function ExportCsvButton({
         from: params.get("from") ?? undefined,
         to: params.get("to") ?? undefined,
         q: params.get("q") ?? undefined,
-        // Fixed filters win (e.g. a property detail page scoping export).
         ...fixed,
       };
       const csv = await exportLeadsCsv(filters);
@@ -50,9 +52,20 @@ export function ExportCsvButton({
   }
 
   return (
-    <Button variant="outline" onClick={onExport} disabled={pending}>
-      <Download className="mr-2 h-4 w-4" />
-      {pending ? "Exporting…" : "Export CSV"}
-    </Button>
+    <ActionsMenu
+      groups={[
+        {
+          items: [
+            {
+              key: "export",
+              label: pending ? "Exporting…" : "Export CSV",
+              icon: <Download className="h-4 w-4" />,
+              disabled: pending,
+              onSelect: onExport,
+            },
+          ],
+        },
+      ]}
+    />
   );
 }

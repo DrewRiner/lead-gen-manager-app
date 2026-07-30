@@ -2,10 +2,10 @@ import { Plus } from "lucide-react";
 import { asc, isNull } from "drizzle-orm";
 
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
-import { ExportCsvButton } from "@/components/leads/export-csv-button";
+import { LeadsActionsMenu } from "@/components/leads/leads-actions-menu";
 import { LeadsFilters } from "@/components/leads/leads-filters";
 import { LeadsTable } from "@/components/leads/leads-table";
-import { PageHeader } from "@/components/page-header";
+import { FilterBar, PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -46,6 +46,7 @@ export default async function LeadsPage({
           from: sp.from,
           to: sp.to,
           q: sp.q,
+          deleted: sp.deleted === "1",
         },
         page,
         25,
@@ -70,7 +71,6 @@ export default async function LeadsPage({
         title="Leads"
         description="Every call and form lead across all properties."
       >
-        <ExportCsvButton />
         <AddLeadDialog
           properties={propertyList}
           defaultOccurredAt={nowLocalInputValue(tz)}
@@ -81,6 +81,7 @@ export default async function LeadsPage({
             </Button>
           }
         />
+        <LeadsActionsMenu />
       </PageHeader>
 
       {unmatchedCount > 0 && sp.billableStatus !== "unmatched" ? (
@@ -98,9 +99,9 @@ export default async function LeadsPage({
         </Link>
       ) : null}
 
-      <div className="mb-2 flex flex-wrap items-center gap-3">
+      <FilterBar>
         <LeadsFilters properties={propertyList} clients={clientList} />
-      </div>
+      </FilterBar>
 
       <p className="mb-4 text-xs text-muted-foreground">
         {spamCount > 0 ? (

@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 import { GuideEditor } from "@/components/guides/guide-editor";
 import { PageHeader } from "@/components/page-header";
@@ -22,13 +20,12 @@ export default async function EditGuidePage({
 
   return (
     <div>
-      <Link
-        href={`/guides/${guide.slug}`}
-        className="mb-3 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" /> Back to guide
-      </Link>
-      <PageHeader title="Edit guide" description="Changes save to this guide." />
+      <PageHeader
+        backHref={`/guides/${guide.slug}`}
+        backLabel="Back to guide"
+        title="Edit guide"
+        description="Changes save to this guide."
+      />
       <GuideEditor
         mode="edit"
         guide={{

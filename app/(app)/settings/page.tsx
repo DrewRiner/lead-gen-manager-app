@@ -94,25 +94,15 @@ export default async function SettingsPage() {
       <PageHeader
         title="Settings"
         description="Organization configuration and app users."
-      />
-
-      {isAdmin ? (
-        <Card className="mb-6">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <div>
-              <CardTitle>User management</CardTitle>
-              <CardDescription>
-                Add, edit, and deactivate the staff who can access this app.
-              </CardDescription>
-            </div>
+      >
+        {isAdmin ? (
+          <Button asChild>
             <Link href="/settings/users">
-              <Button>
-                <Users2 className="mr-2 h-4 w-4" /> Manage users
-              </Button>
+              <Users2 className="mr-2 h-4 w-4" /> Manage users
             </Link>
-          </CardHeader>
-        </Card>
-      ) : null}
+          </Button>
+        ) : null}
+      </PageHeader>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

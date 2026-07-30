@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { asc } from "drizzle-orm";
 
 import { PageHeader } from "@/components/page-header";
@@ -36,14 +34,9 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <Link
-        href="/settings"
-        className="mb-3 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" /> Settings
-      </Link>
-
       <PageHeader
+        backHref="/settings"
+        backLabel="Settings"
         title="Users"
         description="Add, edit, and deactivate the internal staff who can access this app."
       />
