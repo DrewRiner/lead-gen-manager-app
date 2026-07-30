@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #F6F3ED; }
+  * { box-sizing: border-box; }
+  a { color: #C63F1E; text-decoration: none; border-bottom: 1px solid rgba(198,63,30,.35); }
+  a:hover { color: #93290F; border-bottom-color: #93290F; }
+  @keyframes omRing { 0% { box-shadow: 0 0 0 0 rgba(198,63,30,.38); } 100% { box-shadow: 0 0 0 16px rgba(198,63,30,0); } }
+</style>
+</helmet>
+
+<div style="background:#F6F3ED;color:#171614;font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;padding:0 32px 96px">
+  <div style="max-width:1120px;margin:0 auto">
+
+    <div style="display:flex;gap:7px;flex-wrap:wrap;padding:28px 0 0">
+      <a href="./Client%20Onboarding%20Guide.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Onboard a new client</a>
+      <a href="./Switch%20Property%20To%20New%20Client.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Switch to a new client</a>
+      <a href="./Update%20Client%20Contact%20Info.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Update client contact info</a>
+      <a href="./Connect%20A%20Contact%20Form.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect a contact form</a>
+      <a href="./Connect%20CallRail%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect CallRail</a>
+      <a href="./Connect%20Twilio%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect Twilio</a>
+      <a href="./Change%20Notification%20Method.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Change notifications</a>
+      <a href="./Set%20Up%20New%20Lead%20Gen%20Property.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">New lead gen property</a>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#17161A;border:1px solid #17161A;border-radius:999px;padding:6px 11px">No leads troubleshooting</span>
+    </div>
+
+    <header style="padding:40px 0 44px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end;border-bottom:2px solid #171614">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#C63F1E;margin-bottom:18px">Internal runbook &nbsp;/&nbsp; Troubleshooting · urgent</div>
+        <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:62px;line-height:1.03;letter-spacing:-.015em;margin:0 0 16px;max-width:22ch;text-wrap:pretty">A client says they're not getting leads — what to check</h1>
+        <p style="font-size:19px;line-height:1.5;color:#4A4741;margin:0;max-width:54ch">Work through the likely causes in order when a client reports no leads.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <div style="display:flex;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border-radius:999px;padding:7px 13px">5 checks</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#93290F;background:#FBEAE4;border:1px solid #F0C6B7;border-radius:999px;padding:6px 12px">In order</span>
+        </div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8C877D">{{ doneCount }} of {{ stepCount }} checks done</div>
+        </sc-if>
+      </div>
+    </header>
+
+    <section style="padding:52px 0;border-bottom:1px solid #DEDAD0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Why this matters</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">This is urgent. A paying client who thinks they're getting nothing churns fast — often before they even tell us twice. Work through the causes below in order, from most common to least, so you find the real problem quickly instead of guessing.</p>
+        </div>
+        <div style="border:1px solid #E3DFD5;background:#fff;border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D;margin-bottom:16px">Split the problem in two, fast</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="border:1px solid #E3DFD5;border-radius:9px;padding:13px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px">Leads in the dashboard, client silent</div>
+              <div style="font-size:12.5px;color:#6B665E">→ delivery / notification problem · checks 3–4</div>
+            </div>
+            <div style="border:1px solid #E3DFD5;border-radius:9px;padding:13px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px">No leads in the dashboard at all</div>
+              <div style="font-size:12.5px;color:#6B665E">→ upstream form / routing / traffic problem · checks 1, 2, 5</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:52px 0;border-bottom:2px solid #171614">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Before you start</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0">Have on hand:</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="padding:14px 20px;border-bottom:1px solid #EDEAE2;background:#FBFAF7;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D">Pre-flight</div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #F1EEE7">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">Which client and property they're asking about</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">Roughly when they last received a lead</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div style="padding:44px 0 8px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8C877D;margin:0">Steps · most common first</h2>
+    </div>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">1</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Dashboard</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t1 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d1 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Checked</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Is the property connected?</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">In the dashboard, open the property and check the connection dot next to its name. If it's red, no Lead Source is set and nothing can route — follow <em><a href="./Set%20Up%20New%20Lead%20Gen%20Property.dc.html">Set up a new lead gen property to collect leads</a></em> to fix it.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px">
+          <div style="border:1.5px solid #C7DBCF;background:#fff;border-radius:12px;padding:16px 18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <span style="width:10px;height:10px;border-radius:99px;background:#22A06B;display:inline-block;flex:none"></span>
+              <span style="font-size:15px;font-weight:600">Sumter Roofing Company</span>
+            </div>
+            <div style="font-size:12.5px;color:#245740">Green — Lead Source set, routing can work. Move to check 2.</div>
+          </div>
+          <div style="border:1.5px solid #F0C6B7;background:#FBEAE4;border-radius:12px;padding:16px 18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <span style="width:10px;height:10px;border-radius:99px;background:#C63F1E;display:inline-block;flex:none;animation:omRing 2.4s ease-out infinite"></span>
+              <span style="font-size:15px;font-weight:600">Newnan Fence Company</span>
+            </div>
+            <div style="font-size:12.5px;color:#93290F">Red — no Lead Source. Nothing can route. Stop here and wire it up.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">2</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Dashboard</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t2 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d2 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Checked</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Are leads actually coming in?</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">On the property page, look at recent Leads. If leads are arriving in the dashboard but the client isn't hearing about them, it's a notification problem (steps 3–4). If no leads are arriving at all, it's an upstream form/traffic problem, not delivery.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #EDEAE2">
+            <span style="font-size:13.5px;font-weight:600">Leads</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C877D">7 total</span>
+            <span style="margin-left:auto;display:flex;gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#fff;background:#111827;border-radius:999px;padding:4px 9px">All 7</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4A4741;background:#F4F1EA;border-radius:999px;padding:4px 9px">Calls 6</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4A4741;background:#F4F1EA;border-radius:999px;padding:4px 9px">Forms 1</span>
+            </span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.3fr 1fr .9fr .7fr .8fr;gap:10px;padding:9px 18px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#A9A398">
+            <span>Date</span><span>Type</span><span>Lead</span><span>Duration</span><span>Status</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.3fr 1fr .9fr .7fr .8fr;gap:10px;padding:11px 18px;border-bottom:1px solid #F3F0E9;font-size:11.5px;align-items:center">
+            <span style="font-family:'IBM Plex Mono',monospace">Jul 29, 6:52 PM</span>
+            <span style="display:flex;gap:5px;align-items:center"><span style="color:#6B665E">Call</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#2E5A8F;background:#EEF3FB;border:1px solid #D7E3F3;border-radius:999px;padding:2px 6px">CallRail</span></span>
+            <span style="color:#4A4741">Paula Spencer</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:#4A4741">8:06</span>
+            <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#245740;background:#EDF5F0;border:1px solid #D3E4DA;border-radius:999px;padding:3px 7px">Billable</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.3fr 1fr .9fr .7fr .8fr;gap:10px;padding:11px 18px;font-size:11.5px;align-items:center">
+            <span style="font-family:'IBM Plex Mono',monospace;color:#6B665E">Jul 29, 2:43 PM</span>
+            <span style="display:flex;gap:5px;align-items:center"><span style="color:#6B665E">Call</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#2E5A8F;background:#EEF3FB;border:1px solid #D7E3F3;border-radius:999px;padding:2px 6px">CallRail</span></span>
+            <span style="color:#6B665E">Dawg Riner</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:#6B665E">0:25</span>
+            <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#8C877D;background:#F4F1EA;border:1px solid #E3DFD5;border-radius:999px;padding:3px 7px">Not billable</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 18px;border-top:1px solid #EDEAE2;background:#FBFAF7">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#C63F1E">→</span>
+              <span style="font-size:12.5px;color:#2A2823">Leads here, client silent? <strong style="font-weight:600">Notification problem</strong> — checks 3–4.</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#C63F1E">→</span>
+              <span style="font-size:12.5px;color:#2A2823">Empty list? <strong style="font-weight:600">Upstream form / traffic</strong> — not delivery.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">3</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t3 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d3 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Checked</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Is the form still live?</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">In Engine Evolve (<a href="https://app.enginevolve.com">https://app.enginevolve.com</a>), open the property's form and confirm it's still Published — not unpublished or reverted to draft. An unpublished form silently collects nothing.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px">
+          <div style="border:1.5px solid #C7DBCF;background:#EDF5F0;border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:12px">
+            <span style="width:22px;height:22px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            <div>
+              <div style="font-size:13.5px;font-weight:600">Sumter Roofing Lead Form</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#245740">Published</div>
+            </div>
+          </div>
+          <div style="border:1.5px solid #F0C6B7;background:#FBEAE4;border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:12px">
+            <span style="width:22px;height:22px;border-radius:99px;background:#C63F1E;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✕</span>
+            <div>
+              <div style="font-size:13.5px;font-weight:600">Sumter Roofing Lead Form</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#93290F">Draft / unpublished — collects nothing, silently</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">4</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t4 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d4 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Checked</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Are notifications pointing at the right person?</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">In Engine Evolve, open the property's workflow and confirm the Send Email / Send SMS actions use the client's current email and phone — not an old one. If the info is stale, follow <em><a href="./Update%20Client%20Contact%20Info.dc.html">Update a client's phone number or email</a></em>.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+          <div style="display:grid;grid-template-columns:1.6fr 1.6fr 1.2fr;gap:12px;padding:11px 18px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">
+            <span>Action</span><span>Recipient in workflow</span><span>Matches client record?</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.6fr 1.6fr 1.2fr;gap:12px;padding:13px 18px;border-bottom:1px solid #F3F0E9;font-size:12.5px;align-items:center">
+            <span style="font-weight:600">Client Email Notification</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">jamie@mariosbrosfencing.com</span>
+            <span style="justify-self:start;display:flex;align-items:center;gap:7px;font-size:12px;color:#245740"><span style="width:18px;height:18px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center">✓</span>current</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.6fr 1.6fr 1.2fr;gap:12px;padding:13px 18px;font-size:12.5px;align-items:center;background:#FDF4F0">
+            <span style="font-weight:600">Client SMS Notification</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#93290F;text-decoration:line-through">(912) 555-5555</span>
+            <span style="justify-self:start;display:flex;align-items:center;gap:7px;font-size:12px;color:#93290F"><span style="width:18px;height:18px;border-radius:99px;background:#C63F1E;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center">✕</span>stale — fix it</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0;border-bottom:2px solid #171614">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">5</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Dashboard</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t5 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d5 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Checked</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Are leads arriving but not routing?</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">In the dashboard, check the unmatched leads queue (Leads → filter Unmatched, or Settings → Webhooks → Recent unmatched leads). If the client's leads are landing there, the form's Lead Source value doesn't match — fix it per <em><a href="./Set%20Up%20New%20Lead%20Gen%20Property.dc.html">Set up a new lead gen property to collect leads</a></em>.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+          <div style="padding:13px 18px;border-bottom:1px solid #EDEAE2">
+            <div style="font-size:13.5px;font-weight:600">Recent unmatched leads</div>
+            <div style="font-size:11px;color:#8C877D">Leads that arrived without a matching property, with the raw Lead Source each one carried. Compare it against the routing table to spot a mismatch, then assign.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1.1fr 1.6fr 1.2fr .7fr;gap:12px;padding:10px 18px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#A9A398">
+            <span>Received</span><span>Raw Lead Source sent</span><span>Contact</span><span>Assign</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.1fr 1.6fr 1.2fr .7fr;gap:12px;padding:12px 18px;font-size:12px;align-items:center;background:#FDF4F0;border:1.5px solid #C63F1E;border-radius:9px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">Jul 29, 3:12 PM</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#93290F">sumter roofing co.</span>
+            <span style="color:#4A4741">(803) 555-0114</span>
+            <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#fff;background:#111827;border-radius:6px;padding:5px 9px">Assign</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:#FBFAF7;border-top:1px solid #EDEAE2">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B665E">expected</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#171614;background:#F4F1EA;border-radius:5px;padding:4px 8px">Sumter Roofing Company</span>
+            <span style="font-size:12px;color:#93290F;margin-left:auto">mismatch → fix the form's hidden field</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:56px 0 0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">How to check it worked</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">Note which step turned out to be the problem, fix it, then submit a test lead and confirm it both lands on the property in the dashboard and reaches the client's notification. Then let the client know it's resolved.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #EDEAE2">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#fff;background:#17161A;border-radius:6px;padding:5px 8px;flex:none">01</span>
+              <span style="font-size:14px;color:#2A2823">Test lead lands on the property in the dashboard</span>
+              <span style="margin-left:auto;width:22px;height:22px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #EDEAE2">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#fff;background:#17161A;border-radius:6px;padding:5px 8px;flex:none">02</span>
+              <span style="font-size:14px;color:#2A2823">Notification reaches the client</span>
+              <span style="margin-left:auto;width:22px;height:22px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 16px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#fff;background:#17161A;border-radius:6px;padding:5px 8px;flex:none">03</span>
+              <span style="font-size:14px;color:#2A2823">Client told it's resolved</span>
+              <span style="margin-left:auto;width:22px;height:22px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            </div>
+          </div>
+          <div style="border:1px solid #E3DFD5;background:#fff;border-radius:12px;padding:16px 18px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D;margin-bottom:10px">Note the cause for next time</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <span style="font-size:12px;background:#F4F1EA;border:1px solid #E3DFD5;border-radius:999px;padding:5px 10px">no Lead Source</span>
+              <span style="font-size:12px;background:#F4F1EA;border:1px solid #E3DFD5;border-radius:999px;padding:5px 10px">form unpublished</span>
+              <span style="font-size:12px;background:#F4F1EA;border:1px solid #E3DFD5;border-radius:999px;padding:5px 10px">stale recipient</span>
+              <span style="font-size:12px;background:#F4F1EA;border:1px solid #E3DFD5;border-radius:999px;padding:5px 10px">Lead Source mismatch</span>
+              <span style="font-size:12px;background:#F4F1EA;border:1px solid #E3DFD5;border-radius:999px;padding:5px 10px">upstream traffic</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#17161A;border-radius:12px;padding:18px 20px">
+            <span style="width:24px;height:24px;border-radius:99px;background:#BAF25A;color:#2A3D0A;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            <span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#FBFAF7">Fixed, tested, and the client knows.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;showAnnotations&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; },
+  &quot;interactiveChecklist&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; }
+}">
+const KEY = 'no-leads-guide-v1';
+const N = 5;
+
+class Component extends DCLogic {
+  state = { done: {} };
+
+  componentDidMount() {
+    try { const r = localStorage.getItem(KEY); if (r) this.setState({ done: JSON.parse(r) || {} }); } catch (e) {}
+  }
+
+  toggle(n) {
+    return () => this.setState(s => {
+      const done = Object.assign({}, s.done, { [n]: !s.done[n] });
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      return { done };
+    });
+  }
+
+  renderVals() {
+    const d = this.state.done || {};
+    const v = { ann: this.props.showAnnotations ?? true, check: this.props.interactiveChecklist ?? true, stepCount: N };
+    let c = 0;
+    for (let i = 1; i <= N; i++) { v['d' + i] = !!d[i]; v['t' + i] = this.toggle(i); if (d[i]) c++; }
+    v.doneCount = c;
+    return v;
+  }
+}
+
+</script>
+</body>
+</html>

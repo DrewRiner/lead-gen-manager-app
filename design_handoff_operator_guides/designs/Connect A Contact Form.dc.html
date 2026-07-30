@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #F6F3ED; }
+  * { box-sizing: border-box; }
+  a { color: #C63F1E; text-decoration: none; border-bottom: 1px solid rgba(198,63,30,.35); }
+  a:hover { color: #93290F; border-bottom-color: #93290F; }
+  @keyframes omRing { 0% { box-shadow: 0 0 0 0 rgba(198,63,30,.38); } 100% { box-shadow: 0 0 0 16px rgba(198,63,30,0); } }
+  @keyframes omBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+</style>
+</helmet>
+
+<div style="background:#F6F3ED;color:#171614;font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;padding:0 32px 96px">
+  <div style="max-width:1120px;margin:0 auto">
+
+    <div style="display:flex;gap:7px;flex-wrap:wrap;padding:28px 0 0">
+      <a href="./Client%20Onboarding%20Guide.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Onboard a new client</a>
+      <a href="./Switch%20Property%20To%20New%20Client.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Switch to a new client</a>
+      <a href="./Update%20Client%20Contact%20Info.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Update client contact info</a>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#17161A;border:1px solid #17161A;border-radius:999px;padding:6px 11px">Connect a contact form</span>
+      <a href="./Connect%20CallRail%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect CallRail</a>
+      <a href="./Connect%20Twilio%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect Twilio</a>
+      <a href="./Change%20Notification%20Method.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Change notifications</a>
+      <a href="./Set%20Up%20New%20Lead%20Gen%20Property.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">New lead gen property</a>
+      <a href="./Client%20Not%20Getting%20Leads.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">No leads troubleshooting</a>
+    </div>
+
+    <header style="padding:40px 0 44px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end;border-bottom:2px solid #171614">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8C877D;margin-bottom:18px">Internal runbook &nbsp;/&nbsp; Engine Evolve</div>
+        <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:62px;line-height:1.03;letter-spacing:-.015em;margin:0 0 16px;max-width:20ch;text-wrap:pretty">Connect a contact form</h1>
+        <p style="font-size:19px;line-height:1.5;color:#4A4741;margin:0;max-width:54ch">Wire a property's web form so its submissions route to the right property instead of Unmatched.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <div style="display:flex;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border-radius:999px;padding:7px 13px">7 steps</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#93290F;background:#FBEAE4;border:1px solid #F0C6B7;border-radius:999px;padding:6px 12px">2 exact-match values</span>
+        </div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8C877D">{{ doneCount }} of {{ stepCount }} steps checked off</div>
+        </sc-if>
+      </div>
+    </header>
+
+    <section style="padding:52px 0;border-bottom:1px solid #DEDAD0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Why this matters</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">Contact forms are how web leads reach the dashboard. Everything hinges on one field: the form's Source must match the property's Lead Source in the dashboard character-for-character. Get it wrong and every submission lands in the Unmatched queue instead of on the property — the client is paying and hearing nothing.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="border:1px solid #C7DBCF;background:#EDF5F0;border-radius:12px;padding:18px 20px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#245740;margin-bottom:14px">Exact match → routes to the property</div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <div style="background:#fff;border:1px solid #D3E4DA;border-radius:8px;padding:9px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7FA593">Form Source</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#171614">Sumter Roofing Company</div>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#2F6B4F">=</span>
+              <div style="background:#fff;border:1px solid #D3E4DA;border-radius:8px;padding:9px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7FA593">Dashboard Lead Source</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#171614">Sumter Roofing Company</div>
+              </div>
+              <span style="width:22px;height:22px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            </div>
+          </div>
+          <div style="border:1px solid #F0C6B7;background:#FBEAE4;border-radius:12px;padding:18px 20px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#93290F;margin-bottom:14px">One character off → Unmatched queue</div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <div style="background:#fff;border:1px solid #EDD5CB;border-radius:8px;padding:9px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#C08D7C">Form Source</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#171614">sumter roofing co.</div>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#C63F1E">≠</span>
+              <div style="background:#fff;border:1px solid #EDD5CB;border-radius:8px;padding:9px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#C08D7C">Dashboard Lead Source</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#171614">Sumter Roofing Company</div>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#93290F;background:#fff;border:1px dashed #EBC4B4;border-radius:999px;padding:5px 10px">→ Unmatched</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:52px 0;border-bottom:2px solid #171614">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Before you start</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0">Have on hand:</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="padding:14px 20px;border-bottom:1px solid #EDEAE2;background:#FBFAF7;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D">Pre-flight</div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #F1EEE7">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">The property's exact name as it appears in the dashboard's Lead Source setting (Settings → Webhooks routing table)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #F1EEE7">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">The X-Webhook-Secret value from the dashboard's Settings → Webhooks</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">Access to Engine Evolve at <a href="https://app.enginevolve.com">https://app.enginevolve.com</a></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div style="padding:44px 0 8px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8C877D;margin:0">Steps</h2>
+    </div>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">1</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t1 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d1 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Open the property's lead form</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">In Engine Evolve, go to Sites → Forms and open (or create) this property's lead form.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 18px 40px -26px rgba(23,22,20,.4)">
+          <div style="display:flex;align-items:center;gap:14px;padding:11px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2">
+            <span style="font-size:13px;font-weight:600">Sites</span>
+            <span style="display:flex;gap:12px;font-size:11.5px;color:#8C877D;flex-wrap:wrap">
+              <span>Funnels</span><span>Websites</span><span>Stores</span><span>Webinars</span><span>Blogs</span>
+              <span style="color:#171614;font-weight:600;box-shadow:0 2px 0 #BAF25A;padding-bottom:2px">Forms</span>
+              <span>Surveys</span><span>Chat Widget</span>
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:11px 16px;border-bottom:1px solid #EDEAE2">
+            <span style="font-size:12.5px;font-weight:600">Forms</span>
+            <span style="font-size:11.5px;color:#171614;font-weight:600;box-shadow:0 2px 0 #171614;padding-bottom:2px">All forms</span>
+            <span style="font-size:11.5px;color:#8C877D">Analytics</span>
+            <span style="font-size:11.5px;color:#8C877D">Submissions</span>
+            <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fff;background:#2E5A8F;border-radius:6px;padding:6px 10px">+ Create form</span>
+          </div>
+          <div style="padding:16px">
+            <div style="display:flex;align-items:center;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4741;margin-bottom:12px">
+              <span style="color:#A9A398">📁</span><span>Sumter Roofing Company</span>
+            </div>
+            <div style="border:1px solid #EDEAE2;border-radius:9px;overflow:hidden">
+              <div style="display:grid;grid-template-columns:2fr 1.1fr 1fr;gap:12px;padding:10px 14px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">
+                <span>Name</span><span>Updated on</span><span>Updated by</span>
+              </div>
+              <div style="display:grid;grid-template-columns:2fr 1.1fr 1fr;gap:12px;padding:13px 14px;font-size:13px;align-items:center;background:#FDF4F0;border:1.5px solid #C63F1E;border-radius:8px;animation:omRing 2.4s ease-out infinite">
+                <span style="font-weight:600">Sumter Roofing Lead Form</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B665E">Jul 29 2026, 12:27 PM</span>
+                <span style="font-size:12px;color:#6B665E">Drew</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">2</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t2 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d2 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Add the visible fields</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">Add the required fields — name, phone, email — plus any qualifying fields you want the client to see (service needed, address, notes, etc.).</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 18px 40px -26px rgba(23,22,20,.4)">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C877D">← Back</span>
+            <span style="font-size:12.5px;font-weight:600;margin:0 auto">Sumter Roofing Lead Form</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fff;background:#2E5A8F;border-radius:6px;padding:5px 10px">Save</span>
+          </div>
+          <div style="display:grid;grid-template-columns:150px minmax(0,1fr)">
+            <div style="border-right:1px solid #EDEAE2;padding:14px 12px;background:#FBFAF7">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:10px">Form element</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+                <div style="border:1px solid #E3DFD5;background:#fff;border-radius:7px;padding:11px 6px;text-align:center;font-size:10px;color:#4A4741">Full Name</div>
+                <div style="border:1px solid #E3DFD5;background:#fff;border-radius:7px;padding:11px 6px;text-align:center;font-size:10px;color:#4A4741">Phone</div>
+                <div style="border:1px solid #E3DFD5;background:#fff;border-radius:7px;padding:11px 6px;text-align:center;font-size:10px;color:#4A4741">Email</div>
+                <div style="border:1px solid #E3DFD5;background:#fff;border-radius:7px;padding:11px 6px;text-align:center;font-size:10px;color:#4A4741">Postal Code</div>
+              </div>
+            </div>
+            <div style="padding:20px 24px;background:#F7F5F1">
+              <div style="background:#fff;border:1px solid #E3DFD5;border-radius:10px;padding:18px;max-width:520px;margin:0 auto">
+                <div style="background:#EEF3FB;border:1px solid #D7E3F3;border-radius:7px;padding:10px 12px;margin-bottom:14px">
+                  <div style="font-size:11.5px;font-weight:600;color:#2E5A8F">Source "Form Name"</div>
+                  <div style="font-size:12px;color:#4A4741">Sumter Roofing Company</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                  <div>
+                    <div style="font-size:11px;color:#4A4741;margin-bottom:5px">First Name <span style="color:#C63F1E">*</span></div>
+                    <div style="border:1px solid #D9D4C8;border-radius:6px;height:30px"></div>
+                  </div>
+                  <div>
+                    <div style="font-size:11px;color:#4A4741;margin-bottom:5px">Last Name <span style="color:#C63F1E">*</span></div>
+                    <div style="border:1px solid #D9D4C8;border-radius:6px;height:30px"></div>
+                  </div>
+                  <div>
+                    <div style="font-size:11px;color:#4A4741;margin-bottom:5px">Phone <span style="color:#C63F1E">*</span></div>
+                    <div style="border:1px solid #D9D4C8;border-radius:6px;height:30px"></div>
+                  </div>
+                  <div>
+                    <div style="font-size:11px;color:#4A4741;margin-bottom:5px">Email <span style="color:#C63F1E">*</span></div>
+                    <div style="border:1px solid #D9D4C8;border-radius:6px;height:30px"></div>
+                  </div>
+                  <div>
+                    <div style="font-size:11px;color:#4A4741;margin-bottom:5px">Zip Code <span style="color:#C63F1E">*</span></div>
+                    <div style="border:1px solid #D9D4C8;border-radius:6px;height:30px"></div>
+                  </div>
+                  <div>
+                    <div style="font-size:11px;color:#4A4741;margin-bottom:5px">Service Type <span style="color:#C63F1E">*</span></div>
+                    <div style="border:1px solid #D9D4C8;border-radius:6px;height:30px;display:flex;align-items:center;padding:0 9px;font-size:11px;color:#A9A398">Select an option</div>
+                  </div>
+                </div>
+                <div style="margin-top:12px">
+                  <div style="font-size:11px;color:#4A4741;margin-bottom:5px">Tell us anything we should know</div>
+                  <div style="border:1px solid #D9D4C8;border-radius:6px;height:52px"></div>
+                </div>
+                <div style="margin-top:14px;background:#E4142B;color:#fff;border-radius:6px;padding:9px;text-align:center;font-size:12px;font-weight:600">Submit</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">3</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#C63F1E;border:1px solid #C63F1E;border-radius:5px;padding:6px 9px;white-space:nowrap">Exact match</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t3 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d3 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Set the Source field</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 24px;max-width:62ch">Set the form's Source field to exactly the property's name as it appears in the dashboard's Lead Source setting.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start">
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="padding:11px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">Form builder · General settings</div>
+            <div style="padding:18px">
+              <div style="font-size:13px;font-weight:600;text-align:center;margin-bottom:12px">Source</div>
+              <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:7px;padding:11px 13px;font-family:'IBM Plex Mono',monospace;font-size:13px;display:flex;align-items:center;gap:2px">Sumter Roofing Company<span style="width:1.5px;height:14px;background:#171614;display:inline-block;animation:omBlink 1.1s step-end infinite"></span></div>
+            </div>
+          </div>
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="padding:11px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">Dashboard · Settings → Webhooks → Routing table</div>
+            <div style="padding:18px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:8px">
+                <span>Property</span><span>Lead Source</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #F1EEE7">
+                <span style="font-size:12.5px;font-weight:500">Sumter Roofing Company</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#171614;background:#F4F1EA;border-radius:5px;padding:5px 8px">Sumter Roofing Company</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #F1EEE7">
+                <span style="font-size:12.5px;font-weight:500;color:#6B665E">Brunswick Tree Service</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#6B665E;background:#F4F1EA;border-radius:5px;padding:5px 8px">Brunswick Tree Service</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:12px;border:1px solid #F0C6B7;background:#FBEAE4;border-radius:11px;padding:14px 16px;margin-top:16px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;color:#fff;background:#C63F1E;border-radius:5px;padding:4px 7px;flex:none">WARNING</span>
+          <span style="font-size:14.5px;line-height:1.5;color:#5C3226">The Source must match the dashboard's Lead Source character-for-character (spacing, punctuation, capitalization). If it doesn't, the lead lands in Unmatched instead of routing to the property.</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">4</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Honeypot</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t4 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d4 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Add the hidden spam honeypot</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">Add a hidden field with the Query Key <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;background:#EAE6DC;border-radius:4px;padding:2px 6px">website</span>, marked Hidden, with its value left empty. This is the spam honeypot — real visitors never see it and leave it blank, while bots fill it in and get auto-flagged as spam.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start">
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="padding:11px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">Field settings</div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-size:13px;font-weight:600">Website</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border-radius:999px;padding:3px 8px">Hidden</span>
+              </div>
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:5px">Query key</div>
+                <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:7px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13px">website</div>
+              </div>
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:5px">Default value</div>
+                <div style="border:1px solid #E3DFD5;border-radius:7px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#B0A9A0">— leave empty —</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="border:1px solid #C7DBCF;background:#EDF5F0;border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:12px">
+              <span style="width:22px;height:22px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+              <div>
+                <div style="font-size:13.5px;font-weight:600;color:#171614">Real visitor</div>
+                <div style="font-size:12.5px;color:#4A6B5C">never sees the field · arrives blank · lead accepted</div>
+              </div>
+            </div>
+            <div style="border:1px solid #F0C6B7;background:#FBEAE4;border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:12px">
+              <span style="width:22px;height:22px;border-radius:99px;background:#C63F1E;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✕</span>
+              <div>
+                <div style="font-size:13.5px;font-weight:600;color:#171614">Bot</div>
+                <div style="font-size:12.5px;color:#93290F">fills every input · arrives with a value · auto-flagged as spam</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">5</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t5 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d5 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Build the delivery workflow</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 10px;max-width:62ch">Build the delivery workflow: go to Automation → Workflows, add a trigger Form Submitted filtered to this form, then add a Webhook action (method POST) to:</p>
+        <div style="display:flex;align-items:center;gap:12px;background:#17161A;border-radius:10px;padding:13px 15px;margin-bottom:12px;overflow:auto">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#EDEAE2;white-space:nowrap">https://lead-gen-manager-app.vercel.app/api/webhooks/ghl-form</span>
+          <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#BAF25A;border:1px solid #4A6B14;border-radius:5px;padding:4px 7px;flex:none">POST</span>
+        </div>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 24px;max-width:62ch">Add a header X-Webhook-Secret set to the value from the dashboard's Settings → Webhooks.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 18px 40px -26px rgba(23,22,20,.4);display:grid;grid-template-columns:minmax(0,1fr) 320px">
+          <div style="background:#F7F5F1;padding:24px 30px;display:flex;flex-direction:column;align-items:center;border-right:1px solid #E3DFD5">
+            <div style="width:100%;max-width:300px;background:#fff;border:1.5px solid #C63F1E;border-radius:10px;padding:11px 13px">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="width:20px;height:20px;border-radius:5px;background:#EDFAD6;color:#4A6B14;font-size:10px;display:flex;align-items:center;justify-content:center">▣</span>
+                <span style="font-size:12.5px;font-weight:600">Form Submitted</span>
+              </div>
+              <div style="font-size:11px;color:#8C877D;margin-top:8px">Form is any of "Sumter Roofing Lead Form"</div>
+            </div>
+            <div style="width:1px;height:20px;background:#CFC9BC"></div>
+            <div style="width:100%;max-width:300px;background:#fff;border:1px solid #D9D4C8;border-radius:10px;padding:12px 13px;display:flex;align-items:center;gap:9px">
+              <span style="width:20px;height:20px;border-radius:5px;background:#EEF3FB;color:#2E5A8F;font-size:10px;display:flex;align-items:center;justify-content:center">◉</span>
+              <span style="font-size:12.5px;font-weight:500">Create contact</span>
+            </div>
+            <div style="width:1px;height:20px;background:#CFC9BC"></div>
+            <div style="width:100%;max-width:300px;background:#fff;border:1.5px solid #C63F1E;border-radius:10px;overflow:hidden;box-shadow:0 8px 20px -14px rgba(198,63,30,.6)">
+              <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid #F3E4DD">
+                <span style="width:20px;height:20px;border-radius:5px;background:#EEF3FB;color:#2E5A8F;font-size:10px;display:flex;align-items:center;justify-content:center">≈</span>
+                <span style="font-size:12.5px;font-weight:600">Webhook</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:#93290F;background:#FBEAE4;border-radius:999px;padding:3px 7px">POST</span>
+              </div>
+              <div style="padding:10px 13px;background:#FDF7F4;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#171614;word-break:break-all">…/api/webhooks/ghl-form</div>
+            </div>
+            <div style="width:1px;height:20px;background:#CFC9BC"></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:#8C877D;background:#EAE6DC;border-radius:999px;padding:5px 12px">notification actions next</div>
+          </div>
+          <div style="padding:20px 18px">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:14px">Webhook action</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:5px">Method</div>
+                <div style="border:1px solid #E3DFD5;border-radius:7px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px">POST</div>
+              </div>
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:5px">URL</div>
+                <div style="border:1px solid #E3DFD5;border-radius:7px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;word-break:break-all">https://lead-gen-manager-app.vercel.app/api/webhooks/ghl-form</div>
+              </div>
+              <div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#C63F1E;margin-bottom:5px">Headers</div>
+                <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:7px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6">X-Webhook-Secret<br /><span style="color:#6B665E">••••••••••••9f3a</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #EDEAE2">
+              <span style="margin-left:auto;font-size:11.5px;color:#6B665E">Cancel</span>
+              <span style="background:#171614;color:#fff;font-size:11.5px;font-weight:600;border-radius:7px;padding:7px 11px">Save action</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:12px;border:1px solid #F0C6B7;background:#FBEAE4;border-radius:11px;padding:14px 16px;margin-top:16px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;color:#fff;background:#C63F1E;border-radius:5px;padding:4px 7px;flex:none">WARNING</span>
+          <span style="font-size:14.5px;line-height:1.5;color:#5C3226">The X-Webhook-Secret header value must match the dashboard's webhook secret exactly, or the submission is rejected before it ever reaches the property.</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">6</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t6 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d6 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Add the client notification actions</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">Add the client notification actions (Send Email / Send SMS) as needed so the client is alerted on each new lead.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+          <div style="border:1.5px solid #C63F1E;background:#fff;border-radius:11px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid #F3E4DD">
+              <span style="width:20px;height:20px;border-radius:5px;background:#EDFAD6;color:#4A6B14;font-size:10px;display:flex;align-items:center;justify-content:center">🔔</span>
+              <span style="font-size:12.5px;font-weight:600">Client Email Notification</span>
+            </div>
+            <div style="padding:11px 13px;background:#FDF7F4;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#171614;word-break:break-all">To Custom Email · client's email</div>
+          </div>
+          <div style="border:1.5px solid #C63F1E;background:#fff;border-radius:11px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid #F3E4DD">
+              <span style="width:20px;height:20px;border-radius:5px;background:#EDFAD6;color:#4A6B14;font-size:10px;display:flex;align-items:center;justify-content:center">💬</span>
+              <span style="font-size:12.5px;font-weight:600">Client SMS Notification</span>
+            </div>
+            <div style="padding:11px 13px;background:#FDF7F4;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#171614">To Custom Phone · client's phone</div>
+          </div>
+          <div style="border:1px solid #E3DFD5;background:#fff;border-radius:11px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid #EDEAE2">
+              <span style="width:20px;height:20px;border-radius:5px;background:#F1EEE7;color:#8C877D;font-size:10px;display:flex;align-items:center;justify-content:center">🔔</span>
+              <span style="font-size:12.5px;font-weight:500;color:#6B665E">Blue Carrot Solutions Internal Notification</span>
+            </div>
+            <div style="padding:11px 13px;background:#FBFAF7;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8C877D">our internal copy</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0;border-bottom:2px solid #171614">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">7</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t7 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d7 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Publish the workflow</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">Publish the workflow so it goes live.</p>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1.5px solid #C7DBCF;background:#EDF5F0;border-radius:12px;padding:18px 20px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#7FA593">Draft</span>
+          <span style="width:30px;height:17px;border-radius:99px;background:#BAF25A;position:relative;display:inline-block"><span style="position:absolute;top:2.5px;right:2.5px;width:12px;height:12px;border-radius:99px;background:#fff;display:inline-block"></span></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#171614">Publish</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#245740;background:#fff;border:1px solid #C7DBCF;border-radius:999px;padding:4px 9px">Published</span>
+          <span style="font-size:13px;color:#4A6B5C;margin-left:auto">Form submissions now reach the dashboard</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:56px 0 0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">How to check it worked</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">Submit a test entry through the form. Within a few seconds it should appear on that property's page in the dashboard — not in the Unmatched queue. If it lands in Unmatched, re-check the form's Source against the property's Lead Source in the routing table.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="border:1.5px solid #C7DBCF;background:#EDF5F0;border-radius:12px;overflow:hidden">
+            <div style="padding:11px 16px;border-bottom:1px solid #D8E7DE;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7FA593">Right — property page · Leads</div>
+            <div style="display:grid;grid-template-columns:1.2fr 1.6fr .7fr .8fr;gap:10px;padding:12px 16px;font-size:12px;align-items:center;background:#fff">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">Jul 29, 11:44 AM</span>
+              <span style="font-weight:600">Sumter Roofing Company</span>
+              <span style="color:#6B665E">Form</span>
+              <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#245740;background:#EDF5F0;border:1px solid #D3E4DA;border-radius:999px;padding:3px 7px">Billable</span>
+            </div>
+          </div>
+          <div style="border:1px solid #F0C6B7;background:#FBEAE4;border-radius:12px;overflow:hidden">
+            <div style="padding:11px 16px;border-bottom:1px solid #F0C6B7;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#93290F">Wrong — Unmatched queue</div>
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;background:#fff">
+              <span style="width:20px;height:20px;border-radius:99px;background:#C63F1E;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none">✕</span>
+              <span style="font-size:13px;color:#2A2823">Lead in Unmatched → re-check Source vs Lead Source</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#17161A;border-radius:12px;padding:18px 20px">
+            <span style="width:24px;height:24px;border-radius:99px;background:#BAF25A;color:#2A3D0A;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            <span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#FBFAF7">On the property, within seconds.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;showAnnotations&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; },
+  &quot;interactiveChecklist&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; }
+}">
+const KEY = 'connect-form-guide-v1';
+const N = 7;
+
+class Component extends DCLogic {
+  state = { done: {} };
+
+  componentDidMount() {
+    try { const r = localStorage.getItem(KEY); if (r) this.setState({ done: JSON.parse(r) || {} }); } catch (e) {}
+  }
+
+  toggle(n) {
+    return () => this.setState(s => {
+      const done = Object.assign({}, s.done, { [n]: !s.done[n] });
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      return { done };
+    });
+  }
+
+  renderVals() {
+    const d = this.state.done || {};
+    const v = { ann: this.props.showAnnotations ?? true, check: this.props.interactiveChecklist ?? true, stepCount: N };
+    let c = 0;
+    for (let i = 1; i <= N; i++) { v['d' + i] = !!d[i]; v['t' + i] = this.toggle(i); if (d[i]) c++; }
+    v.doneCount = c;
+    return v;
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #F6F3ED; }
+  * { box-sizing: border-box; }
+  a { color: #C63F1E; text-decoration: none; border-bottom: 1px solid rgba(198,63,30,.35); }
+  a:hover { color: #93290F; border-bottom-color: #93290F; }
+  @keyframes omRing {
+    0% { box-shadow: 0 0 0 0 rgba(198,63,30,.38); }
+    100% { box-shadow: 0 0 0 16px rgba(198,63,30,0); }
+  }
+  @keyframes omBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+</style>
+</helmet>
+
+<div style="background:#F6F3ED;color:#171614;font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;padding:0 32px 96px">
+  <div style="max-width:1120px;margin:0 auto">
+
+    <div style="display:flex;gap:7px;flex-wrap:wrap;padding:28px 0 0">
+      <a href="./Client%20Onboarding%20Guide.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Onboard a new client</a>
+      <a href="./Switch%20Property%20To%20New%20Client.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Switch to a new client</a>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#17161A;border:1px solid #17161A;border-radius:999px;padding:6px 11px">Update client contact info</span>
+      <a href="./Connect%20A%20Contact%20Form.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect a contact form</a>
+      <a href="./Connect%20CallRail%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect CallRail</a>
+      <a href="./Connect%20Twilio%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect Twilio</a>
+      <a href="./Change%20Notification%20Method.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Change notifications</a>
+      <a href="./Set%20Up%20New%20Lead%20Gen%20Property.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">New lead gen property</a>
+      <a href="./Client%20Not%20Getting%20Leads.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">No leads troubleshooting</a>
+    </div>
+
+    <header style="padding:40px 0 44px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end;border-bottom:2px solid #171614">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8C877D;margin-bottom:18px">Internal runbook &nbsp;/&nbsp; Client records</div>
+        <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:66px;line-height:1.02;letter-spacing:-.015em;margin:0 0 16px;max-width:20ch;text-wrap:pretty">Update a client's phone number or email</h1>
+        <p style="font-size:19px;line-height:1.5;color:#4A4741;margin:0;max-width:52ch">Change a client's contact info everywhere so they stop missing leads.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <div style="display:flex;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border-radius:999px;padding:7px 13px">5 steps</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border-radius:999px;padding:7px 13px">Every property</span>
+        </div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8C877D">{{ doneCount }} of 5 steps checked off</div>
+        </sc-if>
+      </div>
+    </header>
+
+    <section style="padding:52px 0;border-bottom:1px solid #DEDAD0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Why this matters</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">If a client's phone or email is out of date, their leads are being delivered to a dead number or an inbox nobody checks. The client is silently missing leads they're paying for — and when they notice, they blame us. The new info has to be updated in every place it's used, not just one.</p>
+        </div>
+        <div style="border:1px solid #E3DFD5;background:#fff;border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D;margin-bottom:18px">One change, four places it lives</div>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+            <div style="background:#17161A;color:#fff;border-radius:9px;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;flex:none">New phone / email</div>
+            <div style="flex:1;height:1px;background:#DCD7CA"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="border:1px solid #E3DFD5;border-radius:9px;padding:12px 13px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:5px">Dashboard</div>
+              <div style="font-size:13px;color:#2A2823">Client record</div>
+            </div>
+            <div style="border:1px solid #E3DFD5;border-radius:9px;padding:12px 13px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:5px">Engine Evolve</div>
+              <div style="font-size:13px;color:#2A2823">Contact record</div>
+            </div>
+            <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:9px;padding:12px 13px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#C08D7C;margin-bottom:5px">Workflow · property 1</div>
+              <div style="font-size:13px;color:#93290F;font-weight:500">Email + SMS actions</div>
+            </div>
+            <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:9px;padding:12px 13px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#C08D7C;margin-bottom:5px">Workflow · property 2</div>
+              <div style="font-size:13px;color:#93290F;font-weight:500">Email + SMS actions</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding-top:16px;border-top:1px dashed #DCD7CA">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#C63F1E">!</span>
+            <span style="font-size:13px;line-height:1.5;color:#93290F">Updating the records alone changes nothing about delivery — the workflows are what actually send.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:52px 0;border-bottom:2px solid #171614">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Before you start</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0">Have on hand:</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid #EDEAE2;background:#FBFAF7">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D">Pre-flight</span>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #F1EEE7">
+              <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+              <span style="font-size:16px;color:#2A2823">The client's new phone and/or email</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;padding:16px 20px">
+              <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+              <span style="font-size:16px;color:#2A2823">Which properties this client rents (the client's page in the dashboard lists them)</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;padding:16px 20px;background:#FBFAF7;border-top:1px solid #EDEAE2">
+            <div style="display:flex;align-items:center;gap:9px;border:1px solid #E3DFD5;background:#fff;border-radius:8px;padding:8px 12px">
+              <span style="width:16px;height:16px;border-radius:4px;background:#17161A;display:inline-block"></span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#2A2823">Dashboard</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;border:1px solid #E3DFD5;background:#fff;border-radius:8px;padding:8px 12px">
+              <span style="width:16px;height:16px;border-radius:4px;background:#BAF25A;display:inline-block"></span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#2A2823">Engine Evolve</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div style="padding:44px 0 8px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8C877D;margin:0">Steps</h2>
+    </div>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78;color:#171614">1</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Dashboard</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ t1 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614">
+            <span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1">
+              <sc-if value="{{ d1 }}" hint-placeholder-val="{{ false }}">✓</sc-if>
+            </span>
+            Done
+          </button>
+        </sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Edit the client record in Clients</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 28px;max-width:62ch">In the dashboard, open Clients, find the client, and edit their record with the new phone/email. Save.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 18px 40px -26px rgba(23,22,20,.4)">
+          <div style="display:flex;align-items:center;gap:8px;padding:11px 14px;background:#FBFAF7;border-bottom:1px solid #EDEAE2">
+            <span style="width:9px;height:9px;border-radius:99px;background:#E0DCD2;display:inline-block"></span>
+            <span style="width:9px;height:9px;border-radius:99px;background:#E0DCD2;display:inline-block"></span>
+            <span style="width:9px;height:9px;border-radius:99px;background:#E0DCD2;display:inline-block"></span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C877D;margin-left:10px">Dashboard — Clients</span>
+          </div>
+          <div style="display:grid;grid-template-columns:172px minmax(0,1fr)">
+            <div style="background:#F4F1EA;border-right:1px solid #EAE6DC;padding:16px 12px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#A9A398;padding:0 8px 8px">Menu</div>
+              <div style="font-size:13px;color:#6B665E;padding:9px 10px;border-radius:7px">Overview</div>
+              <div style="font-size:13px;color:#6B665E;padding:9px 10px;border-radius:7px">Properties</div>
+              <div style="font-size:13px;font-weight:600;color:#171614;padding:9px 10px;border-radius:7px;background:#fff;box-shadow:inset 2px 0 0 #C63F1E,0 1px 2px rgba(23,22,20,.06)">Clients</div>
+              <div style="font-size:13px;color:#6B665E;padding:9px 10px;border-radius:7px">Leads</div>
+              <div style="font-size:13px;color:#6B665E;padding:9px 10px;border-radius:7px">Billing</div>
+            </div>
+            <div style="padding:22px 24px 26px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px">
+                <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px">Clients</div>
+                <div style="border:1px solid #E3DFD5;border-radius:8px;padding:8px 12px;min-width:200px;color:#A9A398;font-size:13px">Marios</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1.4fr 1.1fr 1.6fr auto;gap:12px;padding:0 12px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;border-bottom:1px solid #EDEAE2">
+                <span>Client</span><span>Phone</span><span>Email</span><span></span>
+              </div>
+              <div style="display:grid;grid-template-columns:1.4fr 1.1fr 1.6fr auto;gap:12px;padding:14px 12px;font-size:13.5px;color:#2A2823;align-items:center;background:#FDF4F0;border:1.5px solid #C63F1E;border-radius:9px;animation:omRing 2.4s ease-out infinite">
+                <span style="font-weight:600">Marios Bros Fencing</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#B0A9A0;text-decoration:line-through">(912) 555-5555</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#B0A9A0;text-decoration:line-through">Floydjamie18@gmail.com</span>
+                <span style="justify-self:end;background:#C63F1E;color:#fff;font-size:12px;font-weight:600;border-radius:7px;padding:7px 11px">Edit</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1.4fr 1.1fr 1.6fr auto;gap:12px;padding:14px 12px;margin-top:8px;font-size:13.5px;color:#2A2823;align-items:center;border:1.5px solid #C7DBCF;background:#EDF5F0;border-radius:9px">
+                <span style="font-weight:600">Marios Bros Fencing</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">(912) 555-0177</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">jamie@mariosbrosfencing.com</span>
+                <span style="justify-self:end;display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#245740"><span style="width:18px;height:18px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center">✓</span>Saved</span>
+              </div>
+              <sc-if value="{{ ann }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:8px;padding:12px 12px 0">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8C877D">↑</span>
+                  <span style="font-size:12.5px;color:#6B665E">The dashboard record is for billing and reference — it does not change where notifications go.</span>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78;color:#171614">2</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Dashboard</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ t2 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614">
+            <span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1">
+              <sc-if value="{{ d2 }}" hint-placeholder-val="{{ false }}">✓</sc-if>
+            </span>
+            Done
+          </button>
+        </sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">List every property they rent</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 28px;max-width:62ch">On the client's page, note every property they rent — you'll need to update each one's notifications.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start">
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="display:flex;align-items:center;gap:8px;padding:11px 14px;background:#FBFAF7;border-bottom:1px solid #EDEAE2">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A9A398">Clients</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#CFC9BC">/</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#2A2823">Marios Bros Fencing</span>
+            </div>
+            <div style="padding:20px 22px">
+              <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;line-height:1.1;margin-bottom:4px">Marios Bros Fencing</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#6B665E;margin-bottom:18px">(912) 555-0177 · jamie@mariosbrosfencing.com</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;padding-bottom:8px;border-bottom:1px solid #EDEAE2">Properties rented</div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #F3F0E9">
+                <span style="font-size:14px;font-weight:500">Sumter Roofing Company</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#245740;background:#EDF5F0;border:1px solid #D3E4DA;border-radius:999px;padding:3px 8px">Active</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 0">
+                <span style="font-size:14px;font-weight:500">Brunswick Tree Service</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#245740;background:#EDF5F0;border:1px solid #D3E4DA;border-radius:999px;padding:3px 8px">Active</span>
+              </div>
+            </div>
+          </div>
+          <div style="border:1.5px solid #171614;background:#17161A;border-radius:12px;padding:20px 22px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8E8A80;margin-bottom:14px">Your worklist for step 4</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;background:#242220;border-radius:9px;padding:12px 13px">
+                <span style="width:16px;height:16px;border:1.5px solid #6B665E;border-radius:4px;flex:none"></span>
+                <span style="font-size:13.5px;color:#EDEAE2">Sumter Roofing Company workflow</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;background:#242220;border-radius:9px;padding:12px 13px">
+                <span style="width:16px;height:16px;border:1.5px solid #6B665E;border-radius:4px;flex:none"></span>
+                <span style="font-size:13.5px;color:#EDEAE2">Brunswick Tree Service workflow</span>
+              </div>
+            </div>
+            <div style="font-size:12.5px;line-height:1.5;color:#A9A398;margin-top:14px">One workflow per property — each one needs both notification actions changed.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78;color:#171614">3</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ t3 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614">
+            <span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1">
+              <sc-if value="{{ d3 }}" hint-placeholder-val="{{ false }}">✓</sc-if>
+            </span>
+            Done
+          </button>
+        </sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Update the contact record in Contacts</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 28px;max-width:62ch">Log in to Engine Evolve at <a href="https://app.enginevolve.com">https://app.enginevolve.com</a> and update the client's contact record with the new phone/email.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 18px 40px -26px rgba(23,22,20,.4)">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#EFEDE7;border-bottom:1px solid #E3DFD5">
+            <div style="display:flex;gap:6px">
+              <span style="width:9px;height:9px;border-radius:99px;background:#D6D1C6;display:inline-block"></span>
+              <span style="width:9px;height:9px;border-radius:99px;background:#D6D1C6;display:inline-block"></span>
+              <span style="width:9px;height:9px;border-radius:99px;background:#D6D1C6;display:inline-block"></span>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #E3DFD5;border-radius:999px;padding:6px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4741">app.enginevolve.com</div>
+          </div>
+          <div style="display:grid;grid-template-columns:186px minmax(0,1fr)">
+            <div style="border-right:1px solid #EDEAE2;background:#fff">
+              <div style="background:#17161A;padding:13px 14px;display:flex;align-items:center;gap:6px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.12em;color:#fff">ENGINE</span>
+                <span style="color:#BAF25A;font-size:12px">⚡</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.12em;color:#fff">EVOLVE</span>
+              </div>
+              <div style="margin:12px 10px;border:1px solid #E3DFD5;border-radius:8px;padding:8px 10px;background:#FBFAF7">
+                <div style="font-size:11.5px;font-weight:600;color:#171614">Blue Carrot Solution…</div>
+                <div style="font-size:10.5px;color:#8C877D">White Oak, GA</div>
+              </div>
+              <div style="padding:0 10px 14px;display:flex;flex-direction:column;gap:1px">
+                <div style="font-size:12px;color:#6B665E;padding:7px 9px;border-radius:6px">Launchpad</div>
+                <div style="font-size:12px;color:#6B665E;padding:7px 9px;border-radius:6px">Dashboard</div>
+                <div style="font-size:12px;color:#6B665E;padding:7px 9px;border-radius:6px">Conversations</div>
+                <div style="font-size:12px;font-weight:600;color:#171614;padding:7px 9px;border-radius:6px;background:#F0EEE7;box-shadow:inset 2px 0 0 #BAF25A">Contacts</div>
+                <div style="font-size:12px;color:#6B665E;padding:7px 9px;border-radius:6px">Opportunities</div>
+                <div style="font-size:12px;color:#6B665E;padding:7px 9px;border-radius:6px">Automation</div>
+                <div style="font-size:12px;color:#6B665E;padding:7px 9px;border-radius:6px">Sites</div>
+              </div>
+            </div>
+            <div style="padding:22px 24px">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+                <span style="width:42px;height:42px;border-radius:99px;background:#EDFAD6;color:#4A6B14;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center">MB</span>
+                <div>
+                  <div style="font-size:16px;font-weight:600">Marios Bros Fencing</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C877D">Contact · 2 properties</div>
+                </div>
+                <span style="margin-left:auto;background:#171614;color:#fff;font-size:12px;font-weight:600;border-radius:7px;padding:8px 12px">Save</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:620px">
+                <div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:6px">Phone</div>
+                  <div style="border:1px solid #E3DFD5;background:#FBFAF7;border-radius:8px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#B0A9A0;text-decoration:line-through;margin-bottom:6px">(912) 555-5555</div>
+                  <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:8px;padding:11px 13px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;display:flex;align-items:center;gap:2px">(912) 555-0177<span style="width:1.5px;height:14px;background:#171614;display:inline-block;animation:omBlink 1.1s step-end infinite"></span></div>
+                </div>
+                <div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:6px">Email</div>
+                  <div style="border:1px solid #E3DFD5;background:#FBFAF7;border-radius:8px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#B0A9A0;text-decoration:line-through;margin-bottom:6px">Floydjamie18@gmail.com</div>
+                  <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:8px;padding:11px 13px;font-family:'IBM Plex Mono',monospace;font-size:13.5px">jamie@mariosbrosfencing.com</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78;color:#171614">4</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ t4 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614">
+            <span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1">
+              <sc-if value="{{ d4 }}" hint-placeholder-val="{{ false }}">✓</sc-if>
+            </span>
+            Done
+          </button>
+        </sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Replace the recipient in each property's workflow</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 24px;max-width:62ch">For each of the client's properties, open its workflow in Engine Evolve (Automation → Workflows) and replace the old email/number with the new one in every Send Email and Send SMS action. A property often has more than one — don't miss any.</p>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4741;flex-wrap:wrap">
+          <span style="background:#EAE6DC;border-radius:6px;padding:6px 9px">Automation</span>
+          <span style="color:#A9A398">→</span>
+          <span style="background:#EAE6DC;border-radius:6px;padding:6px 9px">Workflows</span>
+          <span style="color:#A9A398">→</span>
+          <span style="background:#EAE6DC;border-radius:6px;padding:6px 9px">Workflows list</span>
+          <span style="color:#A9A398">→</span>
+          <span style="background:#17161A;color:#fff;border-radius:6px;padding:6px 9px">one folder per property</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px">
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 15px;border-bottom:1px solid #EDEAE2;background:#FBFAF7">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8C877D">📁</span>
+              <span style="font-size:12.5px;font-weight:600">Sumter Roofing Company</span>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8C6A17;background:#FBF2DA;border:1px solid #EBDBA8;border-radius:999px;padding:3px 8px">Draft</span>
+            </div>
+            <div style="padding:14px 15px;display:flex;flex-direction:column;gap:10px">
+              <div style="border:1.5px solid #C63F1E;border-radius:9px;overflow:hidden">
+                <div style="padding:9px 12px;border-bottom:1px solid #F3E4DD;font-size:12px;font-weight:600">Client Email Notification</div>
+                <div style="padding:9px 12px;background:#FDF7F4;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B0A9A0;text-decoration:line-through">Floydjamie18@gmail.com</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#171614">jamie@mariosbrosfencing.com</span>
+                </div>
+              </div>
+              <div style="border:1.5px solid #C63F1E;border-radius:9px;overflow:hidden">
+                <div style="padding:9px 12px;border-bottom:1px solid #F3E4DD;font-size:12px;font-weight:600">Client SMS Notification</div>
+                <div style="padding:9px 12px;background:#FDF7F4;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B0A9A0;text-decoration:line-through">(912) 555-5555</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#171614">(912) 555-0177</span>
+                </div>
+              </div>
+              <div style="border:1px solid #E3DFD5;border-radius:9px;padding:9px 12px;font-size:12px;color:#6B665E;background:#FBFAF7">Blue Carrot Solutions Internal Notification — leave as-is</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 15px;border-bottom:1px solid #EDEAE2;background:#FBFAF7">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8C877D">📁</span>
+              <span style="font-size:12.5px;font-weight:600">Brunswick Tree Service</span>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8C6A17;background:#FBF2DA;border:1px solid #EBDBA8;border-radius:999px;padding:3px 8px">Draft</span>
+            </div>
+            <div style="padding:14px 15px;display:flex;flex-direction:column;gap:10px">
+              <div style="border:1.5px solid #C63F1E;border-radius:9px;overflow:hidden">
+                <div style="padding:9px 12px;border-bottom:1px solid #F3E4DD;font-size:12px;font-weight:600">Client Email Notification</div>
+                <div style="padding:9px 12px;background:#FDF7F4;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B0A9A0;text-decoration:line-through">Floydjamie18@gmail.com</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#171614">jamie@mariosbrosfencing.com</span>
+                </div>
+              </div>
+              <div style="border:1.5px solid #C63F1E;border-radius:9px;overflow:hidden">
+                <div style="padding:9px 12px;border-bottom:1px solid #F3E4DD;font-size:12px;font-weight:600">Client SMS Notification</div>
+                <div style="padding:9px 12px;background:#FDF7F4;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B0A9A0;text-decoration:line-through">(912) 555-5555</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#171614">(912) 555-0177</span>
+                </div>
+              </div>
+              <div style="border:1px solid #E3DFD5;border-radius:9px;padding:9px 12px;font-size:12px;color:#6B665E;background:#FBFAF7">Blue Carrot Solutions Internal Notification — leave as-is</div>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{ ann }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-top:16px;border:1px solid #F0C6B7;background:#FBEAE4;border-radius:12px;padding:16px 18px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#C63F1E">!</span>
+            <span style="font-size:13.5px;line-height:1.5;color:#5C3226">Scroll the whole canvas before you close a workflow. A second email or SMS step further down a branch — or an old address sitting in Cc / Bcc — is exactly how a client keeps missing leads after an "update".</span>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0;border-bottom:2px solid #171614">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78;color:#171614">5</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ t5 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614">
+            <span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1">
+              <sc-if value="{{ d5 }}" hint-placeholder-val="{{ false }}">✓</sc-if>
+            </span>
+            Done
+          </button>
+        </sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Publish every workflow you touched</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 28px;max-width:62ch">Save and publish each workflow you changed.</p>
+
+        <div style="border:1.5px solid #C7DBCF;border-radius:12px;background:#EDF5F0;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1.6fr 1fr 1.4fr;gap:12px;padding:12px 18px;background:#E3EFE8;border-bottom:1px solid #D8E7DE;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7FA593">
+            <span>Workflow</span><span>Status</span><span>Last updated</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.6fr 1fr 1.4fr;gap:12px;padding:14px 18px;border-bottom:1px solid #D8E7DE;font-size:13px;align-items:center">
+            <span style="font-weight:600">Sumter Roofing Company</span>
+            <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#245740;background:#fff;border:1px solid #C7DBCF;border-radius:999px;padding:4px 9px">Published</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4A6B5C">Jul 29 2026, 12:41 PM</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.6fr 1fr 1.4fr;gap:12px;padding:14px 18px;font-size:13px;align-items:center">
+            <span style="font-weight:600">Brunswick Tree Service</span>
+            <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#245740;background:#fff;border:1px solid #C7DBCF;border-radius:999px;padding:4px 9px">Published</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#4A6B5C">Jul 29 2026, 12:44 PM</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:13px 18px;border-top:1px solid #D8E7DE;background:#E3EFE8">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#245740">Draft ⟷ Publish flipped on both. Nothing left in Draft.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:56px 0 0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">How to check it worked</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">Send a test lead for one of the client's properties and confirm the notification reaches the new contact — and that nothing arrives at the old number/inbox. Repeat for each property if you want to be certain.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px">
+            <div style="background:#17161A;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8E8A80">New contact — should arrive</div>
+              <div style="background:#2A2823;border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5;color:#EDEAE2">New lead from Blue Carrot Solutions — Sumter Roofing Company.</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:18px;height:18px;border-radius:99px;background:#BAF25A;color:#2A3D0A;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8E8A80">(912) 555-0177 · jamie@mariosbrosfencing.com</span>
+              </div>
+            </div>
+            <div style="background:#FBEAE4;border:1px solid #F0C6B7;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#93290F">Old contact — should be silent</div>
+              <div style="background:#fff;border:1px dashed #EBC4B4;border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5;color:#B0A9A0">No notification</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:18px;height:18px;border-radius:99px;background:#C63F1E;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">✕</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#93290F;text-decoration:line-through">(912) 555-5555 · Floydjamie18@gmail.com</span>
+              </div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:11px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D">Repeat per property to be certain</div>
+            <div style="display:flex;align-items:center;gap:11px">
+              <span style="width:16px;height:16px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+              <span style="font-size:13.5px;color:#2A2823">Sumter Roofing Company — test lead delivered</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:11px">
+              <span style="width:16px;height:16px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+              <span style="font-size:13.5px;color:#2A2823">Brunswick Tree Service — test lead delivered</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#17161A;border-radius:12px;padding:18px 20px">
+            <span style="width:24px;height:24px;border-radius:99px;background:#BAF25A;color:#2A3D0A;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            <span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#FBFAF7">New contact receives. Old one hears nothing.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;showAnnotations&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; },
+  &quot;interactiveChecklist&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; }
+}">
+const KEY = 'update-contact-guide-steps-v1';
+
+class Component extends DCLogic {
+  state = { done: {} };
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) this.setState({ done: JSON.parse(raw) || {} });
+    } catch (e) {}
+  }
+
+  toggle(n) {
+    return () => this.setState(s => {
+      const done = Object.assign({}, s.done, { [n]: !s.done[n] });
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      return { done };
+    });
+  }
+
+  renderVals() {
+    const done = this.state.done || {};
+    return {
+      ann: this.props.showAnnotations ?? true,
+      check: this.props.interactiveChecklist ?? true,
+      doneCount: [1, 2, 3, 4, 5].filter(n => done[n]).length,
+      d1: !!done[1], d2: !!done[2], d3: !!done[3], d4: !!done[4], d5: !!done[5],
+      t1: this.toggle(1), t2: this.toggle(2), t3: this.toggle(3), t4: this.toggle(4), t5: this.toggle(5)
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #F6F3ED; }
+  * { box-sizing: border-box; }
+  a { color: #C63F1E; text-decoration: none; border-bottom: 1px solid rgba(198,63,30,.35); }
+  a:hover { color: #93290F; border-bottom-color: #93290F; }
+  @keyframes omRing { 0% { box-shadow: 0 0 0 0 rgba(198,63,30,.38); } 100% { box-shadow: 0 0 0 16px rgba(198,63,30,0); } }
+</style>
+</helmet>
+
+<div style="background:#F6F3ED;color:#171614;font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;padding:0 32px 96px">
+  <div style="max-width:1120px;margin:0 auto">
+
+    <div style="display:flex;gap:7px;flex-wrap:wrap;padding:28px 0 0">
+      <a href="./Client%20Onboarding%20Guide.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Onboard a new client</a>
+      <a href="./Switch%20Property%20To%20New%20Client.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Switch to a new client</a>
+      <a href="./Update%20Client%20Contact%20Info.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Update client contact info</a>
+      <a href="./Connect%20A%20Contact%20Form.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect a contact form</a>
+      <a href="./Connect%20CallRail%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect CallRail</a>
+      <a href="./Connect%20Twilio%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect Twilio</a>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#17161A;border:1px solid #17161A;border-radius:999px;padding:6px 11px">Change notifications</span>
+      <a href="./Set%20Up%20New%20Lead%20Gen%20Property.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">New lead gen property</a>
+      <a href="./Client%20Not%20Getting%20Leads.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">No leads troubleshooting</a>
+    </div>
+
+    <header style="padding:40px 0 44px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end;border-bottom:2px solid #171614">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8C877D;margin-bottom:18px">Internal runbook &nbsp;/&nbsp; Properties</div>
+        <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:62px;line-height:1.03;letter-spacing:-.015em;margin:0 0 16px;max-width:20ch;text-wrap:pretty">Change how or where a client gets notified</h1>
+        <p style="font-size:19px;line-height:1.5;color:#4A4741;margin:0;max-width:54ch">Switch a client between text/email or add another recipient for a property's leads.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border-radius:999px;padding:7px 13px">5 steps</span>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8C877D">{{ doneCount }} of {{ stepCount }} steps checked off</div>
+        </sc-if>
+      </div>
+    </header>
+
+    <section style="padding:52px 0;border-bottom:1px solid #DEDAD0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Why this matters</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">A client wants their lead alerts a different way — text instead of email, or a second person added. Getting this right is what keeps them responding to leads fast. Set it up wrong and they either miss alerts or get double-notified and tune them out.</p>
+        </div>
+        <div style="border:1px solid #E3DFD5;background:#fff;border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D;margin-bottom:14px">What you're deciding</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="border:1px solid #E3DFD5;border-radius:9px;padding:13px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#A9A398;margin-bottom:6px">Method</div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <span style="font-size:12px;background:#EDFAD6;border:1px solid #C7E39A;border-radius:999px;padding:4px 9px">Client SMS Notification</span>
+                <span style="font-size:12px;background:#F4F1EA;border:1px solid #E3DFD5;border-radius:999px;padding:4px 9px;color:#6B665E">Client Email Notification</span>
+              </div>
+            </div>
+            <div style="border:1px solid #E3DFD5;border-radius:9px;padding:13px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#A9A398;margin-bottom:6px">Recipients</div>
+              <div style="font-size:12.5px;color:#2A2823">owner only, or owner + office manager</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px dashed #DCD7CA">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#C63F1E">!</span>
+            <span style="font-size:13px;color:#93290F">Both changes live in the same place: this property's workflow.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:52px 0;border-bottom:2px solid #171614">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Before you start</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0">Have on hand:</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="padding:14px 20px;border-bottom:1px solid #EDEAE2;background:#FBFAF7;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D">Pre-flight</div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #F1EEE7">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">Exactly what they want (which method — text or email — and who should receive alerts)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">Which property this is for</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div style="padding:44px 0 8px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8C877D;margin:0">Steps</h2>
+    </div>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">1</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t1 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d1 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Open this property's workflow</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 24px;max-width:62ch">Log in to Engine Evolve at <a href="https://app.enginevolve.com">https://app.enginevolve.com</a>, open Automation → Workflows, and open this property's workflow.</p>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4741;flex-wrap:wrap">
+          <span style="background:#EAE6DC;border-radius:6px;padding:6px 9px">Automation</span>
+          <span style="color:#A9A398">→</span>
+          <span style="background:#EAE6DC;border-radius:6px;padding:6px 9px">Workflows list</span>
+          <span style="color:#A9A398">→</span>
+          <span style="background:#EAE6DC;border-radius:6px;padding:6px 9px">📁 Sumter Roofing Company</span>
+          <span style="color:#A9A398">→</span>
+          <span style="background:#17161A;color:#fff;border-radius:6px;padding:6px 9px">Sumter Roofing Company</span>
+        </div>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+          <div style="display:grid;grid-template-columns:1.6fr .8fr .9fr 1.1fr;gap:12px;padding:11px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">
+            <span>Name</span><span>Status</span><span>Total enrolled</span><span>Last updated</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.6fr .8fr .9fr 1.1fr;gap:12px;padding:13px 16px;font-size:12.5px;align-items:center;background:#FDF4F0;border:1.5px solid #C63F1E;border-radius:8px;animation:omRing 2.4s ease-out infinite">
+            <span style="font-weight:600">Sumter Roofing Company</span>
+            <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#245740;background:#EDF5F0;border:1px solid #D3E4DA;border-radius:999px;padding:3px 8px">Published</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:#2E5A8F">5</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B665E">Jul 29 2026, 12:29 PM</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">2</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Method</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t2 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d2 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Change the method</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">To change the method: enable/add a Send SMS action for text, or a Send Email action for email, and remove the action for the method they no longer want.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:18px;align-items:center">
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="padding:10px 15px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">Before — email only</div>
+            <div style="padding:14px 15px;display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:center;gap:9px;border:1px solid #D9D4C8;border-radius:9px;padding:11px 12px">
+                <span style="width:20px;height:20px;border-radius:5px;background:#EDFAD6;color:#4A6B14;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">🔔</span>
+                <span style="font-size:12.5px;font-weight:600">Client Email Notification</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;border:1px dashed #DCD7CA;border-radius:9px;padding:11px 12px;color:#B0A9A0">
+                <span style="width:20px;height:20px;border-radius:5px;background:#F4F1EA;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">💬</span>
+                <span style="font-size:12.5px">no SMS action</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:#C9C4B8">→</span>
+          <div style="border:1.5px solid #C7DBCF;border-radius:12px;background:#EDF5F0;overflow:hidden">
+            <div style="padding:10px 15px;background:#E3EFE8;border-bottom:1px solid #D8E7DE;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7FA593">After — text instead</div>
+            <div style="padding:14px 15px;display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:center;gap:9px;border:1px solid #EBC4B4;background:#FBEAE4;border-radius:9px;padding:11px 12px">
+                <span style="width:20px;height:20px;border-radius:5px;background:#fff;color:#C63F1E;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">✕</span>
+                <span style="font-size:12.5px;color:#93290F;text-decoration:line-through">Client Email Notification</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#93290F;flex:none">removed</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;border:1.5px solid #2F6B4F;background:#fff;border-radius:9px;padding:11px 12px">
+                <span style="width:20px;height:20px;border-radius:5px;background:#EDFAD6;color:#4A6B14;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">💬</span>
+                <span style="font-size:12.5px;font-weight:600">Client SMS Notification</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#245740;flex:none">added</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">3</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Recipients</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t3 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d3 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Add a person</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">To add a person: add their email or phone number to the relevant notification action(s) alongside the existing recipient.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35);max-width:520px">
+          <div style="padding:11px 16px;border-bottom:1px solid #EDEAE2;font-size:13px;font-weight:600">Client Email Notification</div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:11px">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:5px">To Custom Email</div>
+              <div style="border:1px solid #E3DFD5;border-radius:7px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px">jamie@mariosbrosfencing.com</div>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#C63F1E;margin-bottom:5px">Cc — added</div>
+              <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:7px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px">office@mariosbrosfencing.com</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;background:#F4F1EA;border-radius:7px;padding:10px 11px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B665E">Both people now get every lead for this property.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">4</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#C63F1E;border:1px solid #C63F1E;border-radius:5px;padding:6px 9px;white-space:nowrap">Double-check</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t4 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d4 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Confirm every contact detail</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">Confirm every contact detail is correct and current before saving — a typo here means a missed lead.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+          <div style="display:grid;grid-template-columns:1.5fr 1.1fr 1.6fr .6fr;gap:12px;padding:11px 18px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">
+            <span>Action</span><span>Method</span><span>Recipient</span><span>OK</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.5fr 1.1fr 1.6fr .6fr;gap:12px;padding:13px 18px;border-bottom:1px solid #F3F0E9;font-size:12.5px;align-items:center">
+            <span style="font-weight:600">Client SMS Notification</span><span style="color:#6B665E">Text</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">(912) 555-0177</span>
+            <span style="justify-self:start;width:18px;height:18px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center">✓</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1.5fr 1.1fr 1.6fr .6fr;gap:12px;padding:13px 18px;font-size:12.5px;align-items:center">
+            <span style="font-weight:600">Client Email Notification · Cc</span><span style="color:#6B665E">Email</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">office@mariosbrosfencing.com</span>
+            <span style="justify-self:start;width:18px;height:18px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center">✓</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0;border-bottom:2px solid #171614">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">5</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2A3D0A;background:#BAF25A;border:1px solid #A5DC46;border-radius:5px;padding:6px 9px;white-space:nowrap">Engine Evolve</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t5 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d5 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Save and publish</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 24px;max-width:62ch">Save and publish the workflow.</p>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1.5px solid #C7DBCF;background:#EDF5F0;border-radius:12px;padding:16px 20px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#7FA593">Draft</span>
+          <span style="width:30px;height:17px;border-radius:99px;background:#BAF25A;position:relative;display:inline-block"><span style="position:absolute;top:2.5px;right:2.5px;width:12px;height:12px;border-radius:99px;background:#fff;display:inline-block"></span></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#171614">Publish</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#245740;background:#fff;border:1px solid #C7DBCF;border-radius:999px;padding:4px 9px">Published</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:56px 0 0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">How to check it worked</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">Send a test lead for this property and confirm the notification arrives by the right method and reaches everyone who should get it — and no one who shouldn't.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px">
+            <div style="background:#17161A;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8E8A80">Right method — text</div>
+              <div style="background:#2A2823;border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5;color:#EDEAE2">New lead from Blue Carrot Solutions — Sumter Roofing Company.</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8E8A80">(912) 555-0177 ✓</div>
+            </div>
+            <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#A9A398">Right people</div>
+              <div style="display:flex;align-items:center;gap:9px;font-size:12.5px"><span style="width:18px;height:18px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>Owner</div>
+              <div style="display:flex;align-items:center;gap:9px;font-size:12.5px"><span style="width:18px;height:18px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>Office manager</div>
+              <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8C877D"><span style="width:18px;height:18px;border-radius:99px;background:#EAE6DC;color:#8C877D;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">—</span>No one else</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#17161A;border-radius:12px;padding:18px 20px">
+            <span style="width:24px;height:24px;border-radius:99px;background:#BAF25A;color:#2A3D0A;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            <span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#FBFAF7">Right method, right people, no one else.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;showAnnotations&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; },
+  &quot;interactiveChecklist&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; }
+}">
+const KEY = 'notify-method-guide-v1';
+const N = 5;
+
+class Component extends DCLogic {
+  state = { done: {} };
+
+  componentDidMount() {
+    try { const r = localStorage.getItem(KEY); if (r) this.setState({ done: JSON.parse(r) || {} }); } catch (e) {}
+  }
+
+  toggle(n) {
+    return () => this.setState(s => {
+      const done = Object.assign({}, s.done, { [n]: !s.done[n] });
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      return { done };
+    });
+  }
+
+  renderVals() {
+    const d = this.state.done || {};
+    const v = { ann: this.props.showAnnotations ?? true, check: this.props.interactiveChecklist ?? true, stepCount: N };
+    let c = 0;
+    for (let i = 1; i <= N; i++) { v['d' + i] = !!d[i]; v['t' + i] = this.toggle(i); if (d[i]) c++; }
+    v.doneCount = c;
+    return v;
+  }
+}
+
+</script>
+</body>
+</html>

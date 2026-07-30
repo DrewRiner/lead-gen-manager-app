@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #F6F3ED; }
+  * { box-sizing: border-box; }
+  a { color: #C63F1E; text-decoration: none; border-bottom: 1px solid rgba(198,63,30,.35); }
+  a:hover { color: #93290F; border-bottom-color: #93290F; }
+  @keyframes omRing { 0% { box-shadow: 0 0 0 0 rgba(198,63,30,.38); } 100% { box-shadow: 0 0 0 16px rgba(198,63,30,0); } }
+  @keyframes omBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+</style>
+</helmet>
+
+<div style="background:#F6F3ED;color:#171614;font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;padding:0 32px 96px">
+  <div style="max-width:1120px;margin:0 auto">
+
+    <div style="display:flex;gap:7px;flex-wrap:wrap;padding:28px 0 0">
+      <a href="./Client%20Onboarding%20Guide.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Onboard a new client</a>
+      <a href="./Switch%20Property%20To%20New%20Client.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Switch to a new client</a>
+      <a href="./Update%20Client%20Contact%20Info.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Update client contact info</a>
+      <a href="./Connect%20A%20Contact%20Form.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect a contact form</a>
+      <a href="./Connect%20CallRail%20Call%20Tracking.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Connect CallRail</a>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#17161A;border:1px solid #17161A;border-radius:999px;padding:6px 11px">Connect Twilio</span>
+      <a href="./Change%20Notification%20Method.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">Change notifications</a>
+      <a href="./Set%20Up%20New%20Lead%20Gen%20Property.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">New lead gen property</a>
+      <a href="./Client%20Not%20Getting%20Leads.dc.html" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-bottom-color:#DCD7CA;border-radius:999px;padding:6px 11px" style-hover="color:#171614;background:#E2DDD1">No leads troubleshooting</a>
+    </div>
+
+    <header style="padding:40px 0 44px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end;border-bottom:2px solid #171614">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8C877D;margin-bottom:18px">Internal runbook &nbsp;/&nbsp; Call tracking</div>
+        <h1 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:62px;line-height:1.03;letter-spacing:-.015em;margin:0 0 16px;max-width:20ch;text-wrap:pretty">Connect Twilio call tracking</h1>
+        <p style="font-size:19px;line-height:1.5;color:#4A4741;margin:0;max-width:56ch">Route calls for numbers running on Twilio (including WizCaller-managed numbers) into the dashboard.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <div style="display:flex;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border-radius:999px;padding:7px 13px">5 steps</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#93290F;background:#FBEAE4;border:1px solid #F0C6B7;border-radius:999px;padding:6px 12px">Signed, no URL secret</span>
+        </div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8C877D">{{ doneCount }} of {{ stepCount }} steps checked off</div>
+        </sc-if>
+      </div>
+    </header>
+
+    <section style="padding:52px 0;border-bottom:1px solid #DEDAD0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Why this matters</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0;text-wrap:pretty">This serves the same purpose as CallRail, for numbers running on Twilio — including numbers managed through WizCaller, since those are Twilio numbers underneath. Once set up, Twilio calls route to the right property in the dashboard automatically, matched by the dialed number.</p>
+        </div>
+        <div style="border:1px solid #E3DFD5;background:#fff;border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D;margin-bottom:16px">Twilio path vs CallRail path</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1.5px solid #C7DBCF;background:#EDF5F0;border-radius:9px;padding:12px 13px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#245740;flex:none">Twilio</span>
+              <span style="font-size:12.5px;color:#2A2823">status callback → X-Twilio-Signature verified with TWILIO_AUTH_TOKEN</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#245740;background:#fff;border:1px solid #C7DBCF;border-radius:999px;padding:3px 8px;margin-left:auto">no secret in URL</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #E3DFD5;background:#FBFAF7;border-radius:9px;padding:12px 13px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8C877D;flex:none">CallRail</span>
+              <span style="font-size:12.5px;color:#6B665E">webhook → <span style="font-family:'IBM Plex Mono',monospace">?secret=</span> in the URL</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px dashed #DCD7CA;font-size:13px;color:#2A2823">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#C63F1E">→</span>
+            Matched on the dialed number, same as CallRail.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:52px 0;border-bottom:2px solid #171614">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">Before you start</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0">Have on hand:</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 30px -20px rgba(23,22,20,.3)">
+          <div style="padding:14px 20px;border-bottom:1px solid #EDEAE2;background:#FBFAF7;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D">Pre-flight</div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #F1EEE7">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">The property's Twilio number</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid #F1EEE7">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">Access to the Twilio console (and to WizCaller, if the number is managed there)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 20px">
+            <span style="width:18px;height:18px;border:1.5px solid #C9C4B8;border-radius:4px;flex:none"></span>
+            <span style="font-size:16px;color:#2A2823">The Twilio Auth Token for the account (Twilio console → Account Dashboard)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div style="padding:44px 0 8px">
+      <h2 style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#8C877D;margin:0">Steps</h2>
+    </div>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">1</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#C63F1E;border:1px solid #C63F1E;border-radius:5px;padding:6px 9px;white-space:nowrap">Exact match</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t1 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d1 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Match the number to Tracking Phone</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">Identify the Twilio number for the property, and set the dashboard's Tracking Phone for that property to match it exactly.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:center">
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="padding:11px 15px;border-bottom:1px solid #EDEAE2;display:flex;align-items:center;gap:8px">
+              <span style="width:16px;height:16px;border-radius:99px;background:#E31E26;display:inline-block"></span>
+              <span style="font-size:12.5px;font-weight:600">Twilio · Phone Numbers</span>
+            </div>
+            <div style="padding:15px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398;margin-bottom:6px">Number</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:14px">+1 803 373 1022</div>
+              <div style="font-size:11.5px;color:#8C877D;margin-top:6px">managed via WizCaller</div>
+            </div>
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:#C63F1E">=</span>
+          <div style="border:1.5px solid #C63F1E;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 8px 22px -16px rgba(198,63,30,.5)">
+            <div style="padding:11px 15px;border-bottom:1px solid #F3E4DD;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#C08D7C">Dashboard · Edit property</div>
+            <div style="padding:15px">
+              <div style="font-size:11.5px;color:#4A4741;margin-bottom:5px">Tracking phone</div>
+              <div style="border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:6px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;display:flex;align-items:center;gap:2px">+18033731022<span style="width:1.5px;height:14px;background:#171614;display:inline-block;animation:omBlink 1.1s step-end infinite"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:12px;border:1px solid #F0C6B7;background:#FBEAE4;border-radius:11px;padding:14px 16px;margin-top:16px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;color:#fff;background:#C63F1E;border-radius:5px;padding:4px 7px;flex:none">WARNING</span>
+          <span style="font-size:14.5px;line-height:1.5;color:#5C3226">The dialed number is the routing key. The dashboard's Tracking Phone must match the Twilio number, or the call can't be matched to a property.</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">2</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Dashboard</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t2 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d2 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Copy the Twilio endpoint URL</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">In the dashboard, open Settings → Webhooks and copy the Twilio endpoint URL.</p>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+          <div style="padding:12px 18px;border-bottom:1px solid #EDEAE2">
+            <div style="font-size:14px;font-weight:600">Webhooks · form &amp; call ingestion</div>
+          </div>
+          <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
+            <div style="opacity:.6">
+              <div style="font-size:11.5px;color:#4A4741;margin-bottom:5px">CallRail endpoint URL</div>
+              <div style="border:1px solid #E3DFD5;background:#F7F5F1;border-radius:6px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8C877D">…/api/webhooks/callrail</div>
+            </div>
+            <div>
+              <div style="font-size:11.5px;color:#C63F1E;font-weight:600;margin-bottom:5px">Twilio endpoint URL</div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:6px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#171614;word-break:break-all">https://lead-gen-manager-app.vercel.app/api/webhooks/twilio</div>
+                <div style="border:1.5px solid #C63F1E;background:#C63F1E;color:#fff;border-radius:6px;padding:9px 10px;font-size:11px;flex:none;animation:omRing 2.4s ease-out infinite">⧉</div>
+              </div>
+              <div style="font-size:10.5px;color:#8C877D;margin-top:5px">Set as the number's call status callback (completed calls) in Twilio — or in WizCaller's Twilio config alongside the existing one. Signed with TWILIO_AUTH_TOKEN (X-Twilio-Signature).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">3</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#E31E26;border:1px solid #E31E26;border-radius:5px;padding:6px 9px;white-space:nowrap">Twilio</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t3 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d3 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 12px">Set the call status callback</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 12px;max-width:62ch">In the Twilio console, open the phone number's configuration page and set its call status callback (for completed calls, method POST) to:</p>
+        <div style="display:flex;align-items:center;gap:12px;background:#17161A;border-radius:10px;padding:13px 15px;margin-bottom:22px;overflow:auto">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#EDEAE2;white-space:nowrap">https://lead-gen-manager-app.vercel.app/api/webhooks/twilio</span>
+          <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#BAF25A;border:1px solid #4A6B14;border-radius:5px;padding:4px 7px;flex:none">POST</span>
+        </div>
+
+        <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 18px 40px -26px rgba(23,22,20,.4)">
+          <div style="display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid #EDEAE2">
+            <span style="width:16px;height:16px;border-radius:99px;background:#E31E26;display:inline-block"></span>
+            <span style="font-size:13px;font-weight:600">WizCaller · Twilio config for +1 803 373 1022</span>
+          </div>
+          <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">Call status callbacks (completed)</div>
+            <div style="display:flex;align-items:center;gap:12px;border:1px solid #E3DFD5;background:#FBFAF7;border-radius:9px;padding:11px 13px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#6B665E;background:#EAE6DC;border-radius:999px;padding:3px 8px;flex:none">Existing</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4741;word-break:break-all">https://app.wizcaller.com/…/status</span>
+              <span style="margin-left:auto;font-size:11.5px;color:#245740;font-weight:600;flex:none">keep</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;border:1.5px solid #C63F1E;background:#FDF7F4;border-radius:9px;padding:11px 13px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#C63F1E;border-radius:999px;padding:3px 8px;flex:none">Add</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#171614;word-break:break-all">…/api/webhooks/twilio</span>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#93290F;flex:none">POST</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:12px;border:1px solid #F0C6B7;background:#FBEAE4;border-radius:11px;padding:14px 16px;margin-top:16px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;color:#fff;background:#C63F1E;border-radius:5px;padding:4px 7px;flex:none">WARNING</span>
+          <span style="font-size:14.5px;line-height:1.5;color:#5C3226">If the number is managed through WizCaller, add this callback in WizCaller's Twilio config ALONGSIDE its existing one — do not replace it — so WizCaller's own routing keeps working.</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">4</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#4A4741;background:#EAE6DC;border:1px solid #DCD7CA;border-radius:5px;padding:6px 9px;white-space:nowrap">Deploy</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t4 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d4 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Set TWILIO_AUTH_TOKEN, then redeploy</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 26px;max-width:62ch">Set the Twilio Auth Token in the dashboard environment (Vercel → Project → Settings → Environment Variables) as <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;background:#EAE6DC;border-radius:4px;padding:2px 6px">TWILIO_AUTH_TOKEN</span>. The dashboard uses it to verify Twilio's X-Twilio-Signature on every inbound call — this is proper request signing, so there is no secret in the URL.</p>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start">
+          <div style="border:1px solid #E3DFD5;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(23,22,20,.04),0 14px 32px -24px rgba(23,22,20,.35)">
+            <div style="padding:11px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">Vercel · Environment Variables</div>
+            <div style="padding:16px">
+              <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#A9A398;padding-bottom:8px;border-bottom:1px solid #EDEAE2">
+                <span>Key</span><span>Value</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:10px;padding:11px 0;align-items:center;border-bottom:1px solid #F3F0E9">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B665E">CALLRAIL_WEBHOOK_SECRET</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B0A9A0">••••••••</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:10px;padding:11px 0;align-items:center;background:#FDF4F0;border:1.5px solid #C63F1E;border-radius:8px;padding-left:8px;padding-right:8px;margin-top:8px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600">TWILIO_AUTH_TOKEN</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4741">••••••••••••</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="border:1px solid #E3DFD5;background:#fff;border-radius:12px;padding:16px 18px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8C877D;margin-bottom:12px">How verification works</div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:#2A2823">
+                <span style="border:1px solid #E3DFD5;border-radius:8px;padding:8px 11px;font-family:'IBM Plex Mono',monospace;font-size:11px">X-Twilio-Signature</span>
+                <span style="font-family:'IBM Plex Mono',monospace;color:#C9C4B8">+</span>
+                <span style="border:1px solid #E3DFD5;border-radius:8px;padding:8px 11px;font-family:'IBM Plex Mono',monospace;font-size:11px">TWILIO_AUTH_TOKEN</span>
+                <span style="font-family:'IBM Plex Mono',monospace;color:#C9C4B8">→</span>
+                <span style="border:1px solid #C7DBCF;background:#EDF5F0;border-radius:8px;padding:8px 11px;font-size:12px;color:#245740;font-weight:600">auth valid</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:12px;border:1px solid #F0C6B7;background:#FBEAE4;border-radius:11px;padding:14px 16px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;color:#fff;background:#C63F1E;border-radius:5px;padding:4px 7px;flex:none">WARNING</span>
+              <span style="font-size:14px;line-height:1.5;color:#5C3226">Changing an environment variable on Vercel requires a redeploy to take effect — a common reason a freshly-set token still rejects calls.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:132px minmax(0,1fr);gap:32px;padding:36px 0;border-top:1px solid #DEDAD0;border-bottom:2px solid #171614">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:.78">5</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#E31E26;border:1px solid #E31E26;border-radius:5px;padding:6px 9px;white-space:nowrap">Twilio</div>
+        <sc-if value="{{ check }}" hint-placeholder-val="{{ true }}"><button onClick="{{ t5 }}" style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #C9C4B8;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4741" style-hover="border-color:#171614;color:#171614"><span style="width:14px;height:14px;border:1.5px solid #C9C4B8;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#2F6B4F;line-height:1"><sc-if value="{{ d5 }}" hint-placeholder-val="{{ false }}">✓</sc-if></span>Done</button></sc-if>
+      </div>
+      <div>
+        <h3 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.15;margin:0 0 14px">Save the number's configuration</h3>
+        <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 24px;max-width:62ch">Save the Twilio number's configuration.</p>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1.5px solid #C7DBCF;background:#EDF5F0;border-radius:12px;padding:16px 20px">
+          <span style="width:22px;height:22px;border-radius:99px;background:#2F6B4F;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+          <span style="font-size:14px;color:#245740">Tracking Phone matches · callback added alongside WizCaller's · token set and redeployed</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:56px 0 0">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:56px;align-items:start">
+        <div>
+          <h2 style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:1.1;margin:0 0 20px">How to check it worked</h2>
+          <p style="font-size:18px;line-height:1.6;color:#2A2823;margin:0 0 16px;text-wrap:pretty">Place a test call of at least 20 seconds to the number. Within a minute, in the dashboard open Settings → Webhooks and confirm an event appears with auth valid — and that the call shows on the property's page with the red Twilio badge.</p>
+          <div style="display:flex;align-items:flex-start;gap:12px;border:1px solid #F0C6B7;background:#FBEAE4;border-radius:11px;padding:14px 16px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;color:#fff;background:#C63F1E;border-radius:5px;padding:4px 7px;flex:none">WARNING</span>
+            <span style="font-size:14.5px;line-height:1.5;color:#5C3226">Very short calls (under ~10 seconds) may not complete a status callback. Always test with a call of 20+ seconds.</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden">
+            <div style="padding:11px 16px;border-bottom:1px solid #EDEAE2;font-size:13px;font-weight:600">Recent webhook events</div>
+            <div style="display:grid;grid-template-columns:1.2fr .7fr 1fr 1.2fr;gap:10px;padding:9px 16px;background:#FBFAF7;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#A9A398">
+              <span>Received</span><span>Auth</span><span>Lead Source</span><span>Result</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.2fr .7fr 1fr 1.2fr;gap:10px;padding:11px 16px;font-size:11.5px;align-items:center;background:#F4FAF6">
+              <span style="font-family:'IBM Plex Mono',monospace">Jul 29, 7:03 PM</span>
+              <span style="color:#22A06B;font-weight:600">valid</span>
+              <span style="color:#6B665E">Direct</span>
+              <span style="color:#22A06B">lead created</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.2fr .7fr 1fr 1.2fr;gap:10px;padding:11px 16px;font-size:11.5px;align-items:center;border-top:1px solid #F3F0E9">
+              <span style="font-family:'IBM Plex Mono',monospace;color:#6B665E">Jul 29, 2:15 PM</span>
+              <span style="color:#C63F1E;font-weight:600">rejected</span>
+              <span style="color:#6B665E">—</span>
+              <span style="color:#C63F1E;font-family:'IBM Plex Mono',monospace;font-size:10.5px">invalid_signature</span>
+            </div>
+            <div style="padding:10px 16px;background:#FBFAF7;border-top:1px solid #EDEAE2;font-size:11.5px;color:#6B665E"><span style="font-family:'IBM Plex Mono',monospace">invalid_signature</span> → wrong or un-redeployed TWILIO_AUTH_TOKEN.</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E3DFD5;border-radius:12px;overflow:hidden">
+            <div style="padding:11px 16px;border-bottom:1px solid #EDEAE2;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#A9A398">Property page · Leads</div>
+            <div style="display:grid;grid-template-columns:1.3fr 1fr .7fr .8fr;gap:10px;padding:12px 16px;font-size:11.5px;align-items:center">
+              <span style="font-family:'IBM Plex Mono',monospace">Jul 29, 7:01 PM</span>
+              <span style="display:flex;gap:5px;align-items:center"><span style="color:#6B665E">Call</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;color:#fff;background:#E31E26;border-radius:999px;padding:2px 6px">Twilio</span></span>
+              <span style="font-family:'IBM Plex Mono',monospace;color:#4A4741">0:24</span>
+              <span style="justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#245740;background:#EDF5F0;border:1px solid #D3E4DA;border-radius:999px;padding:3px 7px">Billable</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;background:#17161A;border-radius:12px;padding:18px 20px">
+            <span style="width:24px;height:24px;border-radius:99px;background:#BAF25A;color:#2A3D0A;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none">✓</span>
+            <span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#FBFAF7">Signature valid, Twilio badge on the lead.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;showAnnotations&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; },
+  &quot;interactiveChecklist&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Guide&quot; }
+}">
+const KEY = 'twilio-guide-v1';
+const N = 5;
+
+class Component extends DCLogic {
+  state = { done: {} };
+
+  componentDidMount() {
+    try { const r = localStorage.getItem(KEY); if (r) this.setState({ done: JSON.parse(r) || {} }); } catch (e) {}
+  }
+
+  toggle(n) {
+    return () => this.setState(s => {
+      const done = Object.assign({}, s.done, { [n]: !s.done[n] });
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      return { done };
+    });
+  }
+
+  renderVals() {
+    const d = this.state.done || {};
+    const v = { ann: this.props.showAnnotations ?? true, check: this.props.interactiveChecklist ?? true, stepCount: N };
+    let c = 0;
+    for (let i = 1; i <= N; i++) { v['d' + i] = !!d[i]; v['t' + i] = this.toggle(i); if (d[i]) c++; }
+    v.doneCount = c;
+    return v;
+  }
+}
+
+</script>
+</body>
+</html>
