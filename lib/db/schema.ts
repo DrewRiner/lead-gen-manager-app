@@ -199,6 +199,12 @@ export const properties = pgTable(
     launchedOn: date("launched_on", { mode: "string" }),
     gbpPlaceId: text("gbp_place_id"),
     trackingPhone: text("tracking_phone"),
+    // Expected provider hosting this property's tracking number / data source,
+    // for SETUP GUIDANCE and connection-status display ONLY. Values mirror
+    // leads.source_system ('callrail' | 'twilio' | 'ghl'). Nullable: existing
+    // properties are unset. NEVER read by ingestion or resolution — calls always
+    // resolve by dialed number vs tracking_phone, regardless of this field.
+    callProvider: text("call_provider"),
     // Admin override for the connection dot: "marked ready to receive leads".
     // The dot is GREEN if this is true OR a real lead arrived recently; the
     // ghl_lead_source config field is NOT used for the dot anymore.

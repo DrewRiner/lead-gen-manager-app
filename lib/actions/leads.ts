@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { fromZonedTime } from "date-fns-tz";
 import { z } from "zod";
 
@@ -435,4 +435,57 @@ export async function assignLeadToProperty(
       `Lead assigned to ${property.name}.` +
       (sourceToRemember ? " Source saved for future auto-match." : rememberNote),
   };
+}
+
+const leadIdSchema = z.string().uuid();
+
+/**
+ * Soft-delete a lead (set deleted_at). Never a hard delete — historical lead
+ * data must survive (rule 8), and a swept-up lead can be restored. All default
+ * queries filter out soft-deleted rows, so this removes it from every count,
+ * metric, revenue figure, cost-per-lead, and chart automatically.
+ */
+export async function softDeleteLead(leadId: string): Promise<ActionResult> {
+  if (!leadIdSchema.safeParse(leadId).success) {
+    return { ok: false, error: "Invalid lead id." };
+  }
+  const [lead] = await db
+    .select({ propertyId: leads.propertyId })
+    .from(leads)
+    .where(and(eq(leads.id, leadId), isNull(leads.deletedAt)))
+    .limit(1);
+  if (!lead) return { ok: false, error: "Lead not found." };
+
+  await db
+    .update(leads)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(leads.id, leadId), isNull(leads.deletedAt)));
+
+  revalidatePath("/leads");
+  revalidatePath("/");
+  if (lead.propertyId) revalidatePath(`/properties/${lead.propertyId}`);
+  return { ok: true, message: "Lead deleted." };
+}
+
+/** Restore a soft-deleted lead — puts it back into all counts and metrics. */
+export async function restoreLead(leadId: string): Promise<ActionResult> {
+  if (!leadIdSchema.safeParse(leadId).success) {
+    return { ok: false, error: "Invalid lead id." };
+  }
+  const [lead] = await db
+    .select({ propertyId: leads.propertyId })
+    .from(leads)
+    .where(and(eq(leads.id, leadId), isNotNull(leads.deletedAt)))
+    .limit(1);
+  if (!lead) return { ok: false, error: "Lead not found or not deleted." };
+
+  await db
+    .update(leads)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(leads.id, leadId));
+
+  revalidatePath("/leads");
+  revalidatePath("/");
+  if (lead.propertyId) revalidatePath(`/properties/${lead.propertyId}`);
+  return { ok: true, message: "Lead restored." };
 }

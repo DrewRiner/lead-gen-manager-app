@@ -14,7 +14,9 @@ import { useState } from "react";
 import { AssignLeadDialog } from "@/components/leads/assign-lead-dialog";
 import { LeadOverrideDialog } from "@/components/leads/lead-override-dialog";
 import { NotSpamButton } from "@/components/leads/not-spam-button";
+import { RestoreLeadButton } from "@/components/leads/restore-lead-button";
 import { SourceBadge } from "@/components/leads/source-badge";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { formatDuration, titleCase } from "@/lib/format";
@@ -24,9 +26,12 @@ import {
   sourceLabel,
   sourceSystemLabel,
 } from "@/lib/leads/labels";
+import { softDeleteLead } from "@/lib/actions/leads";
+import { billedDisplay } from "@/lib/leads/billed-display";
 import type { LeadListRow } from "@/lib/queries/leads";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { cn } from "@/lib/utils";
 
 // The expanded lead record — grouped, plain-language sections. Raw/debug values
 // live under a collapsed "Details" toggle.
@@ -44,6 +49,8 @@ export function LeadDetailPanel({
 
   const isForm = row.type === "form";
   const isCall = row.type === "call";
+  const billed = billedDisplay(row);
+  const leadWho = row.callerName ?? formatPhone(row.callerPhone) ?? null;
   const answers =
     row.formAnswers && Object.keys(row.formAnswers).length > 0 ? row.formAnswers : null;
 
@@ -94,7 +101,7 @@ export function LeadDetailPanel({
             )
           }
         />
-        <Field label="Client" value={row.clientName ?? "—"} />
+        <Field label="Client at time of lead" value={row.clientName ?? "—"} />
         <Field label="Received" value={when} />
       </Section>
 
@@ -122,12 +129,25 @@ export function LeadDetailPanel({
       {/* 4. Billing */}
       <Section title="Billing">
         <Field label="Status" value={<StatusBadge status={row.billableStatus} />} />
-        <Field label="Reason" value={billableReasonLabel(row.billableReason)} />
+        <Field
+          label="Reason"
+          value={billableReasonLabel(row.billableReason, {
+            qualifiedBy: row.qualifiedBy,
+            thresholdSeconds: row.propertyBillableThresholdSeconds,
+          })}
+        />
         <Field label="Qualified by" value={qualifiedByLabel(row.qualifiedBy)} />
         <Field label="Delivery" value={<StatusBadge status={row.deliveryStatus} />} />
         <Field
           label="Billed"
-          value={<span className="tabular-nums">{formatCurrency(row.billedAmount)}</span>}
+          value={
+            <span
+              title={billed.tooltip}
+              className={cn("tabular-nums", billed.muted && "font-normal text-muted-foreground")}
+            >
+              {billed.text}
+            </span>
+          }
         />
         <Field
           label="Estimated value"
@@ -225,28 +245,52 @@ export function LeadDetailPanel({
 
       {/* Actions */}
       <div className="flex flex-wrap items-end gap-2 border-t pt-3">
-        {row.propertyId == null ? (
-          <AssignLeadDialog
-            leadId={row.id}
-            leadSourceRaw={row.ghlLeadSourceRaw}
-            properties={properties}
-            trigger={
-              <Button size="sm" onClick={(e) => e.stopPropagation()}>
-                Assign to property
-              </Button>
-            }
-          />
-        ) : null}
-        {row.billableStatus === "spam" ? <NotSpamButton leadId={row.id} /> : null}
-        <LeadOverrideDialog
-          leadId={row.id}
-          current={row.billableStatus}
-          trigger={
-            <Button size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
-              Override billable status
-            </Button>
-          }
-        />
+        {row.deletedAt ? (
+          <RestoreLeadButton leadId={row.id} />
+        ) : (
+          <>
+            {row.propertyId == null ? (
+              <AssignLeadDialog
+                leadId={row.id}
+                leadSourceRaw={row.ghlLeadSourceRaw}
+                properties={properties}
+                trigger={
+                  <Button size="sm" onClick={(e) => e.stopPropagation()}>
+                    Assign to property
+                  </Button>
+                }
+              />
+            ) : null}
+            {row.billableStatus === "spam" ? <NotSpamButton leadId={row.id} /> : null}
+            <LeadOverrideDialog
+              leadId={row.id}
+              current={row.billableStatus}
+              trigger={
+                <Button size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
+                  Override billable status
+                </Button>
+              }
+            />
+            {/* Destructive — always last. */}
+            <ConfirmDialog
+              destructive
+              title={leadWho ? `Delete lead from ${leadWho}?` : "Delete this lead?"}
+              description="This soft-deletes the lead and removes it from all counts, revenue, and charts. You can restore it later from the Deleted view."
+              confirmLabel="Delete lead"
+              action={softDeleteLead.bind(null, row.id)}
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-destructive hover:text-destructive focus-visible:text-destructive"
+                >
+                  Delete lead
+                </Button>
+              }
+            />
+          </>
+        )}
       </div>
     </div>
   );

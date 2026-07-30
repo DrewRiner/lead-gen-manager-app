@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import { MetricCard } from "@/components/dashboard/metric-card";
@@ -15,6 +15,7 @@ import { CostPerLead } from "@/components/properties/cost-per-lead";
 import { PropertyActionsMenu } from "@/components/properties/property-actions-menu";
 import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { PropertyDialog } from "@/components/properties/property-dialog";
+import { RevenueStrip, type RevenueStripProps } from "@/components/properties/revenue-strip";
 import { TrialBanner } from "@/components/properties/trial-banner";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import {
   comparativeCalendarWindow,
+  currentMonthKey,
   daysBetween,
   localDateStr,
   nowLocalInputValue,
@@ -43,18 +45,23 @@ import {
 } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, leads, properties, propertyAssignments } from "@/lib/db/schema";
+import { formatDistanceToNow } from "date-fns";
+
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { providerLabel } from "@/lib/providers";
 import { getRealLeadAt } from "@/lib/queries/connection";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
 import {
   getPropertyCostPerLead,
+  getPropertyEconomics,
   getPropertyMonthlySeries,
   getRangeMetrics,
 } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
+import { getWebhookUrls } from "@/lib/webhooks-url";
 import { TabLink, TabNav } from "@/components/tab-link";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +86,7 @@ export default async function PropertyDetailPage({
   const { id } = await params;
   const sp = await searchParams;
   const { orgTimezone: tz } = await getAppSettings();
+  const webhookUrls = await getWebhookUrls();
   const tab = sp.tab === "lifetime" ? "lifetime" : "activity";
 
   const [row] = await db
@@ -127,6 +135,14 @@ export default async function PropertyDetailPage({
 
   const totalLeadCount = leadCountRow[0]?.count ?? 0;
   const connection = { connectionReady: p.connectionReady, lastRealLeadAt: realLeadAt };
+  // Per-property connection status from REAL received data (reuses the same
+  // getRealLeadAt signal as the connection dot). The two problem states
+  // (auth failures, provider-arriving-but-unmatched) aren't attributable to a
+  // single property, so they're surfaced globally (unmatched-leads link below,
+  // and the webhook_events log in Settings → Webhooks) — never faked here.
+  const connectionText = realLeadAt
+    ? `Last lead received ${formatDistanceToNow(realLeadAt, { addSuffix: true })}`
+    : "Not yet connected";
   const activeAssignment = activeAssignmentRow[0];
   const onTrial = p.status === "trial" && activeAssignment?.isTrial === true;
   const isAssigned = p.clientId != null && !onTrial;
@@ -168,6 +184,33 @@ export default async function PropertyDetailPage({
     };
   }
 
+  // Revenue strip — only for a property with an active assignment (rented or
+  // trial). Reuses the existing economics / revenue / lifetime queries.
+  let strip: RevenueStripProps | null = null;
+  if (activeAssignment) {
+    const monthKey = currentMonthKey(tz);
+    const [econ, monthSeries, lifetime] = await Promise.all([
+      getPropertyEconomics(tz, id, monthKey),
+      getPropertyMonthlySeries(tz, id, [monthKey]),
+      getPropertyLifetime(tz, id),
+    ]);
+    strip = {
+      clientName: row.clientName,
+      billingType: activeAssignment.billingType,
+      monthlyRate: activeAssignment.monthlyRate,
+      perLeadCallRate: activeAssignment.perLeadCallRate,
+      perLeadFormRate: activeAssignment.perLeadFormRate,
+      isTrial: onTrial,
+      revenueThisMonth: monthSeries[0]?.actualRevenue ?? "0.00",
+      lifetimeRevenue: lifetime.lifetimeRevenue,
+      actualPerLead: econ.economics.effectiveValue,
+      marketPerLead: econ.economics.marketBlended,
+      underpriced: econ.economics.underpriced,
+      daysRemaining: trial?.daysRemaining ?? null,
+      expired: trial?.expired ?? false,
+    };
+  }
+
   const editValue = {
     id: p.id,
     name: p.name,
@@ -180,6 +223,7 @@ export default async function PropertyDetailPage({
     launchedOn: p.launchedOn,
     gbpPlaceId: p.gbpPlaceId,
     trackingPhone: p.trackingPhone,
+    callProvider: p.callProvider,
     ghlLeadSource: p.ghlLeadSource,
     ghlFormId: p.ghlFormId,
     shortCode: p.shortCode,
@@ -197,14 +241,9 @@ export default async function PropertyDetailPage({
 
   return (
     <div>
-      <Link
-        href="/properties"
-        className="mb-3 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" /> Properties
-      </Link>
-
       <PageHeader
+        backHref="/properties"
+        backLabel="Properties"
         title={
           <span className="flex items-center gap-2">
             <ConnectionDot connection={connection} className="h-3 w-3" />
@@ -216,7 +255,8 @@ export default async function PropertyDetailPage({
         <PropertyDialog
           mode="edit"
           property={editValue}
-          trigger={<Button variant="outline">Edit property</Button>}
+          webhookUrls={webhookUrls}
+          trigger={<Button>Edit property</Button>}
         />
         <PropertyActionsMenu
           propertyId={p.id}
@@ -261,6 +301,20 @@ export default async function PropertyDetailPage({
           </Info>
           <Info label="Current client">{row.clientName ?? "Unassigned"}</Info>
           <Info label="Tracking phone">{formatPhone(p.trackingPhone)}</Info>
+          <Info label="Provider">{providerLabel(p.callProvider)}</Info>
+          <Info label="Connection">
+            <span className={realLeadAt ? undefined : "text-muted-foreground"}>
+              {connectionText}
+            </span>
+            {!realLeadAt ? (
+              <Link
+                href="/leads?billableStatus=unmatched"
+                className="mt-0.5 block text-xs text-primary hover:underline"
+              >
+                If calls are being placed, check unmatched leads →
+              </Link>
+            ) : null}
+          </Info>
           <Info label="GBP place ID">{p.gbpPlaceId ?? "—"}</Info>
           <Info label="Domain">
             {p.domain ? (
@@ -279,6 +333,8 @@ export default async function PropertyDetailPage({
           <Info label="Display name">{p.displayName ?? "—"}</Info>
         </CardContent>
       </Card>
+
+      {strip ? <RevenueStrip {...strip} /> : null}
 
       {/* Tabs (server-rendered via ?tab=) */}
       <TabNav>
@@ -339,6 +395,7 @@ async function ActivityTab({
     from: sp.from,
     to: sp.to,
     q: sp.q,
+    deleted: sp.deleted === "1",
   };
 
   const [

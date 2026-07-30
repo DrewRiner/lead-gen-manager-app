@@ -14,6 +14,7 @@ import {
 } from "@/lib/db/schema";
 import { normalizePhone } from "@/lib/phone";
 import { toMoneyString } from "@/lib/money";
+import { isProviderKey, providerLabel } from "@/lib/providers";
 
 export type ActionResult =
   | { ok: true; message?: string; count?: number }
@@ -60,7 +61,15 @@ const propertySchema = z.object({
   launchedOn: dateField,
   gbpPlaceId: optionalText,
   trackingPhone: optionalText,
-  // GoHighLevel ingestion keys.
+  // Expected provider for setup guidance / status display only — never read by
+  // ingestion. Stored as the internal key ('callrail' | 'twilio' | 'ghl') or null.
+  callProvider: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v && v.length > 0 && v !== "none" ? v : null))
+    .refine((v) => v === null || isProviderKey(v), { message: "Invalid provider." }),
+  // Engine Evolve (GoHighLevel) ingestion keys.
   ghlLeadSource: optionalText,
   ghlFormId: optionalText,
   shortCode: optionalText,
@@ -88,6 +97,7 @@ function parseForm(formData: FormData) {
     launchedOn: formData.get("launchedOn"),
     gbpPlaceId: formData.get("gbpPlaceId"),
     trackingPhone: formData.get("trackingPhone"),
+    callProvider: formData.get("callProvider"),
     ghlLeadSource: formData.get("ghlLeadSource"),
     ghlFormId: formData.get("ghlFormId"),
     shortCode: formData.get("shortCode"),
@@ -141,7 +151,7 @@ function ghlUniqueConflict(err: unknown): string | null {
     return "Another property already uses that Lead Source value.";
   }
   if (e.constraint === "properties_ghl_form_id_uniq") {
-    return "Another property already uses that GHL form ID.";
+    return `Another property already uses that ${providerLabel("ghl")} form ID.`;
   }
   if (e.constraint === "properties_short_code_uniq") {
     return "Another property already uses that short code.";

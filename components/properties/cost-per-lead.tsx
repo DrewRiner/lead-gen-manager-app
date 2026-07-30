@@ -34,7 +34,6 @@ function gapLabel(gap: number | null): { text: string; underpriced: boolean } {
 export function CostPerLead({ data }: { data: PropertyCostPerLead }) {
   const meaningful = data.everRented && (data.isFlat || data.isPerLead);
   const chargedLabel = data.isPerLead ? "Charged" : "Rent charged";
-  const rentDivLabel = data.isPerLead ? "avg charged per billable lead" : "rent / billable leads";
 
   if (!meaningful) {
     return (
@@ -50,41 +49,10 @@ export function CostPerLead({ data }: { data: PropertyCostPerLead }) {
     );
   }
 
-  const lifeGap = gapLabel(data.lifetime.gap);
-  const w = data.window30;
-  const wGap = gapLabel(w.gap);
-
   return (
-    <div className="mb-6 space-y-4">
-      {/* Two headline stats */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <HeadlineCard
-          label="30-day cost per lead"
-          badge="Rolling 30 days"
-          value={perLead(w.actual)}
-          math={
-            w.actual != null
-              ? `${formatCurrency(w.rent)} ${data.isPerLead ? "charged" : "rent"} / ${formatNumber(w.billable)} billable ${w.billable === 1 ? "lead" : "leads"}`
-              : `No billable leads in the last 30 days`
-          }
-          market={w.market}
-          gap={wGap}
-        />
-        <HeadlineCard
-          label="Lifetime cost per lead"
-          badge="Volume-weighted, while rented"
-          value={perLead(data.lifetime.actual)}
-          math={
-            data.lifetime.actual != null
-              ? `${formatCurrency(data.lifetime.totalRent)} ${rentDivLabel.startsWith("avg") ? "charged" : "rent"} / ${formatNumber(data.lifetime.totalBillable)} leads = ${perLead(data.lifetime.actual)}`
-              : `No billable leads during rented months yet`
-          }
-          market={data.lifetime.market}
-          gap={lifeGap}
-        />
-      </div>
-
-      {/* Month-by-month breakdown */}
+    <div className="mb-6">
+      {/* Month-by-month breakdown — the deep view. The at-a-glance summary
+          (this month's cost/lead vs market) lives in the revenue strip up top. */}
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
@@ -146,57 +114,6 @@ export function CostPerLead({ data }: { data: PropertyCostPerLead }) {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function HeadlineCard({
-  label,
-  badge,
-  value,
-  math,
-  market,
-  gap,
-}: {
-  label: string;
-  badge: string;
-  value: string;
-  math: string;
-  market: number;
-  gap: { text: string; underpriced: boolean };
-}) {
-  return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-muted-foreground">{label}</span>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            {badge}
-          </span>
-        </div>
-        <div className="mt-2 text-3xl font-semibold tabular-nums">{value}</div>
-        <div className="mt-1 text-xs text-muted-foreground">{math}</div>
-        <div className="mt-3 flex items-center gap-3 border-t pt-3 text-sm">
-          <span className="text-muted-foreground">
-            Market{" "}
-            <span className="font-medium text-foreground tabular-nums">
-              {formatCurrency(market)}/lead
-            </span>
-          </span>
-          <span
-            className={cn(
-              "tabular-nums",
-              gap.underpriced
-                ? "font-semibold text-amber-600 dark:text-amber-400"
-                : "text-muted-foreground",
-            )}
-            title={gap.underpriced ? "Charging below market — reprice candidate." : undefined}
-          >
-            Gap {gap.text}
-            {gap.underpriced ? " · underpriced" : ""}
-          </span>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 

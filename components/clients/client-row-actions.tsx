@@ -14,9 +14,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { softDeleteClient } from "@/lib/actions/clients";
+import { restoreClient, softDeleteClient } from "@/lib/actions/clients";
 
-export function ClientRowActions({ client }: { client: ClientDialogValue }) {
+export function ClientRowActions({
+  client,
+  deleted = false,
+}: {
+  client: ClientDialogValue;
+  /** When true, the client is soft-deleted → offer Restore instead of Delete. */
+  deleted?: boolean;
+}) {
   return (
     <div className="flex justify-end">
       <DropdownMenu>
@@ -27,36 +34,57 @@ export function ClientRowActions({ client }: { client: ClientDialogValue }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <ClientDialog
-            mode="edit"
-            client={client}
-            trigger={
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                Edit
-              </DropdownMenuItem>
-            }
-          />
-          <ConfirmDialog
-            destructive
-            title="Delete client?"
-            description={
-              <>
-                This soft-deletes <strong>{client.businessName}</strong>.
-                Historical lead data is preserved; their properties become
-                unassigned in lists.
-              </>
-            }
-            confirmLabel="Delete client"
-            action={softDeleteClient.bind(null, client.id)}
-            trigger={
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                className="text-destructive focus:text-destructive"
-              >
-                Delete
-              </DropdownMenuItem>
-            }
-          />
+          {deleted ? (
+            <ConfirmDialog
+              title="Restore client?"
+              description={
+                <>
+                  This restores <strong>{client.businessName}</strong> to your
+                  active client list and pickers.
+                </>
+              }
+              confirmLabel="Restore client"
+              action={restoreClient.bind(null, client.id)}
+              trigger={
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  Restore
+                </DropdownMenuItem>
+              }
+            />
+          ) : (
+            <>
+              <ClientDialog
+                mode="edit"
+                client={client}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    Edit
+                  </DropdownMenuItem>
+                }
+              />
+              <ConfirmDialog
+                destructive
+                title="Delete client?"
+                description={
+                  <>
+                    This soft-deletes <strong>{client.businessName}</strong>.
+                    Historical lead data is preserved; a client with an active
+                    assignment can&rsquo;t be deleted — unassign first.
+                  </>
+                }
+                confirmLabel="Delete client"
+                action={softDeleteClient.bind(null, client.id)}
+                trigger={
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                }
+              />
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

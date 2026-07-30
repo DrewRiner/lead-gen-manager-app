@@ -1,4 +1,5 @@
 import { titleCase } from "@/lib/format";
+import { providerLabel } from "@/lib/providers";
 import { cn } from "@/lib/utils";
 
 // Color-coded provider badge for a lead's source_system. Display only — the raw
@@ -25,6 +26,7 @@ export function SourceBadge({
   if (styled) {
     return (
       <span
+        title={providerLabel(key)}
         className={cn(BASE, className)}
         style={{ backgroundColor: styled.bg, color: styled.fg }}
       >

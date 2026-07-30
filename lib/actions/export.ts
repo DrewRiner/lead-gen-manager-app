@@ -3,6 +3,7 @@
 import { toCsv } from "@/lib/csv";
 import { formatInTz } from "@/lib/dates";
 import { formatDuration } from "@/lib/format";
+import { billableReasonLabel } from "@/lib/leads/labels";
 import { getAllLeadsForExport, type LeadFilters } from "@/lib/queries/leads";
 import { getOrgTimezone } from "@/lib/settings";
 
@@ -55,7 +56,14 @@ export async function exportLeadsCsv(filters: LeadFilters): Promise<string> {
     message: r.message ?? "",
     duration: r.type === "call" ? formatDuration(r.callDurationSeconds) : "",
     billableStatus: r.billableStatus,
-    billableReason: r.billableReason ?? "",
+    // Reworded to state the rule (matches the UI); billed amount stays raw numeric.
+    billableReason:
+      r.billableReason || r.qualifiedBy === "manual"
+        ? billableReasonLabel(r.billableReason, {
+            qualifiedBy: r.qualifiedBy,
+            thresholdSeconds: r.propertyBillableThresholdSeconds,
+          })
+        : "",
     qualifiedBy: r.qualifiedBy ?? "",
     billedAmount: r.billedAmount,
     estimatedValue: r.estimatedValue,

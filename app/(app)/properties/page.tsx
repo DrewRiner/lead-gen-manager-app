@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, Plus } from "lucide-react";
 import { and, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
-import { PageHeader } from "@/components/page-header";
+import { FilterBar, PageHeader } from "@/components/page-header";
 import { PropertiesFilters } from "@/components/properties/properties-filters";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { ConnectionDot } from "@/components/properties/connection-dot";
@@ -30,6 +30,7 @@ import {
 import { getRealLeadMap } from "@/lib/queries/connection";
 import { connectionStatus } from "@/lib/connection";
 import { getAppSettings } from "@/lib/settings";
+import { getWebhookUrls } from "@/lib/webhooks-url";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Properties — LeadGen" };
@@ -76,6 +77,8 @@ export default async function PropertiesPage({
   if (sp.niche) conds.push(eq(properties.niche, sp.niche));
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
+
+  const webhookUrls = await getWebhookUrls();
 
   const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp, realLeadMap] =
     await Promise.all([
@@ -168,6 +171,7 @@ export default async function PropertiesPage({
       >
         <PropertyDialog
           mode="create"
+          webhookUrls={webhookUrls}
           trigger={
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -177,9 +181,9 @@ export default async function PropertiesPage({
         />
       </PageHeader>
 
-      <div className="mb-4">
+      <FilterBar>
         <PropertiesFilters niches={niches} clients={clientList} />
-      </div>
+      </FilterBar>
 
       <div className="rounded-lg border">
         <div className="overflow-x-auto">
@@ -195,7 +199,7 @@ export default async function PropertiesPage({
                 <TableHead>Billing</TableHead>
                 <SortHead label="30d leads" k="leads30" href={sortHref("leads30")} active={sortKey === "leads30"} dir={sortDir} numeric />
                 <SortHead label="30d est. value" k="estValue30" href={sortHref("estValue30")} active={sortKey === "estValue30"} dir={sortDir} numeric />
-                <SortHead label="Eff. $/lead" k="effLead" href={sortHref("effLead")} active={sortKey === "effLead"} dir={sortDir} numeric />
+                <SortHead label="Actual cost/lead" title="Your actual cost per lead" k="effLead" href={sortHref("effLead")} active={sortKey === "effLead"} dir={sortDir} numeric />
                 <SortHead label="Market $/lead" k="marketLead" href={sortHref("marketLead")} active={sortKey === "marketLead"} dir={sortDir} numeric />
                 <SortHead label="Rev/mo rented" k="revPerMonth" href={sortHref("revPerMonth")} active={sortKey === "revPerMonth"} dir={sortDir} numeric />
                 <TableHead className="w-10" />
@@ -230,7 +234,18 @@ export default async function PropertiesPage({
                       <TableCell>
                         <PropertyStatusBadge status={p.status} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{clientName ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {clientName && p.clientId ? (
+                          <Link
+                            href={`/clients/${p.clientId}`}
+                            className="text-foreground hover:underline"
+                          >
+                            {clientName}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground">Not paired</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}
                       </TableCell>
@@ -249,7 +264,7 @@ export default async function PropertiesPage({
                         )}
                         title={
                           econ?.underpriced
-                            ? "Effective cost per lead is well below market — a candidate to move to pay-per-lead."
+                            ? "Your actual cost per lead is well below market — a candidate to move to pay-per-lead."
                             : undefined
                         }
                       >
@@ -277,6 +292,7 @@ export default async function PropertiesPage({
                             launchedOn: p.launchedOn,
                             gbpPlaceId: p.gbpPlaceId,
                             trackingPhone: p.trackingPhone,
+                            callProvider: p.callProvider,
                             ghlLeadSource: p.ghlLeadSource,
                             ghlFormId: p.ghlFormId,
                             shortCode: p.shortCode,
@@ -292,6 +308,7 @@ export default async function PropertiesPage({
                             notes: p.notes,
                           }}
                           clients={clientList}
+                          webhookUrls={webhookUrls}
                         />
                       </TableCell>
                     </TableRow>
@@ -308,12 +325,14 @@ export default async function PropertiesPage({
 
 function SortHead({
   label,
+  title,
   href,
   active,
   dir,
   numeric = false,
 }: {
   label: string;
+  title?: string;
   k: SortKey;
   href: string;
   active: boolean;
@@ -321,7 +340,7 @@ function SortHead({
   numeric?: boolean;
 }) {
   return (
-    <TableHead className={numeric ? "text-right" : undefined}>
+    <TableHead className={numeric ? "text-right" : undefined} title={title}>
       <Link
         href={href}
         className={cn(

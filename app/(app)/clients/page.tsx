@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { asc, eq, isNull, sql } from "drizzle-orm";
+import { Plus, Trash2 } from "lucide-react";
+import { and, asc, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { ClientDialog } from "@/components/clients/client-dialog";
 import { ClientRowActions } from "@/components/clients/client-row-actions";
@@ -26,45 +26,84 @@ import { getAppSettings } from "@/lib/settings";
 export const metadata = { title: "Clients — LeadGen" };
 export const dynamic = "force-dynamic";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ deleted?: string }>;
+}) {
+  const sp = await searchParams;
+  const showDeleted = sp.deleted === "1";
   const { orgTimezone: tz } = await getAppSettings();
 
-  const [rows, propCountRows, leadCounts] = await Promise.all([
+  const [rows, pairedRows, leadCounts, deletedCountRow] = await Promise.all([
     db
       .select()
       .from(clients)
-      .where(isNull(clients.deletedAt))
+      .where(showDeleted ? isNotNull(clients.deletedAt) : isNull(clients.deletedAt))
       .orderBy(asc(clients.businessName)),
+    // Every property currently paired to a client (client_id → clients.id). One
+    // query, grouped in memory below — not per-row. Display only; client_id is
+    // never written here.
     db
       .select({
+        id: properties.id,
         clientId: properties.clientId,
-        count: sql<number>`count(*)::int`,
+        name: properties.name,
+        displayName: properties.displayName,
       })
       .from(properties)
-      .where(isNull(properties.deletedAt))
-      .groupBy(properties.clientId),
+      .where(and(isNull(properties.deletedAt), isNotNull(properties.clientId)))
+      .orderBy(asc(properties.name)),
     getClientRangeCounts(trailingDayRange(tz, 30)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(clients)
+      .where(isNotNull(clients.deletedAt)),
   ]);
+  const deletedCount = deletedCountRow[0]?.count ?? 0;
 
-  const propCount = new Map<string, number>();
-  for (const r of propCountRows) {
-    if (r.clientId) propCount.set(r.clientId, r.count);
+  // clientId → its paired properties (id + shown name). Handles 0/1/many.
+  const propsByClient = new Map<string, { id: string; name: string }[]>();
+  for (const r of pairedRows) {
+    if (!r.clientId) continue;
+    const list = propsByClient.get(r.clientId) ?? [];
+    list.push({ id: r.id, name: r.displayName ?? r.name });
+    propsByClient.set(r.clientId, list);
   }
 
   return (
     <div>
       <PageHeader
-        title="Clients"
-        description="Business owners renting leads."
+        title={showDeleted ? "Deleted clients" : "Clients"}
+        description={
+          showDeleted
+            ? "Soft-deleted clients. Restore to return them to lists and pickers."
+            : "Business owners renting leads."
+        }
       >
-        <ClientDialog
-          mode="create"
-          trigger={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add client
-            </Button>
-          }
-        />
+        {showDeleted ? (
+          <Button asChild variant="outline">
+            <Link href="/clients">Back to active</Link>
+          </Button>
+        ) : (
+          <>
+            <ClientDialog
+              mode="create"
+              trigger={
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> Add client
+                </Button>
+              }
+            />
+            {deletedCount > 0 ? (
+              <Button asChild variant="outline">
+                <Link href="/clients?deleted=1">
+                  <Trash2 className="mr-2 h-4 w-4" /> Deleted ({deletedCount})
+                </Link>
+              </Button>
+            ) : null}
+          </>
+        )}
       </PageHeader>
 
       <div className="rounded-lg border">
@@ -77,7 +116,7 @@ export default async function ClientsPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Properties</TableHead>
+                <TableHead>Properties</TableHead>
                 <TableHead className="text-right">30d leads</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
@@ -89,19 +128,26 @@ export default async function ClientsPage() {
                     colSpan={8}
                     className="py-10 text-center text-muted-foreground"
                   >
-                    No clients yet.
+                    {showDeleted ? "No deleted clients." : "No clients yet."}
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">
-                      <Link
-                        href={`/clients/${c.id}`}
-                        className="hover:underline"
-                      >
-                        {c.businessName}
-                      </Link>
+                      <span className="flex items-center gap-2">
+                        <Link
+                          href={`/clients/${c.id}`}
+                          className="hover:underline"
+                        >
+                          {c.businessName}
+                        </Link>
+                        {c.deletedAt ? (
+                          <span className="rounded-full border border-dashed px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Deleted
+                          </span>
+                        ) : null}
+                      </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {c.contactName ?? "—"}
@@ -115,8 +161,8 @@ export default async function ClientsPage() {
                     <TableCell>
                       <StatusBadge status={c.status} />
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(propCount.get(c.id) ?? 0)}
+                    <TableCell className="max-w-xs text-sm">
+                      <PairedProperties items={propsByClient.get(c.id) ?? []} />
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatNumber(leadCounts.get(c.id) ?? 0)}
@@ -132,6 +178,7 @@ export default async function ClientsPage() {
                           status: c.status,
                           notes: c.notes,
                         }}
+                        deleted={showDeleted}
                       />
                     </TableCell>
                   </TableRow>
@@ -142,5 +189,34 @@ export default async function ClientsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Properties paired to a client. Zero → a deliberate muted "Not paired"; up to
+// two shown inline (linked to detail), the rest collapsed into "+N more".
+function PairedProperties({ items }: { items: { id: string; name: string }[] }) {
+  if (items.length === 0) {
+    return <span className="text-muted-foreground">Not paired</span>;
+  }
+  const shown = items.slice(0, 2);
+  const extra = items.length - shown.length;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5">
+      {shown.map((p, i) => (
+        <span key={p.id} className="whitespace-nowrap">
+          <Link href={`/properties/${p.id}`} className="hover:underline">
+            {p.name}
+          </Link>
+          {i < shown.length - 1 ? (
+            <span className="text-muted-foreground">,</span>
+          ) : null}
+        </span>
+      ))}
+      {extra > 0 ? (
+        <span className="whitespace-nowrap text-muted-foreground">
+          +{extra} more
+        </span>
+      ) : null}
+    </span>
   );
 }

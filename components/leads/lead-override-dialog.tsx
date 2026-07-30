@@ -40,6 +40,15 @@ const LABEL: Record<string, string> = {
   spam: "Spam",
 };
 
+// Common override reasons — quick-pick to fill the field (still editable).
+// Stored verbatim in billable_reason.
+const PRESET_REASONS = [
+  "Not a real lead",
+  "Wrong service area",
+  "Existing customer",
+  "Poor quality",
+] as const;
+
 export function LeadOverrideDialog({
   leadId,
   current,
@@ -52,6 +61,7 @@ export function LeadOverrideDialog({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<string>(current);
+  const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -103,12 +113,31 @@ export function LeadOverrideDialog({
             <Label className="text-xs" htmlFor="reason">
               Reason
             </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESET_REASONS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setReason(p)}
+                  className={
+                    "rounded-full border px-2.5 py-1 text-xs transition-colors " +
+                    (reason === p
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "text-muted-foreground hover:bg-muted")
+                  }
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
             <Textarea
               id="reason"
               name="reason"
               rows={2}
               required
-              placeholder="Why is this being overridden?"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Why is this being overridden? Pick a preset above or type your own."
             />
           </div>
           {error ? (

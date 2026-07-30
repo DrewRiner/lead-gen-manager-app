@@ -1,26 +1,54 @@
-import { PLATFORM } from "@/lib/config";
 import { titleCase } from "@/lib/format";
+import { providerLabel } from "@/lib/providers";
 
 // Plain-language translations for the raw enum/string values stored on a lead,
 // so the detail view reads like a CRM record, not a database dump.
 
+// Static reasons that don't depend on the property threshold. Wording states
+// the RULE, not a verdict, and stays short enough for a table cell.
 const REASON_MAP: Record<string, string> = {
   valid_contact: "Valid contact info",
   form_lead: "Valid contact info", // legacy value, pre-backfill
-  no_contact_info: "No phone or email",
-  low_quality: "Looks like a test submission",
+  no_contact_info: "No contact info provided",
+  low_quality: "Failed quality check",
   spam_detected: "Flagged as spam",
-  duration_met_threshold: "Call was long enough",
-  duration_under_threshold: "Call was too short",
-  missing_duration: "Call needs review — no duration",
   unmatched_no_property: "Not matched to a property",
 };
 
-/** billable_reason -> human sentence. Unknown/free-text reasons pass through. */
-export function billableReasonLabel(raw: string | null | undefined): string {
-  if (!raw) return "—";
-  const r = raw.trim();
-  // Keys may have an appended note in parens, so match on prefix too.
+const DEFAULT_THRESHOLD = 60;
+
+export interface ReasonLabelOptions {
+  /** qualified_by = 'manual' always reads as an override, whatever the note. */
+  qualifiedBy?: string | null;
+  /** The property's billable_threshold_seconds, for the duration reasons. */
+  thresholdSeconds?: number | null;
+}
+
+/** billable_reason -> human rule statement. Unknown/free-text reasons pass through. */
+export function billableReasonLabel(
+  raw: string | null | undefined,
+  opts?: ReasonLabelOptions,
+): string {
+  const r = raw?.trim() ?? "";
+
+  // A manual override wins over whatever automated reason was stored, but we
+  // still surface the operator's recorded reason (the WHY) when there is one.
+  if (opts?.qualifiedBy === "manual") {
+    if (!r) return "Manually overridden";
+    // Already self-describing (e.g. "Manually marked not spam") — show as-is.
+    if (/^manual/i.test(r)) return r;
+    return `Manually overridden — ${r}`;
+  }
+
+  if (!r) return "—";
+  const t = opts?.thresholdSeconds ?? DEFAULT_THRESHOLD;
+
+  // Duration reasons interpolate the property's actual threshold. Match on
+  // prefix too, since ingestion may append a note (e.g. occurred_at fallback).
+  if (r.startsWith("duration_met_threshold")) return `Exceeded ${t}s threshold`;
+  if (r.startsWith("duration_under_threshold")) return `Under ${t}s threshold`;
+  if (r.startsWith("missing_duration")) return "Duration pending";
+
   for (const [key, label] of Object.entries(REASON_MAP)) {
     if (r === key || r.startsWith(key)) return label;
   }
@@ -42,10 +70,11 @@ export function qualifiedByLabel(raw: string | null | undefined): string {
 }
 
 const SOURCE_SYSTEM_MAP: Record<string, string> = {
-  // The team only sees the white-labeled platform name, never the vendor's.
-  ghl: `Contact form (${PLATFORM.name})`,
-  callrail: "CallRail",
-  twilio: "Twilio",
+  // The team only sees the white-labeled name, never the vendor's. The provider
+  // display names come from the single PROVIDER_LABELS map (lib/providers).
+  ghl: `Contact form (${providerLabel("ghl")})`,
+  callrail: providerLabel("callrail"),
+  twilio: providerLabel("twilio"),
   manual: "Manual entry",
 };
 

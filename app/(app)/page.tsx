@@ -237,7 +237,9 @@ async function ActivityTab({
                   <TableHead className="text-right">Billable</TableHead>
                   <TableHead className="text-right">Est. value</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Eff. $/lead</TableHead>
+                  <TableHead className="text-right" title="Your actual cost per lead">
+                    Actual cost/lead
+                  </TableHead>
                   <TableHead className="text-right">Market $/lead</TableHead>
                 </TableRow>
               </TableHeader>
@@ -274,7 +276,7 @@ async function ActivityTab({
                         )}
                         title={
                           econByProp.get(p.propertyId)?.underpriced
-                            ? "Effective cost per lead is well below market — a candidate to move to pay-per-lead. (This calendar month.)"
+                            ? "Your actual cost per lead is well below market — a candidate to move to pay-per-lead. (This calendar month.)"
                             : "This calendar month"
                         }
                       >

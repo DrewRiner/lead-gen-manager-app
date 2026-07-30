@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { and, asc, eq, isNull } from "drizzle-orm";
 
+import { ClientActionsMenu } from "@/components/clients/client-actions-menu";
 import { ClientDialog } from "@/components/clients/client-dialog";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
@@ -87,14 +87,12 @@ export default async function ClientDetailPage({
 
   return (
     <div>
-      <Link
-        href="/clients"
-        className="mb-3 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+      <PageHeader
+        backHref="/clients"
+        backLabel="Clients"
+        title={client.businessName}
+        description={client.contactName ?? undefined}
       >
-        <ArrowLeft className="mr-1 h-4 w-4" /> Clients
-      </Link>
-
-      <PageHeader title={client.businessName} description={client.contactName ?? undefined}>
         <ClientDialog
           mode="edit"
           client={{
@@ -106,8 +104,9 @@ export default async function ClientDetailPage({
             status: client.status,
             notes: client.notes,
           }}
-          trigger={<Button variant="outline">Edit client</Button>}
+          trigger={<Button>Edit client</Button>}
         />
+        <ClientActionsMenu clientId={client.id} businessName={client.businessName} />
       </PageHeader>
 
       <Card className="mb-6">

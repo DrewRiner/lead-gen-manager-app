@@ -23,6 +23,7 @@ export function ConfirmDialog({
   confirmLabel = "Confirm",
   destructive = false,
   action,
+  redirectTo,
   open: controlledOpen,
   onOpenChange,
 }: {
@@ -32,6 +33,9 @@ export function ConfirmDialog({
   confirmLabel?: string;
   destructive?: boolean;
   action: () => Promise<ActionResult>;
+  /** On success, navigate here instead of refreshing (e.g. after deleting the
+      record whose detail page you're on). */
+  redirectTo?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -51,7 +55,8 @@ export function ConfirmDialog({
         return;
       }
       setOpen(false);
-      router.refresh();
+      if (redirectTo) router.push(redirectTo);
+      else router.refresh();
     });
   }
 

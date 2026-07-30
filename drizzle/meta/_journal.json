@@ -134,6 +134,13 @@
       "when": 1785380908851,
       "tag": "0018_gifted_silvermane",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785425477076,
+      "tag": "0019_add_property_call_provider",
+      "breakpoints": true
     }
   ]
 }

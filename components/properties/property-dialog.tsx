@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 import { useState, useTransition } from "react";
 
+import { CopyField } from "@/components/copy-field";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +27,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createProperty, updateProperty } from "@/lib/actions/properties";
 import { PLATFORM } from "@/lib/config";
+import {
+  CALL_PROVIDER_OPTIONS,
+  providerLabel,
+  type ProviderKey,
+} from "@/lib/providers";
+import type { WebhookUrls } from "@/lib/webhooks-url";
 
 type BillingType = "flat_monthly" | "per_lead" | "hybrid";
 type Status =
@@ -63,6 +71,7 @@ export interface PropertyDialogValue {
   launchedOn: string | null;
   gbpPlaceId: string | null;
   trackingPhone: string | null;
+  callProvider: string | null;
   ghlLeadSource: string | null;
   ghlFormId: string | null;
   shortCode: string | null;
@@ -82,10 +91,13 @@ export function PropertyDialog({
   mode,
   property,
   trigger,
+  webhookUrls,
 }: {
   mode: "create" | "edit";
   property?: PropertyDialogValue;
   trigger: React.ReactNode;
+  /** Live production webhook URLs, built server-side (see lib/webhooks-url). */
+  webhookUrls: WebhookUrls;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -96,6 +108,9 @@ export function PropertyDialog({
     property?.billingType ?? "flat_monthly",
   );
   const [status, setStatus] = useState<Status>(property?.status ?? "building");
+  const [callProvider, setCallProvider] = useState<string>(
+    property?.callProvider ?? "none",
+  );
 
   // Editing rates when a client is actively assigned is the silent-wrong-revenue
   // trap: these fields are only defaults for FUTURE assignments; the active
@@ -143,6 +158,7 @@ export function PropertyDialog({
           {/* Hidden mirrors for shadcn selects */}
           <input type="hidden" name="status" value={status} />
           <input type="hidden" name="billingType" value={billingType} />
+          <input type="hidden" name="callProvider" value={callProvider} />
 
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Name" required>
@@ -226,7 +242,29 @@ export function PropertyDialog({
                 defaultValue={property?.trackingPhone ?? ""}
               />
             </Field>
+            <Field label="Where is this number hosted?">
+              <Select value={callProvider} onValueChange={setCallProvider}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Not set" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not set</SelectItem>
+                  {CALL_PROVIDER_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {providerLabel(p)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           </section>
+
+          {callProvider !== "none" ? (
+            <ProviderSetupHelp
+              provider={callProvider as ProviderKey}
+              urls={webhookUrls}
+            />
+          ) : null}
 
           <section className="space-y-4 rounded-lg border p-4">
             <div>
@@ -468,5 +506,86 @@ function Field({
       </Label>
       {children}
     </div>
+  );
+}
+
+// Contextual setup steps for the selected provider — the exact production
+// webhook URL (built server-side from the live host) with a copy button, plus
+// the provider-specific warnings that prevent the common misconfigurations.
+function ProviderSetupHelp({
+  provider,
+  urls,
+}: {
+  provider: ProviderKey;
+  urls: WebhookUrls;
+}) {
+  return (
+    <div className="space-y-2 rounded-lg border bg-muted/30 p-4 text-xs">
+      <p className="text-sm font-semibold">Setup — {providerLabel(provider)}</p>
+
+      {provider === "callrail" ? (
+        <>
+          <p className="text-muted-foreground">
+            In CallRail, open the{" "}
+            <strong>company that owns this number</strong> → Settings →
+            Integrations → Webhooks, and paste this URL into <strong>both</strong>{" "}
+            the <strong>Post-call</strong> and <strong>Call-modified</strong> URL
+            fields:
+          </p>
+          <CopyField value={urls.callrail} />
+          {!urls.callrailSecretConfigured ? (
+            <Warn>
+              <code>CALLRAIL_WEBHOOK_SECRET</code> isn&rsquo;t set on the server,
+              so this URL is missing its <code>?secret=</code>. Set it in Vercel
+              or every call will fail auth.
+            </Warn>
+          ) : null}
+          <Warn>
+            Selecting the wrong CallRail company is the most common setup failure
+            — it must be the company that owns this exact tracking number.
+          </Warn>
+        </>
+      ) : null}
+
+      {provider === "twilio" ? (
+        <>
+          <p className="text-muted-foreground">
+            In Twilio, open this number → Voice Configuration, and paste this URL
+            into the <strong>&ldquo;Call status changes&rdquo;</strong> field only
+            (HTTP POST):
+          </p>
+          <CopyField value={urls.twilio} />
+          <Warn>
+            Do NOT put this in <strong>&ldquo;A call comes in.&rdquo;</strong>{" "}
+            That field controls call forwarding, and this endpoint returns no
+            TwiML — callers would hear silence.
+          </Warn>
+        </>
+      ) : null}
+
+      {provider === "ghl" ? (
+        <>
+          <p className="text-muted-foreground">
+            In {providerLabel("ghl")}, add a webhook action to the form workflow
+            that POSTs here, sending the shared secret as the{" "}
+            <code>X-Webhook-Secret</code> header (see Settings → Webhooks):
+          </p>
+          <CopyField value={urls.ghl} />
+          <p className="text-muted-foreground">
+            Leads match to this property by the <strong>Lead Source</strong>{" "}
+            value set below.
+          </p>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function Warn({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2 py-1.5 text-amber-800 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300">
+      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      <span>{children}</span>
+    </p>
   );
 }
