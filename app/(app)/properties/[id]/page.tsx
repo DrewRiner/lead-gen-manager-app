@@ -14,6 +14,7 @@ import { Pagination } from "@/components/pagination";
 import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
 import { ChangeRateDialog } from "@/components/properties/change-rate-dialog";
 import { ConnectionDot } from "@/components/properties/connection-dot";
+import { CostPerLead } from "@/components/properties/cost-per-lead";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
 import { StartTrialDialog } from "@/components/properties/start-trial-dialog";
@@ -39,7 +40,6 @@ import {
 import { unassignClient } from "@/lib/actions/assignments";
 import {
   comparativeCalendarWindow,
-  currentMonthKey,
   daysBetween,
   localDateStr,
   nowLocalInputValue,
@@ -54,7 +54,7 @@ import { formatPhone } from "@/lib/phone";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
 import {
-  getPropertyEconomics,
+  getPropertyCostPerLead,
   getPropertyMonthlySeries,
   getRangeMetrics,
 } from "@/lib/queries/metrics";
@@ -510,11 +510,10 @@ async function LifetimeTab({
   property: typeof properties.$inferSelect;
   tz: string;
 }) {
-  const thisMonth = currentMonthKey(tz);
-  const [lifetime, monthly, econ] = await Promise.all([
+  const [lifetime, monthly, costPerLead] = await Promise.all([
     getPropertyLifetime(tz, propertyId),
     getPropertyMonthlySeries(tz, propertyId, recentMonths(tz, 12)),
-    getPropertyEconomics(tz, propertyId, thisMonth),
+    getPropertyCostPerLead(tz, propertyId),
   ]);
   const s = lifetime.summary;
   const monthlyDesc = [...monthly].reverse();
@@ -531,25 +530,7 @@ async function LifetimeTab({
 
   return (
     <div>
-      <div className="mb-2 text-sm font-medium text-muted-foreground">
-        Lead value — {thisMonth.label}
-      </div>
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Eff. $/lead"
-          value={econ.economics.effectiveLabel}
-          hint={
-            econ.economics.underpriced
-              ? `Below market — reprice candidate · ${formatNumber(econ.billable)} billable`
-              : `What the client effectively pays · ${formatNumber(econ.billable)} billable`
-          }
-        />
-        <StatCard
-          label="Market $/lead"
-          value={econ.economics.marketLabel}
-          hint="Niche rate card — what a lead is worth"
-        />
-      </div>
+      <CostPerLead data={costPerLead} />
 
       <div className="mb-2 text-sm font-medium text-muted-foreground">
         Lifetime — all clients, all leads

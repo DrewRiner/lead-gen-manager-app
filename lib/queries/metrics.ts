@@ -1,17 +1,26 @@
 import {
   activeInMonth,
+  activeOnDate,
   flatRevenueForMonth,
+  lifetimeFlatRevenue,
   monthIndexFromYm,
   type AssignmentLite,
 } from "@/lib/assignments";
 import { db } from "@/lib/db";
 import { clients, leads, properties } from "@/lib/db/schema";
-import { computeLeadEconomics, type LeadEconomics } from "@/lib/lead-economics";
+import {
+  blendedMarket,
+  computeLeadEconomics,
+  type LeadEconomics,
+} from "@/lib/lead-economics";
 import {
   currentMonthIndex,
+  lastNLocalDays,
   localDateExpr,
   localMonthExpr,
   monthRangeUtc,
+  recentMonths,
+  trailingDayRange,
   type DateRange,
   type MonthKey,
 } from "@/lib/dates";
@@ -57,6 +66,10 @@ const aggTotal = sql<number>`(count(*))::int`;
 const aggBillable = sql<number>`(count(*) filter (where ${leads.billableStatus} = 'billable'))::int`;
 const aggActualRevenue = sql<string>`coalesce(sum(${leads.billedAmount}), 0)::text`;
 const aggEstimatedValue = sql<string>`coalesce(sum(${leads.estimatedValue}), 0)::text`;
+// Billable-only splits — cost-per-lead uses BILLABLE leads exclusively.
+const aggBillableCalls = sql<number>`(count(*) filter (where ${leads.type} = 'call' and ${leads.billableStatus} = 'billable'))::int`;
+const aggBillableForms = sql<number>`(count(*) filter (where ${leads.type} = 'form' and ${leads.billableStatus} = 'billable'))::int`;
+const aggBillableBilled = sql<string>`coalesce(sum(${leads.billedAmount}) filter (where ${leads.billableStatus} = 'billable'), 0)::text`;
 
 export interface RangeMetrics {
   totalLeads: number;
@@ -539,6 +552,212 @@ export async function getPropertyEconomics(
   });
 
   return { economics, billable: agg?.billable ?? 0 };
+}
+
+// ---------------------------------------------------------------------------
+// Cost-per-lead breakdown for the property detail analytics. BILLABLE leads
+// only. Reuses the assignment-based rent logic (flatRevenueForMonth /
+// lifetimeFlatRevenue / activeOnDate) — no reinvented rent math.
+//   • 30-day: monthly_rate prorated across the trailing 30 local days / billable
+//   • lifetime: VOLUME-WEIGHTED total-rent-ever / total-billable-ever, counting
+//     only months the property was rented (idle months excluded on both sides)
+//   • per_lead billing: the actual average billed per billable lead instead
+// ---------------------------------------------------------------------------
+
+export interface CostPerLeadMonth {
+  key: string;
+  label: string;
+  rented: boolean;
+  rent: string; // flat rent charged that month (or per-lead charges)
+  billable: number;
+  actual: number | null; // your actual cost per lead
+  market: number; // market rate per lead
+  gap: number | null; // market - actual (positive = underpriced)
+}
+
+export interface CostPerLeadWindow {
+  rent: string;
+  billable: number;
+  actual: number | null;
+  market: number;
+  gap: number | null;
+  rented: boolean;
+}
+
+export interface PropertyCostPerLead {
+  billingType: string;
+  isFlat: boolean; // flat_monthly | hybrid → rent / billable
+  isPerLead: boolean; // per_lead → average charged
+  everRented: boolean;
+  window30: CostPerLeadWindow;
+  lifetime: {
+    totalRent: string;
+    totalBillable: number;
+    actual: number | null;
+    market: number;
+    gap: number | null;
+  };
+  months: CostPerLeadMonth[]; // oldest → newest
+}
+
+export async function getPropertyCostPerLead(
+  tz: string,
+  propertyId: string,
+): Promise<PropertyCostPerLead> {
+  const nowIndex = currentMonthIndex(tz);
+  const monthExpr = localMonthExpr(tz, leads.occurredAt);
+
+  const [propRows, assignmentsMap, allMonths, win30Rows] = await Promise.all([
+    db
+      .select({
+        billingType: properties.billingType,
+        estimatedCallValue: properties.estimatedCallValue,
+        estimatedFormValue: properties.estimatedFormValue,
+      })
+      .from(properties)
+      .where(eq(properties.id, propertyId))
+      .limit(1),
+    getAssignmentsMap([propertyId]),
+    // Every month of this property's history (billable-only splits).
+    db
+      .select({
+        ym: sql<string>`to_char(${monthExpr}, 'YYYY-MM')`,
+        billable: aggBillable,
+        bcalls: aggBillableCalls,
+        bforms: aggBillableForms,
+        billed: aggBillableBilled,
+      })
+      .from(leads)
+      .where(and(isNull(leads.deletedAt), eq(leads.propertyId, propertyId)))
+      .groupBy(monthExpr),
+    db
+      .select({
+        billable: aggBillable,
+        bcalls: aggBillableCalls,
+        bforms: aggBillableForms,
+        billed: aggBillableBilled,
+      })
+      .from(leads)
+      .where(rangeConditions(trailingDayRange(tz, 30), { propertyId })),
+  ]);
+
+  const prop = propRows[0];
+  const billingType = prop?.billingType ?? "flat_monthly";
+  const isFlat = billingType === "flat_monthly" || billingType === "hybrid";
+  const isPerLead = billingType === "per_lead";
+  const callVal = toMoneyNumber(prop?.estimatedCallValue);
+  const formVal = toMoneyNumber(prop?.estimatedFormValue);
+  const assignments: AssignmentLite[] = assignmentsMap.get(propertyId) ?? [];
+  const everRented = assignments.some((a) => !a.isTrial);
+  const byYm = new Map(allMonths.map((r) => [r.ym, r]));
+
+  // Was the property rented (billing-relevant) in a given month index?
+  const rentedInMonth = (mi: number): boolean =>
+    isFlat
+      ? toMoneyNumber(flatRevenueForMonth(assignments, mi, nowIndex)) > 0
+      : assignments.some((a) => !a.isTrial && activeInMonth(a, mi, nowIndex));
+
+  // ---- Lifetime (volume-weighted, rented months only) --------------------
+  let lifeBillable = 0;
+  let lifeCalls = 0;
+  let lifeForms = 0;
+  let lifeBilledCents = 0;
+  for (const r of allMonths) {
+    const [y, m] = r.ym.split("-").map(Number);
+    if (!rentedInMonth(monthIndexFromYm(y, m))) continue;
+    lifeBillable += r.billable;
+    lifeCalls += r.bcalls;
+    lifeForms += r.bforms;
+    lifeBilledCents += Math.round(toMoneyNumber(r.billed) * 100);
+  }
+  const lifeRent = isFlat
+    ? lifetimeFlatRevenue(assignments, nowIndex)
+    : (lifeBilledCents / 100).toFixed(2);
+  const lifeActual = lifeBillable > 0 ? toMoneyNumber(lifeRent) / lifeBillable : null;
+  const lifeMarket = blendedMarket(callVal, formVal, lifeCalls, lifeForms);
+
+  // ---- 30-day window -----------------------------------------------------
+  const w = win30Rows[0];
+  const wBillable = w?.billable ?? 0;
+  const wBilled = toMoneyString(w?.billed ?? "0");
+  const days = lastNLocalDays(tz, 30);
+  let win30Rent = "0.00";
+  let win30Rented = false;
+  if (isFlat) {
+    let cents = 0;
+    for (const d of days) {
+      const a = assignments.find(
+        (x) =>
+          !x.isTrial &&
+          (x.billingType === "flat_monthly" || x.billingType === "hybrid") &&
+          activeOnDate(x, d.key),
+      );
+      if (a) {
+        const [y, mo] = d.key.split("-").map(Number);
+        const daysInMonth = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+        cents += Math.round((toMoneyNumber(a.monthlyRate) / daysInMonth) * 100);
+      }
+    }
+    win30Rent = (cents / 100).toFixed(2);
+    win30Rented = cents > 0;
+  } else {
+    win30Rent = wBilled;
+    win30Rented = assignments.some(
+      (a) => !a.isTrial && days.some((d) => activeOnDate(a, d.key)),
+    );
+  }
+  const win30Actual =
+    win30Rented && wBillable > 0 ? toMoneyNumber(win30Rent) / wBillable : null;
+  const win30Market = blendedMarket(callVal, formVal, w?.bcalls ?? 0, w?.bforms ?? 0);
+
+  // ---- Last 12 calendar months ------------------------------------------
+  const months: CostPerLeadMonth[] = [...recentMonths(tz, 12)]
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map((m) => {
+      const agg = byYm.get(m.key);
+      const mi = monthIndexFromYm(m.year, m.month);
+      const rented = rentedInMonth(mi);
+      const rent = isFlat
+        ? flatRevenueForMonth(assignments, mi, nowIndex)
+        : toMoneyString(agg?.billed ?? "0");
+      const billable = agg?.billable ?? 0;
+      const actual =
+        rented && billable > 0 ? toMoneyNumber(rent) / billable : null;
+      const market = blendedMarket(callVal, formVal, agg?.bcalls ?? 0, agg?.bforms ?? 0);
+      return {
+        key: m.key,
+        label: m.label,
+        rented,
+        rent,
+        billable,
+        actual,
+        market,
+        gap: actual != null ? market - actual : null,
+      };
+    });
+
+  return {
+    billingType,
+    isFlat,
+    isPerLead,
+    everRented,
+    window30: {
+      rent: win30Rent,
+      billable: wBillable,
+      actual: win30Actual,
+      market: win30Market,
+      gap: win30Actual != null ? win30Market - win30Actual : null,
+      rented: win30Rented,
+    },
+    lifetime: {
+      totalRent: toMoneyString(lifeRent),
+      totalBillable: lifeBillable,
+      actual: lifeActual,
+      market: lifeMarket,
+      gap: lifeActual != null ? lifeMarket - lifeActual : null,
+    },
+    months,
+  };
 }
 
 // ---------------------------------------------------------------------------
