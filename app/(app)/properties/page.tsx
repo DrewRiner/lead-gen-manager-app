@@ -234,7 +234,18 @@ export default async function PropertiesPage({
                       <TableCell>
                         <PropertyStatusBadge status={p.status} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{clientName ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {clientName && p.clientId ? (
+                          <Link
+                            href={`/clients/${p.clientId}`}
+                            className="text-foreground hover:underline"
+                          >
+                            {clientName}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground">Not paired</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}
                       </TableCell>
