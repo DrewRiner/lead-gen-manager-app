@@ -1,5 +1,5 @@
-import { PLATFORM } from "@/lib/config";
 import { titleCase } from "@/lib/format";
+import { providerLabel } from "@/lib/providers";
 
 // Plain-language translations for the raw enum/string values stored on a lead,
 // so the detail view reads like a CRM record, not a database dump.
@@ -70,10 +70,11 @@ export function qualifiedByLabel(raw: string | null | undefined): string {
 }
 
 const SOURCE_SYSTEM_MAP: Record<string, string> = {
-  // The team only sees the white-labeled platform name, never the vendor's.
-  ghl: `Contact form (${PLATFORM.name})`,
-  callrail: "CallRail",
-  twilio: "Twilio",
+  // The team only sees the white-labeled name, never the vendor's. The provider
+  // display names come from the single PROVIDER_LABELS map (lib/providers).
+  ghl: `Contact form (${providerLabel("ghl")})`,
+  callrail: providerLabel("callrail"),
+  twilio: providerLabel("twilio"),
   manual: "Manual entry",
 };
 

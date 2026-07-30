@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { Users2 } from "lucide-react";
 import { asc } from "drizzle-orm";
 
@@ -34,6 +33,7 @@ import {
   getWebhookEvents,
 } from "@/lib/queries/webhooks";
 import { getAppSettings } from "@/lib/settings";
+import { getWebhookUrls } from "@/lib/webhooks-url";
 
 export const metadata = { title: "Settings — LeadGen" };
 export const dynamic = "force-dynamic";
@@ -67,27 +67,25 @@ function timezoneOptions(current: string): string[] {
 }
 
 export default async function SettingsPage() {
-  const [settings, users, leadSources, unmatchedLeads, events, hdrs, profile] =
+  const [settings, users, leadSources, unmatchedLeads, events, profile, urls] =
     await Promise.all([
       getAppSettings(),
       db.select().from(profiles).orderBy(asc(profiles.email)),
       getPropertyLeadSources(),
       getRecentUnmatchedLeads(20),
       getWebhookEvents(100),
-      headers(),
       getProfile(),
+      getWebhookUrls(),
     ]);
   const isAdmin = profile?.role === "admin";
 
   const tz = settings.orgTimezone;
 
-  // Build the public webhook URL from the incoming request's host.
-  const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "localhost:3000";
-  const proto =
-    hdrs.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const webhookUrl = `${proto}://${host}/api/webhooks/ghl-form`;
-  const callrailUrl = `${proto}://${host}/api/webhooks/callrail`;
-  const twilioUrl = `${proto}://${host}/api/webhooks/twilio`;
+  // Webhook URLs come from getWebhookUrls() in the Promise.all above — the
+  // CallRail URL includes the real ?secret= so it's copy-ready (lib/webhooks-url).
+  const webhookUrl = urls.ghl;
+  const callrailUrl = urls.callrail;
+  const twilioUrl = urls.twilio;
 
   return (
     <div>

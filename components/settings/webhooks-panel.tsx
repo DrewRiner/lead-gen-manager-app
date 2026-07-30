@@ -92,7 +92,7 @@ export function WebhooksPanel({
 
         <Labeled
           label="CallRail endpoint URL"
-          hint="Add this as a CallRail webhook (post_call and call_modified). Signed with CALLRAIL_WEBHOOK_SECRET."
+          hint="Paste into BOTH the post_call and call_modified webhook fields, for the CallRail company that owns the number. The ?secret= is already included — copy it as-is."
         >
           <CopyRow value={callrailUrl} mono />
         </Labeled>

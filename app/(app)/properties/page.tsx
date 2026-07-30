@@ -30,6 +30,7 @@ import {
 import { getRealLeadMap } from "@/lib/queries/connection";
 import { connectionStatus } from "@/lib/connection";
 import { getAppSettings } from "@/lib/settings";
+import { getWebhookUrls } from "@/lib/webhooks-url";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Properties — LeadGen" };
@@ -76,6 +77,8 @@ export default async function PropertiesPage({
   if (sp.niche) conds.push(eq(properties.niche, sp.niche));
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
+
+  const webhookUrls = await getWebhookUrls();
 
   const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp, realLeadMap] =
     await Promise.all([
@@ -168,6 +171,7 @@ export default async function PropertiesPage({
       >
         <PropertyDialog
           mode="create"
+          webhookUrls={webhookUrls}
           trigger={
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -277,6 +281,7 @@ export default async function PropertiesPage({
                             launchedOn: p.launchedOn,
                             gbpPlaceId: p.gbpPlaceId,
                             trackingPhone: p.trackingPhone,
+                            callProvider: p.callProvider,
                             ghlLeadSource: p.ghlLeadSource,
                             ghlFormId: p.ghlFormId,
                             shortCode: p.shortCode,
@@ -292,6 +297,7 @@ export default async function PropertiesPage({
                             notes: p.notes,
                           }}
                           clients={clientList}
+                          webhookUrls={webhookUrls}
                         />
                       </TableCell>
                     </TableRow>

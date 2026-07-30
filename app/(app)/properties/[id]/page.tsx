@@ -45,9 +45,12 @@ import {
 } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, leads, properties, propertyAssignments } from "@/lib/db/schema";
+import { formatDistanceToNow } from "date-fns";
+
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { providerLabel } from "@/lib/providers";
 import { getRealLeadAt } from "@/lib/queries/connection";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
@@ -58,6 +61,7 @@ import {
   getRangeMetrics,
 } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
+import { getWebhookUrls } from "@/lib/webhooks-url";
 import { TabLink, TabNav } from "@/components/tab-link";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +86,7 @@ export default async function PropertyDetailPage({
   const { id } = await params;
   const sp = await searchParams;
   const { orgTimezone: tz } = await getAppSettings();
+  const webhookUrls = await getWebhookUrls();
   const tab = sp.tab === "lifetime" ? "lifetime" : "activity";
 
   const [row] = await db
@@ -130,6 +135,14 @@ export default async function PropertyDetailPage({
 
   const totalLeadCount = leadCountRow[0]?.count ?? 0;
   const connection = { connectionReady: p.connectionReady, lastRealLeadAt: realLeadAt };
+  // Per-property connection status from REAL received data (reuses the same
+  // getRealLeadAt signal as the connection dot). The two problem states
+  // (auth failures, provider-arriving-but-unmatched) aren't attributable to a
+  // single property, so they're surfaced globally (unmatched-leads link below,
+  // and the webhook_events log in Settings → Webhooks) — never faked here.
+  const connectionText = realLeadAt
+    ? `Last lead received ${formatDistanceToNow(realLeadAt, { addSuffix: true })}`
+    : "Not yet connected";
   const activeAssignment = activeAssignmentRow[0];
   const onTrial = p.status === "trial" && activeAssignment?.isTrial === true;
   const isAssigned = p.clientId != null && !onTrial;
@@ -210,6 +223,7 @@ export default async function PropertyDetailPage({
     launchedOn: p.launchedOn,
     gbpPlaceId: p.gbpPlaceId,
     trackingPhone: p.trackingPhone,
+    callProvider: p.callProvider,
     ghlLeadSource: p.ghlLeadSource,
     ghlFormId: p.ghlFormId,
     shortCode: p.shortCode,
@@ -241,6 +255,7 @@ export default async function PropertyDetailPage({
         <PropertyDialog
           mode="edit"
           property={editValue}
+          webhookUrls={webhookUrls}
           trigger={<Button>Edit property</Button>}
         />
         <PropertyActionsMenu
@@ -286,6 +301,20 @@ export default async function PropertyDetailPage({
           </Info>
           <Info label="Current client">{row.clientName ?? "Unassigned"}</Info>
           <Info label="Tracking phone">{formatPhone(p.trackingPhone)}</Info>
+          <Info label="Provider">{providerLabel(p.callProvider)}</Info>
+          <Info label="Connection">
+            <span className={realLeadAt ? undefined : "text-muted-foreground"}>
+              {connectionText}
+            </span>
+            {!realLeadAt ? (
+              <Link
+                href="/leads?billableStatus=unmatched"
+                className="mt-0.5 block text-xs text-primary hover:underline"
+              >
+                If calls are being placed, check unmatched leads →
+              </Link>
+            ) : null}
+          </Info>
           <Info label="GBP place ID">{p.gbpPlaceId ?? "—"}</Info>
           <Info label="Domain">
             {p.domain ? (

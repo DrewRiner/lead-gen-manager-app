@@ -18,13 +18,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { unassignClient } from "@/lib/actions/assignments";
 import { softDeleteProperty } from "@/lib/actions/properties";
+import type { WebhookUrls } from "@/lib/webhooks-url";
 
 export function PropertyRowActions({
   property,
   clients,
+  webhookUrls,
 }: {
   property: PropertyDialogValue;
   clients: { id: string; businessName: string }[];
+  webhookUrls: WebhookUrls;
 }) {
   const isAssigned = property.clientId != null;
 
@@ -41,6 +44,7 @@ export function PropertyRowActions({
           <PropertyDialog
             mode="edit"
             property={property}
+            webhookUrls={webhookUrls}
             trigger={
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 Edit
