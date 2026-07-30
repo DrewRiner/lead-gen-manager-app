@@ -45,8 +45,13 @@ import {
 } from "@/lib/queries/metrics";
 import { cn } from "@/lib/utils";
 import { getLifetimeRollup, getTrialSummary } from "@/lib/queries/lifetime";
+import { RevenueByClientChart } from "@/components/charts/revenue-by-client-chart";
 import { getPipelineSummary } from "@/lib/queries/pipeline";
 import { getConnectionSummary } from "@/lib/queries/connection";
+import {
+  getRevenueByClient,
+  type RevenueRange,
+} from "@/lib/queries/revenue-by-client";
 import { getAppSettings } from "@/lib/settings";
 
 export const metadata = { title: "Dashboard — LeadGen" };
@@ -55,7 +60,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; rev?: string }>;
 }) {
   const sp = await searchParams;
   const { orgTimezone: tz } = await getAppSettings();
@@ -77,7 +82,11 @@ export default async function DashboardPage({
         </TabLink>
       </TabNav>
 
-      {tab === "activity" ? <ActivityTab tz={tz} /> : <LifetimeTab tz={tz} />}
+      {tab === "activity" ? (
+        <ActivityTab tz={tz} revRange={sp.rev} />
+      ) : (
+        <LifetimeTab tz={tz} />
+      )}
     </div>
   );
 }
@@ -86,8 +95,24 @@ export default async function DashboardPage({
 // Activity tab — everything that was on the dashboard.
 // ---------------------------------------------------------------------------
 
-async function ActivityTab({ tz }: { tz: string }) {
+const REV_RANGES: { key: RevenueRange; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "7d" },
+  { key: "30d", label: "30d" },
+  { key: "all", label: "All time" },
+];
+
+async function ActivityTab({
+  tz,
+  revRange,
+}: {
+  tz: string;
+  revRange?: string;
+}) {
   const now = new Date();
+  const rev: RevenueRange = REV_RANGES.some((r) => r.key === revRange)
+    ? (revRange as RevenueRange)
+    : "30d";
   const today = comparativeDayWindow(tz, 1, now);
   const week = comparativeDayWindow(tz, 7, now);
   const month = comparativeDayWindow(tz, 30, now);
@@ -105,6 +130,7 @@ async function ActivityTab({ tz }: { tz: string }) {
     pipeline,
     connection,
     econByProp,
+    revByClient,
   ] = await Promise.all([
     getRangeMetrics(today.current),
     getRangeMetrics(today.previous),
@@ -117,6 +143,7 @@ async function ActivityTab({ tz }: { tz: string }) {
     getPipelineSummary(tz),
     getConnectionSummary(),
     getPropertyEconomicsMap(tz, currentMonthKey(tz)),
+    getRevenueByClient(tz, rev),
   ]);
 
   const volumeByDay = new Map(dailyVolume.map((d) => [d.day, d]));
@@ -156,6 +183,37 @@ async function ActivityTab({ tz }: { tz: string }) {
             <LegendDot color="hsl(160 60% 45%)" label="Forms" />
           </div>
           <DailyVolumeChart data={chartData} />
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle>Revenue by client</CardTitle>
+            <CardDescription>
+              Where revenue comes from. Flat rent + per-lead charges; trials show
+              at $0.
+            </CardDescription>
+          </div>
+          <div className="flex shrink-0 gap-1">
+            {REV_RANGES.map((r) => (
+              <Link
+                key={r.key}
+                href={`/?tab=activity&rev=${r.key}`}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium",
+                  r.key === rev
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {r.label}
+              </Link>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <RevenueByClientChart data={revByClient} />
         </CardContent>
       </Card>
 
