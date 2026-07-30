@@ -1,4 +1,5 @@
 import { MonthSelector } from "@/components/reports/month-selector";
+import { NicheRateCard } from "@/components/reports/niche-rate-card";
 import { ReportView } from "@/components/reports/report-view";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -6,7 +7,7 @@ import {
   parseMonthKey,
   recentMonths,
 } from "@/lib/dates";
-import { getMonthlyReport } from "@/lib/queries/metrics";
+import { getMonthlyReport, getNicheRateCard } from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
 
 export const metadata = { title: "Reports — LeadGen" };
@@ -22,7 +23,10 @@ export default async function ReportsPage({
   const now = new Date();
 
   const selected = parseMonthKey(sp.month, tz, now);
-  const report = await getMonthlyReport(tz, selected);
+  const [report, nicheRateCard] = await Promise.all([
+    getMonthlyReport(tz, selected),
+    getNicheRateCard(),
+  ]);
 
   // This month + previous 12 = 13 options; covers "this", "last", "previous 12".
   const monthOptions = recentMonths(tz, 13, now).map((m) => ({
@@ -54,6 +58,10 @@ export default async function ReportsPage({
         monthLabel={selected.label}
         monthKey={selected.key}
       />
+
+      <div className="mt-8">
+        <NicheRateCard rows={nicheRateCard} />
+      </div>
     </div>
   );
 }

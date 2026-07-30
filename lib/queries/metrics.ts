@@ -1,10 +1,12 @@
 import {
+  activeInMonth,
   flatRevenueForMonth,
   monthIndexFromYm,
   type AssignmentLite,
 } from "@/lib/assignments";
 import { db } from "@/lib/db";
 import { clients, leads, properties } from "@/lib/db/schema";
+import { computeLeadEconomics, type LeadEconomics } from "@/lib/lead-economics";
 import {
   currentMonthIndex,
   localDateExpr,
@@ -232,6 +234,8 @@ export interface MonthlyReportRow {
   estimatedValue: string;
   actualRevenue: string;
   gap: string;
+  /** Lead-value economics for this property-month (see lib/lead-economics). */
+  economics: LeadEconomics;
 }
 
 export interface MonthlyReportTotals {
@@ -272,6 +276,8 @@ export async function getMonthlyReport(
         status: properties.status,
         billingType: properties.billingType,
         monthlyRate: properties.monthlyRate,
+        estimatedCallValue: properties.estimatedCallValue,
+        estimatedFormValue: properties.estimatedFormValue,
         clientId: properties.clientId,
         clientName: clients.businessName,
       })
@@ -306,6 +312,22 @@ export async function getMonthlyReport(
     const flat = flatRevenueForMonth(assignments, monthIndex, nowIndex);
     const actualRevenue = sumMoney([flat, perLeadBilled]);
     const gap = sumMoney([estimatedValue, -toMoneyNumber(actualRevenue)]);
+    const calls = agg?.calls ?? 0;
+    const forms = agg?.forms ?? 0;
+    const billable = agg?.billable ?? 0;
+    const economics = computeLeadEconomics({
+      billingType: p.billingType,
+      hasActiveAssignment: assignments.some((a) =>
+        activeInMonth(a, monthIndex, nowIndex),
+      ),
+      billableLeads: billable,
+      flatBookedThisMonth: flat,
+      perLeadBilledThisMonth: perLeadBilled,
+      estimatedCallValue: p.estimatedCallValue,
+      estimatedFormValue: p.estimatedFormValue,
+      calls,
+      forms,
+    });
     return {
       propertyId: p.propertyId,
       name: p.name,
@@ -316,13 +338,14 @@ export async function getMonthlyReport(
       billingType: p.billingType,
       clientName: p.clientName,
       isRented,
-      calls: agg?.calls ?? 0,
-      forms: agg?.forms ?? 0,
+      calls,
+      forms,
       total: agg?.total ?? 0,
-      billable: agg?.billable ?? 0,
+      billable,
       estimatedValue,
       actualRevenue,
       gap,
+      economics,
     };
   });
 
@@ -447,6 +470,127 @@ export async function getPropertyRangeCounts(
           ],
     ),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Lead-value economics (effective $/lead + market $/lead) — see
+// lib/lead-economics. Both use calendar-month figures in the org timezone,
+// consistent with the monthly revenue logic.
+// ---------------------------------------------------------------------------
+
+/** Economics for every property for a calendar month (list pages). */
+export async function getPropertyEconomicsMap(
+  tz: string,
+  month: MonthKey,
+): Promise<Map<string, LeadEconomics>> {
+  const report = await getMonthlyReport(tz, month);
+  return new Map(report.rows.map((r) => [r.propertyId, r.economics]));
+}
+
+/** Economics for a single property for a calendar month (detail page). */
+export async function getPropertyEconomics(
+  tz: string,
+  propertyId: string,
+  month: MonthKey,
+): Promise<{ economics: LeadEconomics; billable: number }> {
+  const range = monthRangeUtc(tz, month.year, month.month);
+  const monthIndex = monthIndexFromYm(month.year, month.month);
+  const nowIndex = currentMonthIndex(tz);
+
+  const [propRows, aggRows, assignmentsMap] = await Promise.all([
+    db
+      .select({
+        billingType: properties.billingType,
+        estimatedCallValue: properties.estimatedCallValue,
+        estimatedFormValue: properties.estimatedFormValue,
+      })
+      .from(properties)
+      .where(eq(properties.id, propertyId))
+      .limit(1),
+    db
+      .select({
+        calls: aggCalls,
+        forms: aggForms,
+        billable: aggBillable,
+        perLeadBilled: aggActualRevenue,
+      })
+      .from(leads)
+      .where(rangeConditions(range, { propertyId })),
+    getAssignmentsMap([propertyId]),
+  ]);
+
+  const prop = propRows[0];
+  const agg = aggRows[0];
+  const assignments: AssignmentLite[] = assignmentsMap.get(propertyId) ?? [];
+  const flat = flatRevenueForMonth(assignments, monthIndex, nowIndex);
+
+  const economics = computeLeadEconomics({
+    billingType: prop?.billingType ?? "flat_monthly",
+    hasActiveAssignment: assignments.some((a) =>
+      activeInMonth(a, monthIndex, nowIndex),
+    ),
+    billableLeads: agg?.billable ?? 0,
+    flatBookedThisMonth: flat,
+    perLeadBilledThisMonth: agg?.perLeadBilled ?? "0",
+    estimatedCallValue: prop?.estimatedCallValue,
+    estimatedFormValue: prop?.estimatedFormValue,
+    calls: agg?.calls ?? 0,
+    forms: agg?.forms ?? 0,
+  });
+
+  return { economics, billable: agg?.billable ?? 0 };
+}
+
+// ---------------------------------------------------------------------------
+// Niche rate card — the going market lead value per industry, aggregated from
+// the estimated values of the properties in each niche.
+// ---------------------------------------------------------------------------
+
+export interface NicheRateCardRow {
+  niche: string;
+  propertyCount: number;
+  callAvg: string;
+  callMin: string;
+  callMax: string;
+  formAvg: string;
+  formMin: string;
+  formMax: string;
+  /** True when properties in the niche disagree on the rate (show a range). */
+  callVaries: boolean;
+  formVaries: boolean;
+}
+
+export async function getNicheRateCard(): Promise<NicheRateCardRow[]> {
+  const rows = await db
+    .select({
+      niche: properties.niche,
+      n: sql<number>`count(*)::int`,
+      callAvg: sql<string>`avg(${properties.estimatedCallValue})::text`,
+      callMin: sql<string>`min(${properties.estimatedCallValue})::text`,
+      callMax: sql<string>`max(${properties.estimatedCallValue})::text`,
+      formAvg: sql<string>`avg(${properties.estimatedFormValue})::text`,
+      formMin: sql<string>`min(${properties.estimatedFormValue})::text`,
+      formMax: sql<string>`max(${properties.estimatedFormValue})::text`,
+    })
+    .from(properties)
+    .where(and(isNull(properties.deletedAt), isNotNull(properties.niche)))
+    .groupBy(properties.niche)
+    .orderBy(properties.niche);
+
+  return rows
+    .filter((r): r is typeof r & { niche: string } => !!r.niche)
+    .map((r) => ({
+      niche: r.niche,
+      propertyCount: r.n,
+      callAvg: toMoneyString(r.callAvg),
+      callMin: toMoneyString(r.callMin),
+      callMax: toMoneyString(r.callMax),
+      formAvg: toMoneyString(r.formAvg),
+      formMin: toMoneyString(r.formMin),
+      formMax: toMoneyString(r.formMax),
+      callVaries: toMoneyNumber(r.callMin) !== toMoneyNumber(r.callMax),
+      formVaries: toMoneyNumber(r.formMin) !== toMoneyNumber(r.formMax),
+    }));
 }
 
 /** Per-client lead totals for a range: clientId -> total leads. */

@@ -39,6 +39,7 @@ import {
 import { unassignClient } from "@/lib/actions/assignments";
 import {
   comparativeCalendarWindow,
+  currentMonthKey,
   daysBetween,
   localDateStr,
   nowLocalInputValue,
@@ -52,7 +53,11 @@ import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
-import { getPropertyMonthlySeries, getRangeMetrics } from "@/lib/queries/metrics";
+import {
+  getPropertyEconomics,
+  getPropertyMonthlySeries,
+  getRangeMetrics,
+} from "@/lib/queries/metrics";
 import { getAppSettings } from "@/lib/settings";
 import { TabLink, TabNav } from "@/components/tab-link";
 
@@ -505,9 +510,11 @@ async function LifetimeTab({
   property: typeof properties.$inferSelect;
   tz: string;
 }) {
-  const [lifetime, monthly] = await Promise.all([
+  const thisMonth = currentMonthKey(tz);
+  const [lifetime, monthly, econ] = await Promise.all([
     getPropertyLifetime(tz, propertyId),
     getPropertyMonthlySeries(tz, propertyId, recentMonths(tz, 12)),
+    getPropertyEconomics(tz, propertyId, thisMonth),
   ]);
   const s = lifetime.summary;
   const monthlyDesc = [...monthly].reverse();
@@ -524,6 +531,26 @@ async function LifetimeTab({
 
   return (
     <div>
+      <div className="mb-2 text-sm font-medium text-muted-foreground">
+        Lead value — {thisMonth.label}
+      </div>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Eff. $/lead"
+          value={econ.economics.effectiveLabel}
+          hint={
+            econ.economics.underpriced
+              ? `Below market — reprice candidate · ${formatNumber(econ.billable)} billable`
+              : `What the client effectively pays · ${formatNumber(econ.billable)} billable`
+          }
+        />
+        <StatCard
+          label="Market $/lead"
+          value={econ.economics.marketLabel}
+          hint="Niche rate card — what a lead is worth"
+        />
+      </div>
+
       <div className="mb-2 text-sm font-medium text-muted-foreground">
         Lifetime — all clients, all leads
       </div>

@@ -29,14 +29,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { comparativeDayWindow, lastNLocalDays, trailingDayRange } from "@/lib/dates";
+import {
+  comparativeDayWindow,
+  currentMonthKey,
+  lastNLocalDays,
+  trailingDayRange,
+} from "@/lib/dates";
 import { formatCurrency, toMoneyNumber } from "@/lib/money";
 import { formatNumber } from "@/lib/format";
 import {
   getDailyVolume,
+  getPropertyEconomicsMap,
   getRangeMetrics,
   getTopProperties,
 } from "@/lib/queries/metrics";
+import { cn } from "@/lib/utils";
 import { getLifetimeRollup, getTrialSummary } from "@/lib/queries/lifetime";
 import { getPipelineSummary } from "@/lib/queries/pipeline";
 import { getConnectionSummary } from "@/lib/queries/connection";
@@ -97,6 +104,7 @@ async function ActivityTab({ tz }: { tz: string }) {
     topProperties,
     pipeline,
     connection,
+    econByProp,
   ] = await Promise.all([
     getRangeMetrics(today.current),
     getRangeMetrics(today.previous),
@@ -108,6 +116,7 @@ async function ActivityTab({ tz }: { tz: string }) {
     getTopProperties(tz, chartRange),
     getPipelineSummary(tz),
     getConnectionSummary(),
+    getPropertyEconomicsMap(tz, currentMonthKey(tz)),
   ]);
 
   const volumeByDay = new Map(dailyVolume.map((d) => [d.day, d]));
@@ -170,12 +179,14 @@ async function ActivityTab({ tz }: { tz: string }) {
                   <TableHead className="text-right">Billable</TableHead>
                   <TableHead className="text-right">Est. value</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
+                  <TableHead className="text-right">Eff. $/lead</TableHead>
+                  <TableHead className="text-right">Market $/lead</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {topProperties.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={12} className="py-8 text-center text-muted-foreground">
                       No leads in the last 30 days.
                     </TableCell>
                   </TableRow>
@@ -196,6 +207,24 @@ async function ActivityTab({ tz }: { tz: string }) {
                       <TableCell className="text-right tabular-nums">{formatNumber(p.billable)}</TableCell>
                       <TableCell className="text-right font-medium tabular-nums">{formatCurrency(p.estimatedValue)}</TableCell>
                       <TableCell className="text-right tabular-nums">{formatCurrency(p.actualRevenue)}</TableCell>
+                      <TableCell
+                        className={cn(
+                          "text-right tabular-nums",
+                          econByProp.get(p.propertyId)?.underpriced
+                            ? "font-semibold text-amber-600 dark:text-amber-400"
+                            : "text-muted-foreground",
+                        )}
+                        title={
+                          econByProp.get(p.propertyId)?.underpriced
+                            ? "Effective cost per lead is well below market — a candidate to move to pay-per-lead. (This calendar month.)"
+                            : "This calendar month"
+                        }
+                      >
+                        {econByProp.get(p.propertyId)?.effectiveLabel ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {econByProp.get(p.propertyId)?.marketLabel ?? "—"}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

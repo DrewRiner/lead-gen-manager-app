@@ -17,13 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { trailingDayRange } from "@/lib/dates";
+import { currentMonthKey, trailingDayRange } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, properties } from "@/lib/db/schema";
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency, toMoneyNumber } from "@/lib/money";
 import { getPropertyLifetimeMap } from "@/lib/queries/assignments";
-import { getPropertyRangeCounts } from "@/lib/queries/metrics";
+import {
+  getPropertyEconomicsMap,
+  getPropertyRangeCounts,
+} from "@/lib/queries/metrics";
 import { isConnected } from "@/lib/connection";
 import { getAppSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
@@ -41,6 +44,8 @@ type SortKey =
   | "name"
   | "leads30"
   | "estValue30"
+  | "effLead"
+  | "marketLead"
   | "revPerMonth";
 
 export default async function PropertiesPage({
@@ -65,7 +70,7 @@ export default async function PropertiesPage({
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
 
-  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap] =
+  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp] =
     await Promise.all([
       db
         .select({ property: properties, clientName: clients.businessName })
@@ -84,11 +89,13 @@ export default async function PropertiesPage({
         .orderBy(properties.niche),
       getPropertyRangeCounts(trailingDayRange(tz, 30)),
       getPropertyLifetimeMap(tz),
+      getPropertyEconomicsMap(tz, currentMonthKey(tz)),
     ]);
 
   const niches = nicheRows.map((n) => n.niche).filter((n): n is string => !!n);
 
-  // Value extractors for sorting.
+  // Value extractors for sorting. Effective $/lead is a current-calendar-month
+  // figure; unrented / no-billable-leads sort to the bottom (-1 sentinel).
   const val = (pid: string, p: (typeof rowsRaw)[number]["property"], key: SortKey) => {
     switch (key) {
       case "name":
@@ -97,12 +104,16 @@ export default async function PropertiesPage({
         return counts.get(pid)?.total ?? 0;
       case "estValue30":
         return toMoneyNumber(counts.get(pid)?.estimatedValue ?? "0");
+      case "effLead":
+        return econByProp.get(pid)?.effectiveValue ?? -1;
+      case "marketLead":
+        return econByProp.get(pid)?.marketBlended ?? 0;
       case "revPerMonth":
         return lifetimeMap.get(pid)?.revenuePerMonthRented ?? 0;
     }
   };
 
-  const sortKey: SortKey = (["name", "leads30", "estValue30", "revPerMonth"] as const).includes(
+  const sortKey: SortKey = (["name", "leads30", "estValue30", "effLead", "marketLead", "revPerMonth"] as const).includes(
     sp.sort as SortKey,
   )
     ? (sp.sort as SortKey)
@@ -170,6 +181,8 @@ export default async function PropertiesPage({
                 <TableHead>Billing</TableHead>
                 <SortHead label="30d leads" k="leads30" href={sortHref("leads30")} active={sortKey === "leads30"} dir={sortDir} numeric />
                 <SortHead label="30d est. value" k="estValue30" href={sortHref("estValue30")} active={sortKey === "estValue30"} dir={sortDir} numeric />
+                <SortHead label="Eff. $/lead" k="effLead" href={sortHref("effLead")} active={sortKey === "effLead"} dir={sortDir} numeric />
+                <SortHead label="Market $/lead" k="marketLead" href={sortHref("marketLead")} active={sortKey === "marketLead"} dir={sortDir} numeric />
                 <SortHead label="Rev/mo rented" k="revPerMonth" href={sortHref("revPerMonth")} active={sortKey === "revPerMonth"} dir={sortDir} numeric />
                 <TableHead className="w-10" />
               </TableRow>
@@ -177,13 +190,14 @@ export default async function PropertiesPage({
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
+                  <TableCell colSpan={13} className="py-10 text-center text-muted-foreground">
                     No properties match these filters.
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map(({ property: p, clientName }) => {
                   const count = counts.get(p.id);
+                  const econ = econByProp.get(p.id);
                   return (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">
@@ -211,6 +225,24 @@ export default async function PropertiesPage({
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatCurrency(count?.estimatedValue ?? "0")}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "text-right tabular-nums",
+                          econ?.underpriced
+                            ? "font-semibold text-amber-600 dark:text-amber-400"
+                            : "text-muted-foreground",
+                        )}
+                        title={
+                          econ?.underpriced
+                            ? "Effective cost per lead is well below market — a candidate to move to pay-per-lead."
+                            : undefined
+                        }
+                      >
+                        {econ?.effectiveLabel ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {econ?.marketLabel ?? "—"}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">
                         {lifetimeMap.get(p.id)?.summary.monthsRented

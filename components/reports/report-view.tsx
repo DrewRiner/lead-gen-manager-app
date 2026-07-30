@@ -36,6 +36,8 @@ type SortKey =
   | "billable"
   | "estimatedValue"
   | "actualRevenue"
+  | "effLead"
+  | "marketLead"
   | "gap";
 
 const NUMERIC: Set<SortKey> = new Set([
@@ -45,6 +47,8 @@ const NUMERIC: Set<SortKey> = new Set([
   "billable",
   "estimatedValue",
   "actualRevenue",
+  "effLead",
+  "marketLead",
   "gap",
 ]);
 
@@ -81,7 +85,10 @@ export function ReportView({
         const bv = numeric(b, sortKey);
         cmp = av - bv;
       } else {
-        cmp = String(a[sortKey] ?? "").localeCompare(String(b[sortKey] ?? ""));
+        // Non-numeric keys are always plain string fields on the row.
+        const av = (a as unknown as Record<string, unknown>)[sortKey] ?? "";
+        const bv = (b as unknown as Record<string, unknown>)[sortKey] ?? "";
+        cmp = String(av).localeCompare(String(bv));
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -125,6 +132,8 @@ export function ReportView({
       { key: "billable", label: "Billable" },
       { key: "estimatedValue", label: "Estimated Value" },
       { key: "actualRevenue", label: "Actual Revenue" },
+      { key: "effectivePerLead", label: "Effective $/Lead" },
+      { key: "marketPerLead", label: "Market $/Lead (blended)" },
       { key: "gap", label: "Gap" },
     ];
     const records = sorted.map((r) => ({
@@ -140,6 +149,8 @@ export function ReportView({
       billable: r.billable,
       estimatedValue: r.estimatedValue,
       actualRevenue: r.actualRevenue,
+      effectivePerLead: r.economics.effectiveValue ?? "",
+      marketPerLead: r.economics.marketBlended.toFixed(2),
       gap: r.gap,
     }));
     const csv = toCsv(headers, records);
@@ -201,6 +212,8 @@ export function ReportView({
                 <SortHead label="Billable" k="billable" numeric {...{ sortKey, sortDir, toggleSort }} />
                 <SortHead label="Est. value" k="estimatedValue" numeric {...{ sortKey, sortDir, toggleSort }} />
                 <SortHead label="Revenue" k="actualRevenue" numeric {...{ sortKey, sortDir, toggleSort }} />
+                <SortHead label="Eff. $/lead" k="effLead" numeric {...{ sortKey, sortDir, toggleSort }} />
+                <SortHead label="Market $/lead" k="marketLead" numeric {...{ sortKey, sortDir, toggleSort }} />
                 <SortHead label="Gap" k="gap" numeric {...{ sortKey, sortDir, toggleSort }} />
               </TableRow>
             </TableHeader>
@@ -208,7 +221,7 @@ export function ReportView({
               {sorted.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={12}
+                    colSpan={14}
                     className="py-10 text-center text-muted-foreground"
                   >
                     No properties to show for {monthLabel}.
@@ -255,6 +268,24 @@ export function ReportView({
                     <TableCell className="text-right tabular-nums">
                       {formatCurrency(r.actualRevenue)}
                     </TableCell>
+                    <TableCell
+                      className={cn(
+                        "text-right tabular-nums",
+                        r.economics.underpriced
+                          ? "font-semibold text-amber-600 dark:text-amber-400"
+                          : "text-muted-foreground",
+                      )}
+                      title={
+                        r.economics.underpriced
+                          ? "Effective cost per lead is well below market — a candidate to move to pay-per-lead."
+                          : undefined
+                      }
+                    >
+                      {r.economics.effectiveLabel}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {r.economics.marketLabel}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
                       {formatCurrency(r.gap)}
                     </TableCell>
@@ -286,6 +317,8 @@ export function ReportView({
                 <TableCell className="text-right font-semibold tabular-nums">
                   {formatCurrency(totals.actualRevenue)}
                 </TableCell>
+                <TableCell className="text-right text-muted-foreground">—</TableCell>
+                <TableCell className="text-right text-muted-foreground">—</TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">
                   {formatCurrency(totals.gap)}
                 </TableCell>
@@ -312,6 +345,10 @@ function numeric(r: MonthlyReportRow, key: SortKey): number {
       return toMoneyNumber(r.estimatedValue);
     case "actualRevenue":
       return toMoneyNumber(r.actualRevenue);
+    case "effLead":
+      return r.economics.effectiveValue ?? -1;
+    case "marketLead":
+      return r.economics.marketBlended;
     case "gap":
       return toMoneyNumber(r.gap);
     default:
