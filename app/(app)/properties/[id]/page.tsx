@@ -1,25 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus, Sparkles, UserMinus, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import { MetricCard } from "@/components/dashboard/metric-card";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
 import { LeadsFilters } from "@/components/leads/leads-filters";
 import { LeadTypeChips } from "@/components/leads/lead-type-chips";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
-import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
-import { ChangeRateDialog } from "@/components/properties/change-rate-dialog";
 import { ConnectionDot } from "@/components/properties/connection-dot";
-import { ConnectionReadyToggle } from "@/components/properties/connection-ready-toggle";
 import { CostPerLead } from "@/components/properties/cost-per-lead";
+import { PropertyActionsMenu } from "@/components/properties/property-actions-menu";
 import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { PropertyDialog } from "@/components/properties/property-dialog";
-import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
-import { StartTrialDialog } from "@/components/properties/start-trial-dialog";
 import { TrialBanner } from "@/components/properties/trial-banner";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +33,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { unassignClient } from "@/lib/actions/assignments";
 import {
   comparativeCalendarWindow,
   daysBetween,
@@ -224,67 +218,18 @@ export default async function PropertyDetailPage({
           property={editValue}
           trigger={<Button variant="outline">Edit property</Button>}
         />
-        {/* Unassigned: offer both Assign client and Start free trial. */}
-        {!isAssigned && !onTrial ? (
-          <>
-            <AssignClientDialog
-              propertyId={p.id}
-              currentClientId={p.clientId}
-              clients={clientList}
-              trigger={
-                <Button variant="outline">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Assign client
-                </Button>
-              }
-            />
-            <StartTrialDialog
-              propertyId={p.id}
-              clients={clientList}
-              defaultStartedOn={today}
-              trigger={
-                <Button variant="outline">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Start free trial
-                </Button>
-              }
-            />
-          </>
-        ) : null}
-        {isAssigned && activeAssignment ? (
-          <>
-            <AssignClientDialog
-              propertyId={p.id}
-              currentClientId={p.clientId}
-              clients={clientList}
-              trigger={
-                <Button variant="outline">
-                  <UserPlus className="mr-2 h-4 w-4" /> Reassign
-                </Button>
-              }
-            />
-            <ChangeRateDialog
-              propertyId={p.id}
-              active={activeAssignment}
-              defaultEffectiveDate={today}
-              clientName={row.clientName}
-              trigger={<Button variant="outline">Change rate</Button>}
-            />
-            <ConfirmDialog
-              title="Unassign client?"
-              description="Ends the active assignment as of today and returns the property to producing. Historical revenue is preserved."
-              confirmLabel="Unassign"
-              action={unassignClient.bind(null, p.id)}
-              trigger={
-                <Button variant="outline">
-                  <UserMinus className="mr-2 h-4 w-4" /> Unassign
-                </Button>
-              }
-            />
-          </>
-        ) : null}
-        <ConnectionReadyToggle propertyId={p.id} ready={p.connectionReady} />
-        <RecalcEstimatedValuesButton propertyId={p.id} leadCount={totalLeadCount} />
+        <PropertyActionsMenu
+          propertyId={p.id}
+          clientId={p.clientId}
+          clientName={row.clientName}
+          clients={clientList}
+          isAssigned={isAssigned}
+          onTrial={onTrial}
+          activeAssignment={activeAssignment}
+          connectionReady={p.connectionReady}
+          leadCount={totalLeadCount}
+          today={today}
+        />
       </PageHeader>
 
       {onTrial && trial ? (

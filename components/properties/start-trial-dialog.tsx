@@ -29,15 +29,21 @@ export function StartTrialDialog({
   clients,
   defaultStartedOn,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   propertyId: string;
   clients: { id: string; businessName: string }[];
   /** "YYYY-MM-DD" (org tz today) */
   defaultStartedOn: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [clientId, setClientId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -63,7 +69,7 @@ export function StartTrialDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Start free trial</DialogTitle>

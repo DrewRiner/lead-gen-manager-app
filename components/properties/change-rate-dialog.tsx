@@ -39,16 +39,22 @@ export function ChangeRateDialog({
   defaultEffectiveDate,
   clientName,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   propertyId: string;
   active: ActiveAssignmentRates;
   /** "YYYY-MM-DD" (org tz today) */
   defaultEffectiveDate: string;
   clientName: string | null;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [billingType, setBillingType] = useState<BillingType>(active.billingType);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -74,7 +80,7 @@ export function ChangeRateDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Change rate</DialogTitle>
