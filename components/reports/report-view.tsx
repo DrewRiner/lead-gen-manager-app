@@ -5,7 +5,7 @@ import { ArrowDown, ArrowUp, Download } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { StatCard } from "@/components/stat-card";
-import { StatusBadge } from "@/components/status-badge";
+import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -245,7 +245,7 @@ export function ReportView({
                       {r.city ?? "—"}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={r.status} />
+                      <PropertyStatusBadge status={r.status} />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {BILLING_LABEL[r.billingType] ?? titleCase(r.billingType)}

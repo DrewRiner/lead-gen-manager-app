@@ -14,13 +14,14 @@ import { Pagination } from "@/components/pagination";
 import { AssignClientDialog } from "@/components/properties/assign-client-dialog";
 import { ChangeRateDialog } from "@/components/properties/change-rate-dialog";
 import { ConnectionDot } from "@/components/properties/connection-dot";
+import { ConnectionReadyToggle } from "@/components/properties/connection-ready-toggle";
 import { CostPerLead } from "@/components/properties/cost-per-lead";
+import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { RecalcEstimatedValuesButton } from "@/components/properties/recalc-button";
 import { StartTrialDialog } from "@/components/properties/start-trial-dialog";
 import { TrialBanner } from "@/components/properties/trial-banner";
 import { StatCard } from "@/components/stat-card";
-import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,6 +52,7 @@ import { clients, leads, properties, propertyAssignments } from "@/lib/db/schema
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency } from "@/lib/money";
 import { formatPhone } from "@/lib/phone";
+import { getRealLeadAt } from "@/lib/queries/connection";
 import { getPropertyLifetime } from "@/lib/queries/assignments";
 import { getLeadTypeCounts, getLeads } from "@/lib/queries/leads";
 import {
@@ -94,8 +96,9 @@ export default async function PropertyDetailPage({
   if (!row) notFound();
   const p = row.property;
 
-  // Always needed: header actions (assign/change-rate/recalc) and lead count.
-  const [clientList, activeAssignmentRow, leadCountRow] = await Promise.all([
+  // Always needed: header actions (assign/change-rate/recalc), lead count, and
+  // the most recent real ingested lead (for the connection dot).
+  const [clientList, activeAssignmentRow, leadCountRow, realLeadAt] = await Promise.all([
     db
       .select({ id: clients.id, businessName: clients.businessName })
       .from(clients)
@@ -125,9 +128,11 @@ export default async function PropertyDetailPage({
       .select({ count: sql<number>`count(*)::int` })
       .from(leads)
       .where(and(eq(leads.propertyId, id), isNull(leads.deletedAt))),
+    getRealLeadAt(id),
   ]);
 
   const totalLeadCount = leadCountRow[0]?.count ?? 0;
+  const connection = { connectionReady: p.connectionReady, lastRealLeadAt: realLeadAt };
   const activeAssignment = activeAssignmentRow[0];
   const onTrial = p.status === "trial" && activeAssignment?.isTrial === true;
   const isAssigned = p.clientId != null && !onTrial;
@@ -208,7 +213,7 @@ export default async function PropertyDetailPage({
       <PageHeader
         title={
           <span className="flex items-center gap-2">
-            <ConnectionDot property={p} className="h-3 w-3" />
+            <ConnectionDot connection={connection} className="h-3 w-3" />
             {p.name}
           </span>
         }
@@ -278,6 +283,7 @@ export default async function PropertyDetailPage({
             />
           </>
         ) : null}
+        <ConnectionReadyToggle propertyId={p.id} ready={p.connectionReady} />
         <RecalcEstimatedValuesButton propertyId={p.id} leadCount={totalLeadCount} />
       </PageHeader>
 
@@ -300,7 +306,7 @@ export default async function PropertyDetailPage({
       <Card className="mb-6">
         <CardContent className="grid grid-cols-2 gap-4 p-6 text-sm md:grid-cols-4">
           <Info label="Status">
-            <StatusBadge status={p.status} />
+            <PropertyStatusBadge status={p.status} />
           </Info>
           <Info label="Niche">
             <span className="capitalize">{p.niche ?? "—"}</span>

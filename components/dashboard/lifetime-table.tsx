@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { StatusBadge } from "@/components/status-badge";
+import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import {
   Table,
   TableBody,
@@ -158,7 +158,7 @@ export function LifetimeTable({ rows }: { rows: LifetimePropertyRow[] }) {
               <TableCell className="capitalize text-muted-foreground">{r.niche ?? "—"}</TableCell>
               <TableCell className="text-muted-foreground">{r.city ?? "—"}</TableCell>
               <TableCell>
-                <StatusBadge status={r.status} />
+                <PropertyStatusBadge status={r.status} />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {BILLING_LABEL[r.billingType] ?? titleCase(r.billingType)}

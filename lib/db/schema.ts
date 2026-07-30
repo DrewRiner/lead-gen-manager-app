@@ -199,6 +199,10 @@ export const properties = pgTable(
     launchedOn: date("launched_on", { mode: "string" }),
     gbpPlaceId: text("gbp_place_id"),
     trackingPhone: text("tracking_phone"),
+    // Admin override for the connection dot: "marked ready to receive leads".
+    // The dot is GREEN if this is true OR a real lead arrived recently; the
+    // ghl_lead_source config field is NOT used for the dot anymore.
+    connectionReady: boolean("connection_ready").notNull().default(false),
     // GoHighLevel ingestion keys. ghl_lead_source is the exact value the GHL
     // form puts in its Lead Source hidden field; ghl_form_id is the form's id.
     // Either resolves an inbound webhook to this property (see lib/ingestion).

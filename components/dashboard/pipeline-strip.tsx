@@ -5,50 +5,28 @@ import { formatCurrency } from "@/lib/money";
 import type { PipelineSummary } from "@/lib/queries/pipeline";
 import { cn } from "@/lib/utils";
 
+// Three states only: Rented (monthly revenue), Trial, Not rented (lead volume
+// + total target rent).
 export function PipelineStrip({ summary }: { summary: PipelineSummary }) {
-  const { counts } = summary;
-
   return (
-    <div className="mb-6 space-y-2">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Segment
-          href="/properties?status=building"
-          label="Building"
-          count={counts.building}
-        />
-        <Segment
-          href="/properties?status=optimizing"
-          label="Optimizing"
-          count={counts.optimizing}
-        />
-        <Segment
-          href="/properties?status=producing"
-          label="Producing"
-          count={counts.producing}
-          emphasized
-          lines={[
-            `${formatNumber(summary.producingLeads30d)} leads · 30d`,
-            `${formatCurrency(summary.producingTargetRent)} target rent`,
-          ]}
-        />
-        <Segment
-          href="/properties?status=trial"
-          label="Trial"
-          count={counts.trial}
-          lines={[`${formatCurrency(summary.trialEstimatedDelivered)} est. delivered`]}
-          warnLine={
-            summary.expiredTrials > 0
-              ? `${formatNumber(summary.expiredTrials)} expired`
-              : undefined
-          }
-        />
-        <Segment
-          href="/properties?status=rented"
-          label="Rented"
-          count={counts.rented}
-          lines={[`${formatCurrency(summary.rentedMonthlyRevenue)} / mo now`]}
-        />
-      </div>
+    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <Segment
+        href="/properties?rental=rented"
+        label="Rented"
+        count={summary.rented.count}
+        emphasized
+        lines={[`${formatCurrency(summary.rented.monthlyRevenue)} / mo now`]}
+      />
+      <Segment href="/properties?rental=trial" label="Trial" count={summary.trial.count} />
+      <Segment
+        href="/properties?rental=not_rented"
+        label="Not rented"
+        count={summary.notRented.count}
+        lines={[
+          `${formatNumber(summary.notRented.leads30d)} leads · 30d`,
+          `${formatCurrency(summary.notRented.targetRent)} target rent`,
+        ]}
+      />
     </div>
   );
 }
@@ -58,14 +36,12 @@ function Segment({
   label,
   count,
   lines,
-  warnLine,
   emphasized = false,
 }: {
   href: string;
   label: string;
   count: number;
   lines?: string[];
-  warnLine?: string;
   emphasized?: boolean;
 }) {
   return (
@@ -100,11 +76,6 @@ function Segment({
           {lines.map((l) => (
             <div key={l}>{l}</div>
           ))}
-        </div>
-      ) : null}
-      {warnLine ? (
-        <div className="mt-0.5 text-xs font-semibold text-red-600 dark:text-red-400">
-          {warnLine}
         </div>
       ) : null}
     </Link>

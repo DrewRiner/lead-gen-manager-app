@@ -1,0 +1,1 @@
+ALTER TABLE "properties" ADD COLUMN "connection_ready" boolean DEFAULT false NOT NULL;

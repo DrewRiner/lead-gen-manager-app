@@ -127,6 +127,13 @@
       "when": 1785377022755,
       "tag": "0017_calm_vanisher",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785380908851,
+      "tag": "0018_gifted_silvermane",
+      "breakpoints": true
     }
   ]
 }

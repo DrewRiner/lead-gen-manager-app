@@ -6,6 +6,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { ClientDialog } from "@/components/clients/client-dialog";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
+import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -228,7 +229,7 @@ export default async function ClientDetailPage({
                           {p.niche ?? "—"}
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={p.status} />
+                          <PropertyStatusBadge status={p.status} />
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}

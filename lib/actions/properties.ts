@@ -214,6 +214,23 @@ export async function updateProperty(
   return { ok: true, message: "Property updated." };
 }
 
+/** Admin toggle: mark a property ready to receive leads (connection dot). */
+export async function setConnectionReady(
+  id: string,
+  ready: boolean,
+): Promise<ActionResult> {
+  if (!z.string().uuid().safeParse(id).success) {
+    return { ok: false, error: "Invalid property id." };
+  }
+  await db
+    .update(properties)
+    .set({ connectionReady: ready, updatedAt: new Date() })
+    .where(and(eq(properties.id, id), isNull(properties.deletedAt)));
+  revalidatePath("/properties");
+  revalidatePath(`/properties/${id}`);
+  return { ok: true, message: ready ? "Marked ready." : "Unmarked." };
+}
+
 export async function softDeleteProperty(id: string): Promise<ActionResult> {
   if (!z.string().uuid().safeParse(id).success) {
     return { ok: false, error: "Invalid property id." };

@@ -7,7 +7,7 @@ import { PropertiesFilters } from "@/components/properties/properties-filters";
 import { PropertyDialog } from "@/components/properties/property-dialog";
 import { ConnectionDot } from "@/components/properties/connection-dot";
 import { PropertyRowActions } from "@/components/properties/property-row-actions";
-import { StatusBadge } from "@/components/status-badge";
+import { PropertyStatusBadge } from "@/components/properties/property-status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -27,7 +27,8 @@ import {
   getPropertyEconomicsMap,
   getPropertyRangeCounts,
 } from "@/lib/queries/metrics";
-import { isConnected } from "@/lib/connection";
+import { getRealLeadMap } from "@/lib/queries/connection";
+import { connectionStatus } from "@/lib/connection";
 import { getAppSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 
@@ -66,11 +67,17 @@ export default async function PropertiesPage({
     );
   }
   if (sp.status) conds.push(eq(properties.status, sp.status as never));
+  // Simplified rental filter (matches the dashboard pipeline): rented / trial /
+  // not_rented (everything else). Display-only mapping of the status enum.
+  if (sp.rental === "rented") conds.push(eq(properties.status, "rented" as never));
+  else if (sp.rental === "trial") conds.push(eq(properties.status, "trial" as never));
+  else if (sp.rental === "not_rented")
+    conds.push(sql`${properties.status} not in ('rented','trial')`);
   if (sp.niche) conds.push(eq(properties.niche, sp.niche));
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
 
-  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp] =
+  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp, realLeadMap] =
     await Promise.all([
       db
         .select({ property: properties, clientName: clients.businessName })
@@ -90,7 +97,14 @@ export default async function PropertiesPage({
       getPropertyRangeCounts(trailingDayRange(tz, 30)),
       getPropertyLifetimeMap(tz),
       getPropertyEconomicsMap(tz, currentMonthKey(tz)),
+      getRealLeadMap(),
     ]);
+
+  // Connection input per property: admin flag + most recent real ingested lead.
+  const connFor = (p: (typeof rowsRaw)[number]["property"]) => ({
+    connectionReady: p.connectionReady,
+    lastRealLeadAt: realLeadMap.get(p.id) ?? null,
+  });
 
   const niches = nicheRows.map((n) => n.niche).filter((n): n is string => !!n);
 
@@ -121,10 +135,10 @@ export default async function PropertiesPage({
   const sortDir: "asc" | "desc" = sp.dir === "asc" ? "asc" : "desc";
 
   let rows = [...rowsRaw];
-  // Connection filter (derived; no SQL column): can a form route here now?
+  // Connection filter (derived): is the property actually receiving/ready?
   if (sp.connected === "connected" || sp.connected === "not_connected") {
     const want = sp.connected === "connected";
-    rows = rows.filter((r) => isConnected(r.property) === want);
+    rows = rows.filter((r) => connectionStatus(connFor(r.property)).connected === want);
   }
   rows.sort((a, b) => {
     const av = val(a.property.id, a.property, sortKey);
@@ -202,7 +216,7 @@ export default async function PropertiesPage({
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">
                         <span className="flex items-center gap-2">
-                          <ConnectionDot property={p} />
+                          <ConnectionDot connection={connFor(p)} />
                           <Link href={`/properties/${p.id}`} className="hover:underline">
                             {p.name}
                           </Link>
@@ -214,7 +228,7 @@ export default async function PropertiesPage({
                         {[p.city, p.state].filter(Boolean).join(", ") || "—"}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={p.status} />
+                        <PropertyStatusBadge status={p.status} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">{clientName ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">
