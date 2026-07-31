@@ -1,13 +1,12 @@
 import Link from "next/link";
 
+import type { DailyVolumePoint } from "@/components/charts/daily-volume-chart";
+import type { LifetimeTrendPointView } from "@/components/charts/lifetime-trend-chart";
 import {
   DailyVolumeChart,
-  type DailyVolumePoint,
-} from "@/components/charts/daily-volume-chart";
-import {
   LifetimeTrendChart,
-  type LifetimeTrendPointView,
-} from "@/components/charts/lifetime-trend-chart";
+  RevenueByClientChart,
+} from "@/components/charts/lazy";
 import { LifetimeTable } from "@/components/dashboard/lifetime-table";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { PipelineStrip } from "@/components/dashboard/pipeline-strip";
@@ -45,7 +44,6 @@ import {
 } from "@/lib/queries/metrics";
 import { cn } from "@/lib/utils";
 import { getLifetimeRollup, getTrialSummary } from "@/lib/queries/lifetime";
-import { RevenueByClientChart } from "@/components/charts/revenue-by-client-chart";
 import { getPipelineSummary } from "@/lib/queries/pipeline";
 import { getConnectionSummary } from "@/lib/queries/connection";
 import {
