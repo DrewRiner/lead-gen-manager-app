@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   Building2,
+  GraduationCap,
   LayoutDashboard,
   PhoneCall,
   Settings,
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/leads", label: "Leads", icon: PhoneCall },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/guides", label: "Guides", icon: BookOpen },
+  { href: "/training", label: "Training", icon: GraduationCap },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

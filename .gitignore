@@ -41,3 +41,7 @@ scripts/.demo-snapshot.json
 
 # local guide reference material (not app content — guides use Supabase Storage)
 guide-content/
+
+# local training video source files (.mov). Large; the app embeds the YouTube
+# uploads by id (lib/video-guides.ts) — the sources don't belong in the repo.
+Video Guides/
