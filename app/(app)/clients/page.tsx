@@ -67,7 +67,8 @@ export default async function ClientsPage() {
         />
       </PageHeader>
 
-      <div className="rounded-lg border">
+      {/* Desktop: full table. Hidden below lg in favour of the card list. */}
+      <div className="hidden rounded-lg border lg:block">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -140,6 +141,65 @@ export default async function ClientsPage() {
             </TableBody>
           </Table>
         </div>
+      </div>
+
+      {/* Mobile/tablet: card list. Email moves behind the tap into the detail. */}
+      <div className="space-y-3 lg:hidden">
+        {rows.length === 0 ? (
+          <div className="rounded-lg border py-10 text-center text-muted-foreground">
+            No clients yet.
+          </div>
+        ) : (
+          rows.map((c) => {
+            const sub = [c.contactName, formatPhone(c.phone)]
+              .filter((v) => v && v !== "—")
+              .join(" · ");
+            return (
+              <div key={c.id} className="rounded-xl border p-4">
+                <div className="flex items-start gap-2.5">
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/clients/${c.id}`}
+                      className="block truncate py-0.5 font-medium leading-snug hover:underline"
+                    >
+                      {c.businessName}
+                    </Link>
+                    <div className="truncate text-sm text-muted-foreground">
+                      {sub || "—"}
+                    </div>
+                  </div>
+                  <StatusBadge status={c.status} className="mt-0.5 shrink-0" />
+                  <ClientRowActions
+                    client={{
+                      id: c.id,
+                      businessName: c.businessName,
+                      contactName: c.contactName,
+                      email: c.email,
+                      phone: c.phone,
+                      status: c.status,
+                      notes: c.notes,
+                    }}
+                    triggerClassName="h-11 w-11"
+                  />
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-md bg-muted/50 px-2.5 py-1.5">
+                    <div className="text-[11px] text-muted-foreground">Properties</div>
+                    <div className="text-sm font-medium tabular-nums">
+                      {formatNumber(propCount.get(c.id) ?? 0)}
+                    </div>
+                  </div>
+                  <div className="rounded-md bg-muted/50 px-2.5 py-1.5">
+                    <div className="text-[11px] text-muted-foreground">30d leads</div>
+                    <div className="text-sm font-medium tabular-nums">
+                      {formatNumber(leadCounts.get(c.id) ?? 0)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

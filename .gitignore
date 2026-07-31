@@ -41,3 +41,6 @@ scripts/.demo-snapshot.json
 
 # local guide reference material (not app content — guides use Supabase Storage)
 guide-content/
+
+# Local video sources (uploaded to YouTube; do not commit ~164MB of .mov)
+Video Guides/

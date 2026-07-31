@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 
 import { AppNav } from "@/components/app-nav";
 import { DeveloperCredit } from "@/components/developer-credit";
+import { MobileNav } from "@/components/mobile-nav";
 import { Button } from "@/components/ui/button";
 import { signOutAction } from "@/lib/actions/auth";
 import { getProfile, requireUser } from "@/lib/auth";
@@ -55,14 +56,10 @@ export default async function AppLayout({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile top bar */}
-        <header className="flex h-14 items-center justify-between border-b px-4 md:hidden">
+        {/* Mobile top bar: hamburger opens the nav drawer. */}
+        <header className="flex h-14 items-center gap-1 border-b px-2 md:hidden">
+          <MobileNav email={profile?.email} role={profile?.role} />
           <span className="text-sm font-semibold">Blue Carrot Solutions</span>
-          <form action={signOutAction}>
-            <Button type="submit" variant="ghost" size="sm">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </form>
         </header>
         <main className="flex-1 overflow-x-hidden p-4 md:p-8">{children}</main>
         <footer className="border-t px-4 py-4 md:px-8">

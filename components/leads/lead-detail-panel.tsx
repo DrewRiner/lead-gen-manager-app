@@ -198,7 +198,7 @@ export function LeadDetailPanel({
           Details
         </button>
         {showDetails ? (
-          <div className="mt-2 grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3">
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-3 sm:gap-x-8 md:grid-cols-3">
             <Field
               label="Source system"
               value={
@@ -258,7 +258,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </h4>
-      <div className="grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3">{children}</div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:gap-x-8 md:grid-cols-3">{children}</div>
     </div>
   );
 }
