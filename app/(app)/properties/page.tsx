@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, Building2, Plus } from "lucide-react";
 import { and, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { PropertiesFilters } from "@/components/properties/properties-filters";
 import { PropertyDialog } from "@/components/properties/property-dialog";
@@ -210,6 +211,14 @@ export default async function PropertiesPage({
         <PropertiesFilters niches={niches} clients={clientList} />
       </div>
 
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={Building2}
+          title="No properties match these filters"
+          description="Adjust or clear the filters above, or add a new property to get started."
+        />
+      ) : (
+      <>
       {/* Desktop: full table. Hidden below lg in favour of the card list. */}
       <div className="hidden rounded-lg border lg:block">
         <div className="overflow-x-auto">
@@ -354,6 +363,8 @@ export default async function PropertiesPage({
           })
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

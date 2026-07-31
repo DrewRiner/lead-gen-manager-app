@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { asc, eq, isNull, sql } from "drizzle-orm";
 
 import { ClientDialog } from "@/components/clients/client-dialog";
 import { ClientRowActions } from "@/components/clients/client-row-actions";
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,14 @@ export default async function ClientsPage() {
         />
       </PageHeader>
 
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No clients yet"
+          description="Clients are the business owners renting your leads. Add one to start assigning properties."
+        />
+      ) : (
+      <>
       {/* Desktop: full table. Hidden below lg in favour of the card list. */}
       <div className="hidden rounded-lg border lg:block">
         <div className="overflow-x-auto">
@@ -201,6 +210,8 @@ export default async function ClientsPage() {
           })
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
