@@ -22,7 +22,7 @@ const currency = (v: number) =>
 
 export function LifetimeTrendChart({ data }: { data: LifetimeTrendPointView[] }) {
   return (
-    <div className="h-80 w-full">
+    <div className="h-64 w-full sm:h-80">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />

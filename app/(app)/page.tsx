@@ -187,7 +187,7 @@ async function ActivityTab({
       </Card>
 
       <Card className="mt-6">
-        <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+        <CardHeader className="flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <CardTitle>Revenue by client</CardTitle>
             <CardDescription>
@@ -223,7 +223,8 @@ async function ActivityTab({
           <CardDescription>Last 30 days, ranked by estimated value.</CardDescription>
         </CardHeader>
         <CardContent className="px-0">
-          <div className="overflow-x-auto">
+          {/* Desktop: full table. Cards below lg. */}
+          <div className="hidden overflow-x-auto lg:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -288,6 +289,45 @@ async function ActivityTab({
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile/tablet: card list. Niche, city, calls/forms, and the
+              $/lead columns move behind the tap into the property. */}
+          <div className="space-y-3 px-4 lg:hidden">
+            {topProperties.length === 0 ? (
+              <div className="rounded-lg border py-8 text-center text-muted-foreground">
+                No leads in the last 30 days.
+              </div>
+            ) : (
+              topProperties.map((p) => {
+                const econ = econByProp.get(p.propertyId);
+                return (
+                  <div key={p.propertyId} className="rounded-xl border p-4">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/properties/${p.propertyId}`}
+                        className="block truncate py-0.5 font-medium leading-snug hover:underline"
+                      >
+                        {p.name}
+                      </Link>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {p.clientName ?? "—"}
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <DashStat label="Leads" value={formatNumber(p.total)} />
+                      <DashStat label="Est. value" value={formatCurrency(p.estimatedValue)} />
+                      <DashStat label="Revenue" value={formatCurrency(p.actualRevenue)} />
+                    </div>
+                    {econ?.underpriced ? (
+                      <div className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                        Eff. {econ.effectiveLabel}/lead — below market
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
           </div>
         </CardContent>
       </Card>
@@ -386,7 +426,7 @@ async function LifetimeTab({ tz }: { tz: string }) {
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex-col gap-2 space-y-0 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Per-property, all-time</CardTitle>
             <CardDescription>
@@ -401,6 +441,15 @@ async function LifetimeTab({ tz }: { tz: string }) {
           <LifetimeTable rows={roll.properties} />
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function DashStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md bg-muted/50 px-2.5 py-1.5">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="truncate text-sm font-medium tabular-nums">{value}</div>
     </div>
   );
 }
