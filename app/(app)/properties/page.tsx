@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowDown, ArrowUp, Building2, Plus } from "lucide-react";
 import { and, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
+import { BillableOfTotal } from "@/components/billable-of-total";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { PropertiesFilters } from "@/components/properties/properties-filters";
@@ -21,7 +22,7 @@ import {
 import { currentMonthKey, trailingDayRange } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, properties } from "@/lib/db/schema";
-import { formatNumber, titleCase } from "@/lib/format";
+import { titleCase } from "@/lib/format";
 import { formatCurrency, toMoneyNumber } from "@/lib/money";
 import {
   getPropertyLifetimeMap,
@@ -280,8 +281,11 @@ export default async function PropertiesPage({
                       <TableCell className="text-muted-foreground">
                         {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatNumber(count?.total ?? 0)}
+                      <TableCell className="text-right">
+                        <BillableOfTotal
+                          billable={count?.billable ?? 0}
+                          total={count?.total ?? 0}
+                        />
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatCurrency(count?.estimatedValue ?? "0")}
@@ -365,7 +369,15 @@ export default async function PropertiesPage({
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   <MiniStat label="Client" value={clientName ?? "—"} />
-                  <MiniStat label="30d leads" value={formatNumber(count?.total ?? 0)} numeric />
+                  <MiniStat
+                    label="30d leads"
+                    value={
+                      <BillableOfTotal
+                        billable={count?.billable ?? 0}
+                        total={count?.total ?? 0}
+                      />
+                    }
+                  />
                   <MiniStat label="Rev/mo" value={revPerMo} numeric />
                 </div>
               </div>
@@ -399,7 +411,7 @@ function MiniStat({
   numeric = false,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   numeric?: boolean;
 }) {
   return (

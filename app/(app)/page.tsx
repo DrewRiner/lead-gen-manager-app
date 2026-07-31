@@ -10,6 +10,7 @@ import {
 import { LifetimeTable } from "@/components/dashboard/lifetime-table";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { PipelineStrip } from "@/components/dashboard/pipeline-strip";
+import { BillableOfTotal } from "@/components/billable-of-total";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { TabLink, TabNav } from "@/components/tab-link";
@@ -313,7 +314,10 @@ async function ActivityTab({
                       </div>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2">
-                      <DashStat label="Leads" value={formatNumber(p.total)} />
+                      <DashStat
+                        label="Leads"
+                        value={<BillableOfTotal billable={p.billable} total={p.total} />}
+                      />
                       <DashStat label="Est. value" value={formatCurrency(p.estimatedValue)} />
                       <DashStat label="Revenue" value={formatCurrency(p.actualRevenue)} />
                     </div>
@@ -443,7 +447,7 @@ async function LifetimeTab({ tz }: { tz: string }) {
   );
 }
 
-function DashStat({ label, value }: { label: string; value: string }) {
+function DashStat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0 rounded-md bg-muted/50 px-2.5 py-1.5">
       <div className="text-[11px] text-muted-foreground">{label}</div>

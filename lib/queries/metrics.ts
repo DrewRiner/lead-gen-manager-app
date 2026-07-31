@@ -460,11 +460,12 @@ export async function getPropertyMonthlySeries(
 
 export async function getPropertyRangeCounts(
   range: DateRange,
-): Promise<Map<string, { total: number; estimatedValue: string }>> {
+): Promise<Map<string, { total: number; billable: number; estimatedValue: string }>> {
   const rows = await db
     .select({
       propertyId: leads.propertyId,
       total: aggTotal,
+      billable: aggBillable,
       estimatedValue: aggEstimatedValue,
     })
     .from(leads)
@@ -478,7 +479,11 @@ export async function getPropertyRangeCounts(
         : [
             [
               r.propertyId,
-              { total: r.total, estimatedValue: toMoneyString(r.estimatedValue) },
+              {
+                total: r.total,
+                billable: r.billable,
+                estimatedValue: toMoneyString(r.estimatedValue),
+              },
             ] as const,
           ],
     ),
