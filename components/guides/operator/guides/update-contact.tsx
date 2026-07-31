@@ -16,6 +16,7 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   StatusPill,
   Step,
   StepVisual,
@@ -23,7 +24,7 @@ import {
   Success,
   ToggleSwitch,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "update-a-clients-phone-or-email";
@@ -76,6 +77,7 @@ export function UpdateContactDesigned({ initialDone }: { initialDone: string[] }
         eyebrow="Internal runbook / Client records"
         title="Update a client's phone number or email"
         pills={["5 steps", "2 systems"]}
+        videoId={meta.videoId}
       />
 
       <Section
@@ -87,12 +89,11 @@ export function UpdateContactDesigned({ initialDone }: { initialDone: string[] }
         }
         right={
           <Panel header="Where the number/email is used">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              The same phone/email lives in the dashboard client record, the Engine
-              Evolve contact, and <strong>every notification action in every one of
-              their properties&rsquo; workflows</strong>. Miss one and the client
-              silently stops hearing about leads.
-            </div>
+            The same phone/email lives in the dashboard client record, the Engine
+            Evolve contact, and{" "}
+            <strong>every notification action in every one of their properties&rsquo;
+            workflows</strong>. Miss one and the client silently stops hearing about
+            leads.
           </Panel>
         }
       />
@@ -114,7 +115,7 @@ export function UpdateContactDesigned({ initialDone }: { initialDone: string[] }
         <Body>{STEPS[0].body}</Body>
         <StepVisual>
           <Panel header="Dashboard — Clients / Marios Bros Fencing" deep>
-            <div className="og-panel-body" style={{ display: "grid", gap: 12 }}>
+            <div className="grid gap-3">
               <FieldMatters label="Phone">(912) 555-0177</FieldMatters>
               <FieldMatters label="Email">floydjamie18@gmail.com</FieldMatters>
             </div>
@@ -163,10 +164,10 @@ export function UpdateContactDesigned({ initialDone }: { initialDone: string[] }
       <Step n={4} stepKey="step-4" badge={BADGES[3]} title={STEPS[3].title}>
         <Body>{STEPS[3].body}</Body>
         <StepVisual>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div className="flex flex-col items-center">
             <Node
               icon={<Bell size={12} />}
-              iconBg="#8aa542"
+              iconBg="#65a30d"
               label="Client Email Notification"
               edit
               value={<>TO CUSTOM EMAIL → new email</>}
@@ -174,7 +175,7 @@ export function UpdateContactDesigned({ initialDone }: { initialDone: string[] }
             <NodeConnector />
             <Node
               icon={<MessageSquare size={12} />}
-              iconBg="#8aa542"
+              iconBg="#65a30d"
               label="Client SMS Notification"
               edit
               value={<>TO CUSTOM PHONE → new phone</>}
@@ -189,13 +190,13 @@ export function UpdateContactDesigned({ initialDone }: { initialDone: string[] }
       <Step n={5} stepKey="step-5" badge={BADGES[4]} title={STEPS[4].title} last>
         <Body>{STEPS[4].body}</Body>
         <StepVisual>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontFamily: "var(--og-mono)", fontSize: 10.5, fontWeight: 600 }}>Draft</span>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <span className="font-medium">Draft</span>
             <ToggleSwitch />
-            <span style={{ fontFamily: "var(--og-mono)", fontSize: 10.5, color: "#8c877d" }}>Publish</span>
-            <span style={{ fontFamily: "var(--og-mono)", fontSize: 18, color: "#c9c4b8" }}>→</span>
+            <span>Publish</span>
+            <span aria-hidden>→</span>
             <StatusPill tone="ok">Published</StatusPill>
-            <span style={{ fontSize: 13, color: "#4a6b5c" }}>Repeat for every property they rent</span>
+            <span>Repeat for every property they rent</span>
           </div>
         </StepVisual>
       </Step>
@@ -209,11 +210,11 @@ export function UpdateContactDesigned({ initialDone }: { initialDone: string[] }
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>Test lead reaches the new contact.</Success>
             <Success>Nothing arrives at the old number/inbox.</Success>
             <Closing>{CLOSING}</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

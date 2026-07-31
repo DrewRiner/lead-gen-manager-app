@@ -13,7 +13,7 @@ import {
 } from "react";
 
 import { toggleGuideStep } from "@/lib/actions/guide-progress";
-import { OPERATOR_GUIDES } from "@/lib/guides/operator-guides";
+import { VISIBLE_OPERATOR_GUIDES } from "@/lib/guides/operator-guides";
 import { cn } from "@/lib/utils";
 
 // ===========================================================================
@@ -72,7 +72,7 @@ export function GuideProgress({
 function GuideNav({ current }: { current: string }) {
   return (
     <nav className="og-nav" aria-label="Guides">
-      {OPERATOR_GUIDES.map((g) =>
+      {VISIBLE_OPERATOR_GUIDES.map((g) =>
         g.slug === current ? (
           <span key={g.slug} className="og-pill og-pill--active" aria-current="page">
             {g.navLabel}

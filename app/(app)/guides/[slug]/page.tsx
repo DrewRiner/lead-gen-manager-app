@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil } from "lucide-react";
 import { and, eq } from "drizzle-orm";
 
 import { GuideBlockView } from "@/components/guides/guide-block-view";
+import { GuideShell } from "@/components/guides/app/ui";
 import { GuideTabs } from "@/components/guides/operator/guide-tabs";
 import { getDesignedGuide } from "@/components/guides/operator/registry";
 import { Button } from "@/components/ui/button";
@@ -39,8 +40,12 @@ export default async function GuidePage({
       : [];
     const initialDone = doneRows.map((r) => r.stepKey);
     const { Designed, Plain } = designed;
+    // Migrated to the app-styled shell; the rest still use the (retiring)
+    // warm-paper GuideTabs until they're migrated too.
+    const MIGRATED = new Set(["update-a-clients-phone-or-email"]);
+    const Shell = MIGRATED.has(slug) ? GuideShell : GuideTabs;
     return (
-      <GuideTabs
+      <Shell
         guide={<Designed initialDone={initialDone} />}
         plain={<Plain />}
       />

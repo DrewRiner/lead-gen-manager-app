@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { VISIBLE_OPERATOR_GUIDES } from "@/lib/guides/operator-guides";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -34,20 +35,48 @@ export function AppNav() {
           ? pathname === item.href
           : pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
+        const onGuides = item.href === "/guides" && pathname.startsWith("/guides");
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {item.label}
-          </Link>
+          <div key={item.href}>
+            <Link
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+
+            {/* Guides expands into its list while you're in the section, so you
+                always see where you are and can jump between runbooks. */}
+            {onGuides ? (
+              <div className="mt-1 space-y-0.5 border-l pl-3">
+                {VISIBLE_OPERATOR_GUIDES.map((g) => {
+                  const href = `/guides/${g.slug}`;
+                  const current = pathname === href;
+                  return (
+                    <Link
+                      key={g.slug}
+                      href={href}
+                      aria-current={current ? "page" : undefined}
+                      className={cn(
+                        "block rounded-md px-3 py-1.5 text-sm transition-colors",
+                        current
+                          ? "bg-muted font-medium text-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {g.navLabel}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
         );
       })}
     </nav>
