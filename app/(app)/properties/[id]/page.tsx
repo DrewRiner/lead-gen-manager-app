@@ -543,7 +543,7 @@ async function LifetimeTab({
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto lg:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -595,6 +595,47 @@ async function LifetimeTab({
               </TableBody>
             </Table>
           </div>
+
+          {/* Mobile/tablet: card list. */}
+          <div className="space-y-3 px-4 lg:hidden">
+            {lifetime.clientHistory.length === 0 ? (
+              <div className="rounded-lg border py-8 text-center text-muted-foreground">
+                Never rented.
+              </div>
+            ) : (
+              lifetime.clientHistory.map((c) => (
+                <div key={c.clientId} className="rounded-xl border p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link
+                      href={`/clients/${c.clientId}`}
+                      className="min-w-0 truncate py-0.5 font-medium leading-snug hover:underline"
+                    >
+                      {c.clientName ?? "—"}
+                    </Link>
+                    <div className="flex shrink-0 gap-1">
+                      {c.isActive ? (
+                        <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                          active
+                        </span>
+                      ) : null}
+                      {c.hasTrial ? (
+                        <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-400">
+                          Trial
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {c.firstStarted} → {c.lastEnded ?? "active"} · {c.tenureMonths} mo
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <CardStat label="Attributed revenue" value={formatCurrency(c.attributedRevenue)} />
+                    <CardStat label="% of lifetime" value={`${Math.round(c.pctOfLifetimeRevenue)}%`} />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -607,7 +648,7 @@ async function LifetimeTab({
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto lg:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -637,8 +678,39 @@ async function LifetimeTab({
               </TableBody>
             </Table>
           </div>
+
+          {/* Mobile/tablet: card list. */}
+          <div className="space-y-3 px-4 lg:hidden">
+            {monthlyDesc.map((m) => (
+              <div key={m.month.key} className="rounded-xl border p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">{m.month.label}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {formatNumber(m.total)} leads
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <CardStat label="Calls" value={formatNumber(m.calls)} />
+                  <CardStat label="Forms" value={formatNumber(m.forms)} />
+                  <CardStat label="Billable" value={formatNumber(m.billable)} />
+                  <CardStat label="Est. value" value={formatCurrency(m.estimatedValue)} />
+                  <CardStat label="Revenue" value={formatCurrency(m.actualRevenue)} />
+                  <CardStat label="Gap" value={formatCurrency(m.gap)} />
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function CardStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md bg-muted/50 px-2.5 py-1.5">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="truncate text-sm font-medium tabular-nums">{value}</div>
     </div>
   );
 }
