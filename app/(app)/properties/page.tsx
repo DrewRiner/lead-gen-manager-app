@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Building2, Plus } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Building2, Plus } from "lucide-react";
 import { and, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
 import { EmptyState } from "@/components/empty-state";
@@ -23,7 +23,10 @@ import { db } from "@/lib/db";
 import { clients, properties } from "@/lib/db/schema";
 import { formatNumber, titleCase } from "@/lib/format";
 import { formatCurrency, toMoneyNumber } from "@/lib/money";
-import { getPropertyLifetimeMap } from "@/lib/queries/assignments";
+import {
+  getPropertyLifetimeMap,
+  getZeroRateRentedPropertyIds,
+} from "@/lib/queries/assignments";
 import {
   getPropertyEconomicsMap,
   getPropertyRangeCounts,
@@ -78,7 +81,7 @@ export default async function PropertiesPage({
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
 
-  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp, realLeadMap] =
+  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp, realLeadMap, zeroRateSet] =
     await Promise.all([
       db
         .select({ property: properties, clientName: clients.businessName })
@@ -99,6 +102,7 @@ export default async function PropertiesPage({
       getPropertyLifetimeMap(tz),
       getPropertyEconomicsMap(tz, currentMonthKey(tz)),
       getRealLeadMap(),
+      getZeroRateRentedPropertyIds(),
     ]);
 
   // Connection input per property: admin flag + most recent real ingested lead.
@@ -267,7 +271,10 @@ export default async function PropertiesPage({
                         {[p.city, p.state].filter(Boolean).join(", ") || "—"}
                       </TableCell>
                       <TableCell>
-                        <PropertyStatusBadge status={p.status} />
+                        <span className="flex items-center gap-1.5">
+                          <PropertyStatusBadge status={p.status} />
+                          {zeroRateSet.has(p.id) ? <ZeroRateFlag /> : null}
+                        </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{clientName ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">
@@ -346,7 +353,10 @@ export default async function PropertiesPage({
                       {p.domain ?? "—"}
                     </div>
                   </div>
-                  <PropertyStatusBadge status={p.status} className="mt-0.5 shrink-0" />
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <PropertyStatusBadge status={p.status} className="mt-0.5" />
+                    {zeroRateSet.has(p.id) ? <ZeroRateFlag /> : null}
+                  </div>
                   <PropertyRowActions
                     property={actionsProperty(p)}
                     clients={clientList}
@@ -366,6 +376,19 @@ export default async function PropertiesPage({
       </>
       )}
     </div>
+  );
+}
+
+/** Amber flag: rented but the active assignment bills $0 (no revenue). */
+function ZeroRateFlag() {
+  return (
+    <span
+      title="Rented at a $0 rate — no revenue is being recorded. Use Change rate to fix."
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-warning/15 px-1.5 py-0.5 text-[11px] font-medium text-warning"
+    >
+      <AlertTriangle className="h-3 w-3" />
+      $0 rate
+    </span>
   );
 }
 

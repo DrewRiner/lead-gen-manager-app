@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Plus } from "lucide-react";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
 import { MetricCard } from "@/components/dashboard/metric-card";
@@ -41,6 +41,7 @@ import {
   recentMonths,
   todayDateStr,
 } from "@/lib/dates";
+import { isZeroRateAssignment } from "@/lib/assignments/rate";
 import { db } from "@/lib/db";
 import { clients, leads, properties, propertyAssignments } from "@/lib/db/schema";
 import { formatNumber, titleCase } from "@/lib/format";
@@ -231,6 +232,23 @@ export default async function PropertyDetailPage({
           today={today}
         />
       </PageHeader>
+
+      {isAssigned && isZeroRateAssignment(activeAssignment) ? (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+          <div className="space-y-0.5">
+            <p className="font-medium text-foreground">
+              Rented at a $0 rate — no revenue is being recorded.
+            </p>
+            <p className="text-muted-foreground">
+              {row.clientName ? `${row.clientName} holds this property` : "This property is rented"}{" "}
+              but the active assignment bills $0. If that&rsquo;s not intentional,
+              use <span className="font-medium text-foreground">Change rate</span>{" "}
+              in Actions to set the agreed rate. Historical months aren&rsquo;t affected.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {onTrial && trial ? (
         <TrialBanner
