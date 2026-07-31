@@ -12,12 +12,13 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   Step,
   StepVisual,
   StepsLabel,
   Success,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "connect-twilio-call-tracking";
@@ -87,11 +88,9 @@ export function ConnectTwilioDesigned({ initialDone }: { initialDone: string[] }
         }
         right={
           <Panel header="Same idea as CallRail">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              Twilio (and WizCaller-managed Twilio numbers) post each completed
-              call to the dashboard, matched by the <strong>dialed number</strong>{" "}
-              → the property&rsquo;s Tracking Phone.
-            </div>
+            Twilio (and WizCaller-managed Twilio numbers) post each completed
+            call to the dashboard, matched by the <strong>dialed number</strong>{" "}
+            → the property&rsquo;s Tracking Phone.
           </Panel>
         }
       />
@@ -151,11 +150,11 @@ export function ConnectTwilioDesigned({ initialDone }: { initialDone: string[] }
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>An event shows <strong>auth valid</strong>, and the call shows with the red Twilio badge.</Success>
             <Warning>{VERIFY_WARN}</Warning>
             <Closing>Signature valid, Twilio badge on the lead.</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

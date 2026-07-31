@@ -12,10 +12,11 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   Step,
   StepsLabel,
   Success,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "client-not-getting-leads-what-to-check";
@@ -83,10 +84,8 @@ export function NoLeadsDesigned({ initialDone }: { initialDone: string[] }) {
         }
         right={
           <Panel header="Work the causes in order">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              Connected? → Leads arriving? → Form live? → Notifications current? →
-              Routing (unmatched)? Most common first, so you fix it fast.
-            </div>
+            Connected? → Leads arriving? → Form live? → Notifications current? →
+            Routing (unmatched)? Most common first, so you fix it fast.
           </Panel>
         }
       />
@@ -156,10 +155,10 @@ export function NoLeadsDesigned({ initialDone }: { initialDone: string[] }) {
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>Test lead lands on the property AND reaches the client&rsquo;s notification.</Success>
             <Closing>Fixed, tested, and the client knows.</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

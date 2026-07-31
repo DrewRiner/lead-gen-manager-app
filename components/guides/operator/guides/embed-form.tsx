@@ -13,12 +13,13 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   Step,
   StepVisual,
   StepsLabel,
   Success,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "embed-a-contact-form-on-a-website";
@@ -99,11 +100,7 @@ export function EmbedFormDesigned({ initialDone }: { initialDone: string[] }) {
           </>
         }
         right={
-          <Panel header="Any website builder">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              {NOTE}
-            </div>
-          </Panel>
+          <Panel header="Any website builder">{NOTE}</Panel>
         }
       />
 
@@ -170,10 +167,10 @@ export function EmbedFormDesigned({ initialDone }: { initialDone: string[] }) {
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>Your test submission lands on the property&rsquo;s page — not in Unmatched.</Success>
             <Closing>If it lands correctly, the form is fully embedded and live.</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

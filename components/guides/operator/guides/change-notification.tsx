@@ -10,12 +10,13 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   StatusPill,
   Step,
   StepVisual,
   StepsLabel,
   Success,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "change-how-a-client-gets-notified";
@@ -77,12 +78,10 @@ export function ChangeNotificationDesigned({ initialDone }: { initialDone: strin
         }
         right={
           <Panel header="Method & recipients">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              Every lead alert is a Send Email / Send SMS action in the
-              property&rsquo;s workflow. Change the <strong>method</strong> by
-              swapping the action; change <strong>who</strong> by editing the
-              recipients — on every relevant action.
-            </div>
+            Every lead alert is a Send Email / Send SMS action in the
+            property&rsquo;s workflow. Change the <strong>method</strong> by
+            swapping the action; change <strong>who</strong> by editing the
+            recipients — on every relevant action.
           </Panel>
         }
       />
@@ -112,7 +111,7 @@ export function ChangeNotificationDesigned({ initialDone }: { initialDone: strin
           <Body>{s.body}</Body>
           {i === 1 ? (
             <StepVisual>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div className="flex flex-wrap items-center gap-3">
                 <StatusPill tone="error">✕ Email action removed</StatusPill>
                 <StatusPill tone="ok">✓ SMS action added</StatusPill>
               </div>
@@ -130,10 +129,10 @@ export function ChangeNotificationDesigned({ initialDone }: { initialDone: strin
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>Alert arrives by the right method, to everyone who should get it — and no one else.</Success>
             <Closing>Right method, right people, no one else.</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

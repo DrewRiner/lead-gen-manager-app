@@ -3,7 +3,6 @@
 import { ArrowLeft, Check } from "lucide-react";
 import Link from "next/link";
 import {
-  Fragment,
   createContext,
   useContext,
   useState,
@@ -353,14 +352,28 @@ export function Field({ label, children }: { label?: string; children: ReactNode
   );
 }
 
-export function FieldMatters({ label, children }: { label?: string; children: ReactNode }) {
+export function FieldMatters({
+  label,
+  caret,
+  children,
+}: {
+  label?: string;
+  caret?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div className="space-y-1">
       {label ? (
         <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       ) : null}
-      <div className="rounded-md border bg-background px-2.5 py-1.5 text-sm font-medium tabular-nums">
+      <div className="flex items-center rounded-md border bg-background px-2.5 py-1.5 text-sm font-medium tabular-nums">
         {children}
+        {caret ? (
+          <span
+            aria-hidden
+            className="ml-0.5 inline-block h-4 w-px animate-pulse bg-foreground/70 align-middle"
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -431,9 +444,12 @@ export function ToggleSwitch({ on }: { on?: boolean }) {
 export function Checklist({
   title = "Pre-flight",
   items,
+  chips,
 }: {
   title?: string;
   items: ReactNode[];
+  /** Optional legend / swatch row rendered below the items. */
+  chips?: ReactNode;
 }) {
   return (
     <Panel header={title}>
@@ -445,7 +461,20 @@ export function Checklist({
           </div>
         ))}
       </div>
+      {chips ? (
+        <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">{chips}</div>
+      ) : null}
     </Panel>
+  );
+}
+
+/** A small labeled swatch for Checklist legends (e.g. system colour keys). */
+export function Chip({ color, children }: { color: string; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+      <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+      {children}
+    </span>
   );
 }
 
@@ -488,6 +517,29 @@ export function Compare({ children }: { children: ReactNode }) {
   return <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
 }
 
+/** A framed, captioned screenshot (real uploaded image) inside a step. */
+export function GuideShot({
+  src,
+  alt,
+  caption,
+}: {
+  src: string;
+  alt: string;
+  caption?: string;
+}) {
+  return (
+    <figure className="overflow-hidden rounded-lg border">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="block w-full" />
+      {caption ? (
+        <figcaption className="border-t bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          {caption}
+        </figcaption>
+      ) : null}
+    </figure>
+  );
+}
+
 export function CodeBlock({
   method,
   children,
@@ -503,26 +555,6 @@ export function CodeBlock({
         </span>
       ) : null}
       <span className="whitespace-nowrap">{children}</span>
-    </div>
-  );
-}
-
-export function Crumbs({ items }: { items: string[] }) {
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-      {items.map((it, i) => (
-        <Fragment key={i}>
-          {i > 0 ? <span aria-hidden>→</span> : null}
-          <span
-            className={cn(
-              "rounded border px-1.5 py-0.5",
-              i === items.length - 1 && "font-medium text-foreground",
-            )}
-          >
-            {it}
-          </span>
-        </Fragment>
-      ))}
     </div>
   );
 }

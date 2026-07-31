@@ -1,30 +1,35 @@
 "use client";
 
 import { Bell, FileText, MessageSquare, UserPlus, Webhook } from "lucide-react";
+import type { ReactNode } from "react";
 
 import {
   Body,
   Checklist,
+  Chip,
   Closing,
+  Compare,
   DiagramCard,
   Field,
   FieldMatters,
-  GuideProgress,
   GuideHeader,
+  GuideProgress,
   H2,
   MockTable,
   Node,
   NodeConnector,
   Panel,
+  PlainGuide,
   Section,
+  Stack,
+  StatusPill,
   Step,
   StepVisual,
   StepsLabel,
   Success,
-  StatusPill,
   ToggleSwitch,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "onboard-a-new-client-to-a-property";
@@ -85,42 +90,22 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
           </>
         }
         right={
-          <div className="og-diagram">
-            <DiagramCard tone="bad" label="Half-done onboarding" labelColor="#93290f">
-              <div style={{ fontSize: 14, color: "#2a2823", lineHeight: 1.5 }}>
-                <strong>✓ Client assigned in dashboard</strong> + ✕ Notification
-                actions never set
-              </div>
-              <div
-                style={{
-                  marginTop: 12,
-                  paddingTop: 12,
-                  borderTop: "1px dashed #ebc4b4",
-                  fontWeight: 500,
-                  color: "#93290f",
-                }}
-              >
+          <Compare>
+            <DiagramCard tone="bad" label="Half-done onboarding">
+              <strong>✓ Client assigned in dashboard</strong> + ✕ Notification
+              actions never set
+              <div className="mt-3 border-t border-dashed border-amber-300 pt-3 font-medium text-amber-700 dark:border-amber-900 dark:text-amber-400">
                 → Client pays, hears nothing. We look broken on day one.
               </div>
             </DiagramCard>
-            <DiagramCard tone="good" label="Finished onboarding" labelColor="#245740">
-              <div style={{ fontSize: 14, color: "#2a2823", lineHeight: 1.5 }}>
-                <strong>✓ Client assigned in dashboard</strong> + ✓ Workflow routed
-                &amp; published
-              </div>
-              <div
-                style={{
-                  marginTop: 12,
-                  paddingTop: 12,
-                  borderTop: "1px dashed #cce0d4",
-                  fontWeight: 500,
-                  color: "#245740",
-                }}
-              >
+            <DiagramCard tone="good" label="Finished onboarding">
+              <strong>✓ Client assigned in dashboard</strong> + ✓ Workflow routed
+              &amp; published
+              <div className="mt-3 border-t border-dashed border-emerald-300 pt-3 font-medium text-emerald-700 dark:border-emerald-900 dark:text-emerald-400">
                 → Leads arrive the moment the form is submitted.
               </div>
             </DiagramCard>
-          </div>
+          </Compare>
         }
       />
 
@@ -138,12 +123,8 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
             items={BEFORE}
             chips={
               <>
-                <span style={chip}>
-                  <span style={{ ...sw, background: "#17161a" }} /> Dashboard
-                </span>
-                <span style={chip}>
-                  <span style={{ ...sw, background: "#baf25a" }} /> Engine Evolve
-                </span>
+                <Chip color="#64748b">Dashboard</Chip>
+                <Chip color="#84cc16">Engine Evolve</Chip>
               </>
             }
           />
@@ -171,22 +152,22 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ fontWeight: 500 }}>Brunswick Tree Service</td>
-                  <td style={{ color: "#6b665e" }}>Coastal Yard Co.</td>
+                  <td className="font-medium">Brunswick Tree Service</td>
+                  <td className="text-muted-foreground">Coastal Yard Co.</td>
                   <td>
                     <StatusPill tone="ok">Active</StatusPill>
                   </td>
                 </tr>
-                <tr className="og-row-highlight og-ring">
-                  <td style={{ fontWeight: 600 }}>Sumter Roofing Company</td>
-                  <td style={{ color: "#b0a9a0" }}>—</td>
+                <tr className="bg-primary/5 ring-1 ring-inset ring-primary/20">
+                  <td className="font-semibold">Sumter Roofing Company</td>
+                  <td className="text-muted-foreground/70">—</td>
                   <td>
                     <StatusPill tone="error">Unassigned</StatusPill>
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ fontWeight: 500 }}>Brunswick Roofing Company</td>
-                  <td style={{ color: "#6b665e" }}>Golden Isles Roofing</td>
+                  <td className="font-medium">Brunswick Roofing Company</td>
+                  <td className="text-muted-foreground">Golden Isles Roofing</td>
                   <td>
                     <StatusPill tone="ok">Active</StatusPill>
                   </td>
@@ -205,23 +186,15 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
       >
         <Body>{STEPS[1].body}</Body>
         <StepVisual>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 18,
-              flexWrap: "wrap",
-            }}
-            className="og-success"
-          >
-            <span className="og-check-circle">✓</span>
-            <span style={{ fontFamily: "var(--og-mono)", fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: "#245740" }}>
+          <div className="flex flex-wrap items-center gap-4 rounded-lg border border-emerald-300 bg-emerald-50/60 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500 text-sm text-white">
+              ✓
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               Current client
             </span>
-            <span style={{ fontFamily: "var(--og-serif)", fontSize: 24, color: "#171614" }}>
-              Marios Bros Fencing
-            </span>
-            <span style={{ fontSize: 13, color: "#4a6b5c", marginLeft: "auto" }}>
+            <span className="text-xl font-semibold">Marios Bros Fencing</span>
+            <span className="ml-auto text-sm text-muted-foreground">
               $50.00 / lead · Month-to-month
             </span>
           </div>
@@ -243,8 +216,8 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
         </Body>
         <StepVisual>
           <Panel header="Engine Evolve — Contacts / Marios Bros Fencing" deep>
-            <div className="og-panel-body" style={{ display: "grid", gap: 12 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="grid gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <Field label="First name">Jamie</Field>
                 <Field label="Last name">Floyd</Field>
               </div>
@@ -263,30 +236,30 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
       >
         <Body>{STEPS[3].body}</Body>
         <StepVisual>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-            <Node icon={<FileText size={12} />} iconBg="#8aa542" label="Form Submitted" />
+          <div className="flex flex-col items-center">
+            <Node icon={<FileText size={12} />} iconBg="#65a30d" label="Form Submitted" />
             <NodeConnector />
-            <Node icon={<UserPlus size={12} />} iconBg="#2e5a8f" label="Create contact" />
+            <Node icon={<UserPlus size={12} />} iconBg="#2563eb" label="Create contact" />
             <NodeConnector />
-            <Node icon={<Webhook size={12} />} iconBg="#2e5a8f" label="Webhook" />
+            <Node icon={<Webhook size={12} />} iconBg="#2563eb" label="Webhook" />
             <NodeConnector />
             <Node
               icon={<Bell size={12} />}
-              iconBg="#8aa542"
+              iconBg="#65a30d"
               label="Client Email Notification"
               edit
-              value={<><span style={mono10}>TO CUSTOM EMAIL</span> Floydjamie18@gmail.com</>}
+              value={<><Tag>To custom email</Tag> Floydjamie18@gmail.com</>}
             />
             <NodeConnector />
             <Node
               icon={<MessageSquare size={12} />}
-              iconBg="#8aa542"
+              iconBg="#65a30d"
               label="Client SMS Notification"
               edit
-              value={<><span style={mono10}>TO CUSTOM PHONE</span> (912) 555-5555</>}
+              value={<><Tag>To custom phone</Tag> (912) 555-5555</>}
             />
             <NodeConnector />
-            <Node icon={<Bell size={12} />} iconBg="#8c877d" label="Blue Carrot Solutions Internal Notification" />
+            <Node icon={<Bell size={12} />} iconBg="#78716c" label="Blue Carrot Solutions Internal Notification" />
           </div>
         </StepVisual>
         <StepVisual>
@@ -309,24 +282,24 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
       >
         <Body>{STEPS[4].body}</Body>
         <StepVisual>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div className="flex flex-wrap items-center gap-4">
             <Panel header="Builder header — before">
-              <div className="og-panel-body" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Sumter Roofing Company</span>
-                <span style={{ fontFamily: "var(--og-mono)", fontSize: 10.5, fontWeight: 600 }}>Draft</span>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="text-sm font-semibold">Sumter Roofing Company</span>
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider">Draft</span>
                 <ToggleSwitch />
-                <span style={{ fontFamily: "var(--og-mono)", fontSize: 10.5, color: "#8c877d" }}>Publish</span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Publish</span>
               </div>
             </Panel>
-            <span style={{ fontFamily: "var(--og-mono)", fontSize: 20, color: "#c9c4b8" }}>→</span>
-            <div className="og-diagram-card og-diagram-card--good" style={{ padding: 0, overflow: "hidden" }}>
-              <div className="og-diagram-label" style={{ color: "#7fa593", padding: "11px 16px", borderBottom: "1px solid #d8e7de", margin: 0 }}>
+            <span aria-hidden className="text-xl text-muted-foreground">→</span>
+            <div className="overflow-hidden rounded-lg border border-emerald-300 dark:border-emerald-900">
+              <div className="border-b border-emerald-200 bg-emerald-50/60 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400">
                 Workflows list — after
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 16 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Sumter Roofing Company</span>
+              <div className="flex flex-wrap items-center gap-2.5 p-4">
+                <span className="text-sm font-semibold">Sumter Roofing Company</span>
                 <StatusPill tone="ok">Published</StatusPill>
-                <span style={{ fontSize: 12, color: "#4a6b5c" }}>New notifications in effect</span>
+                <span className="text-xs text-muted-foreground">New notifications in effect</span>
               </div>
             </div>
           </div>
@@ -343,7 +316,7 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>
               Property page shows <strong>Marios Bros Fencing</strong> as current
               client.
@@ -362,7 +335,7 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
                   <tr>
                     <td>Jul 29, 11:44 AM</td>
                     <td>Sumter Roofing Company</td>
-                    <td style={{ color: "#6b665e" }}>Form</td>
+                    <td className="text-muted-foreground">Form</td>
                     <td>
                       <StatusPill tone="ok">Billable</StatusPill>
                     </td>
@@ -371,7 +344,7 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
               </MockTable>
             </Panel>
             <Closing>{CLOSING}</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>
@@ -380,62 +353,22 @@ export function OnboardingDesigned({ initialDone }: { initialDone: string[] }) {
 
 export function OnboardingPlain() {
   return (
-    <article className="og-plain">
-      <div className="og-plain-eyebrow">Internal runbook / Property operations</div>
-      <h1>Onboarding a client onto a rented property</h1>
-
-      <h2>Why this matters</h2>
-      <p>{WHY}</p>
-
-      <h2>Before you start</h2>
-      <p>Have on hand:</p>
-      <ul>
-        {BEFORE.map((b) => (
-          <li key={b}>{b}</li>
-        ))}
-      </ul>
-
-      <h2>Steps</h2>
-      {STEPS.map((s, i) => (
-        <div key={i}>
-          <h3>
-            {i + 1}. {s.title}
-          </h3>
-          <p>{s.body}</p>
-          {s.warn ? <p className="og-plain-warn">⚠️ WARNING: {s.warn}</p> : null}
-        </div>
-      ))}
-
-      <h2>How to check it worked</h2>
-      <p>{VERIFY}</p>
-    </article>
+    <PlainGuide
+      eyebrow="Internal runbook / Property operations"
+      title="Onboarding a client onto a rented property"
+      why={WHY}
+      before={BEFORE}
+      steps={STEPS}
+      verify={VERIFY}
+    />
   );
 }
 
-// Small local helpers.
-const chip: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 9,
-  border: "1px solid #e3dfd5",
-  background: "#fff",
-  borderRadius: 8,
-  padding: "8px 12px",
-  fontFamily: "var(--og-mono)",
-  fontSize: 12,
-  color: "#2a2823",
-};
-const sw: React.CSSProperties = {
-  width: 16,
-  height: 16,
-  borderRadius: 4,
-  display: "inline-block",
-};
-const mono10: React.CSSProperties = {
-  fontFamily: "var(--og-mono)",
-  fontSize: 9.5,
-  letterSpacing: ".1em",
-  textTransform: "uppercase",
-  color: "#c08d7c",
-  marginRight: 6,
-};
+/** Small mono uppercase tag used inside workflow-node values. */
+function Tag({ children }: { children: ReactNode }) {
+  return (
+    <span className="mr-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+      {children}
+    </span>
+  );
+}
