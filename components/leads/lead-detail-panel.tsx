@@ -16,6 +16,7 @@ import { LeadOverrideDialog } from "@/components/leads/lead-override-dialog";
 import { NotSpamButton } from "@/components/leads/not-spam-button";
 import { SourceBadge } from "@/components/leads/source-badge";
 import { StatusBadge } from "@/components/status-badge";
+import { isPendingEnrichment } from "@/lib/leads/pending-enrichment";
 import { Button } from "@/components/ui/button";
 import { formatDuration, titleCase } from "@/lib/format";
 import {
@@ -44,6 +45,7 @@ export function LeadDetailPanel({
 
   const isForm = row.type === "form";
   const isCall = row.type === "call";
+  const pending = isPendingEnrichment(row);
   const answers =
     row.formAnswers && Object.keys(row.formAnswers).length > 0 ? row.formAnswers : null;
 
@@ -121,21 +123,54 @@ export function LeadDetailPanel({
 
       {/* 4. Billing */}
       <Section title="Billing">
-        <Field label="Status" value={<StatusBadge status={row.billableStatus} />} />
-        <Field label="Reason" value={billableReasonLabel(row.billableReason)} />
+        <Field
+          label="Status"
+          value={pending ? <PendingBadge /> : <StatusBadge status={row.billableStatus} />}
+        />
+        <Field
+          label="Reason"
+          value={
+            pending ? (
+              <span className="text-muted-foreground">Awaiting call data</span>
+            ) : (
+              billableReasonLabel(row.billableReason)
+            )
+          }
+        />
         <Field label="Qualified by" value={qualifiedByLabel(row.qualifiedBy)} />
         <Field label="Delivery" value={<StatusBadge status={row.deliveryStatus} />} />
         <Field
           label="Billed"
-          value={<span className="tabular-nums">{formatCurrency(row.billedAmount)}</span>}
+          value={
+            pending ? (
+              <span className="text-muted-foreground">Pending</span>
+            ) : (
+              <span className="tabular-nums">{formatCurrency(row.billedAmount)}</span>
+            )
+          }
         />
         <Field
           label="Estimated value"
-          value={<span className="tabular-nums">{formatCurrency(row.estimatedValue)}</span>}
+          value={
+            pending ? (
+              <span className="text-muted-foreground">Pending</span>
+            ) : (
+              <span className="tabular-nums">{formatCurrency(row.estimatedValue)}</span>
+            )
+          }
         />
         {isCall ? (
           <>
-            <Field label="Duration" value={formatDuration(row.callDurationSeconds)} />
+            <Field
+              label="Duration"
+              value={
+                pending ? (
+                  <span className="text-muted-foreground">Awaiting call data</span>
+                ) : (
+                  formatDuration(row.callDurationSeconds)
+                )
+              }
+            />
             <Field label="Call" value={<CallOutcome answered={row.callAnswered} />} />
             {row.isRepeatCaller != null ? (
               <Field
@@ -153,9 +188,21 @@ export function LeadDetailPanel({
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <audio controls src={row.recordingUrl} className="h-8 w-full max-w-md" />
         </div>
+      ) : isCall && pending ? (
+        <div className="space-y-1">
+          <FieldLabel>Recording</FieldLabel>
+          <div className="text-muted-foreground">
+            Still incoming — available once the call ends.
+          </div>
+        </div>
       ) : null}
 
-      {isCall && row.transcript ? (
+      {isCall && pending ? (
+        <div className="space-y-1">
+          <FieldLabel>Transcript</FieldLabel>
+          <div className="text-muted-foreground">Still incoming.</div>
+        </div>
+      ) : isCall && row.transcript ? (
         <div>
           <button
             type="button"
@@ -275,6 +322,18 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
       <FieldLabel>{label}</FieldLabel>
       <div className="font-medium text-foreground">{value}</div>
     </div>
+  );
+}
+
+/** Muted "Pending" pill shown while a CallRail lead awaits its enrichment merge. */
+function PendingBadge() {
+  return (
+    <span
+      title="Call data still arriving from CallRail — status finalizes once the call ends."
+      className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+    >
+      Pending
+    </span>
   );
 }
 
