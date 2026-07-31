@@ -15,13 +15,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { softDeleteClient } from "@/lib/actions/clients";
+import { cn } from "@/lib/utils";
 
-export function ClientRowActions({ client }: { client: ClientDialogValue }) {
+export function ClientRowActions({
+  client,
+  triggerClassName,
+}: {
+  client: ClientDialogValue;
+  /** Override the trigger size (e.g. a larger touch target on mobile cards). */
+  triggerClassName?: string;
+}) {
   return (
     <div className="flex justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("h-8 w-8", triggerClassName)}
+          >
             <MoreHorizontal className="h-4 w-4" />
             <span className="sr-only">Actions</span>
           </Button>

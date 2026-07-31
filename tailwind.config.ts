@@ -40,6 +40,14 @@ const config: Config = {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -53,6 +61,17 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        soft: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.05)",
+        "soft-md":
+          "0 2px 4px -1px rgb(15 23 42 / 0.05), 0 6px 16px -4px rgb(15 23 42 / 0.08)",
+      },
+      fontSize: {
+        display: ["2.25rem", { lineHeight: "2.5rem", letterSpacing: "-0.02em" }],
+      },
+      transitionDuration: {
+        DEFAULT: "150ms",
       },
       keyframes: {
         "accordion-down": {

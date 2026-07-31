@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
+import { isZeroRateAssignment } from "@/lib/assignments/rate";
 import {
   lifetimeFlatRevenue,
   monthIndexFromDate,
@@ -335,4 +336,29 @@ export async function getClientLifetime(
     monthsRented: monthSet.size,
     propertiesEverRented,
   };
+}
+
+/**
+ * Property IDs whose ACTIVE, non-trial assignment bills $0 for its billing type
+ * — i.e. rented but recording no revenue. Display-only signal; makes no billing
+ * decision. See [[lib/assignments/rate]].
+ */
+export async function getZeroRateRentedPropertyIds(): Promise<Set<string>> {
+  const rows = await db
+    .select({
+      propertyId: propertyAssignments.propertyId,
+      billingType: propertyAssignments.billingType,
+      monthlyRate: propertyAssignments.monthlyRate,
+      perLeadCallRate: propertyAssignments.perLeadCallRate,
+      perLeadFormRate: propertyAssignments.perLeadFormRate,
+      isTrial: propertyAssignments.isTrial,
+    })
+    .from(propertyAssignments)
+    .where(isNull(propertyAssignments.endedOn));
+
+  const set = new Set<string>();
+  for (const r of rows) {
+    if (isZeroRateAssignment(r)) set.add(r.propertyId);
+  }
+  return set;
 }

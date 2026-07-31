@@ -65,8 +65,8 @@ function Segment({
       </div>
       <div
         className={cn(
-          "mt-1 font-bold tabular-nums",
-          emphasized ? "text-3xl" : "text-2xl",
+          "mt-1 font-semibold tracking-tight tabular-nums",
+          emphasized ? "text-4xl" : "text-3xl",
         )}
       >
         {formatNumber(count)}

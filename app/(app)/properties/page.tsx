@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Plus } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Building2, Plus } from "lucide-react";
 import { and, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 
+import { BillableOfTotal } from "@/components/billable-of-total";
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { PropertiesFilters } from "@/components/properties/properties-filters";
 import { PropertyDialog } from "@/components/properties/property-dialog";
@@ -20,9 +22,12 @@ import {
 import { currentMonthKey, trailingDayRange } from "@/lib/dates";
 import { db } from "@/lib/db";
 import { clients, properties } from "@/lib/db/schema";
-import { formatNumber, titleCase } from "@/lib/format";
+import { titleCase } from "@/lib/format";
 import { formatCurrency, toMoneyNumber } from "@/lib/money";
-import { getPropertyLifetimeMap } from "@/lib/queries/assignments";
+import {
+  getPropertyLifetimeMap,
+  getZeroRateRentedPropertyIds,
+} from "@/lib/queries/assignments";
 import {
   getPropertyEconomicsMap,
   getPropertyRangeCounts,
@@ -77,7 +82,7 @@ export default async function PropertiesPage({
   if (sp.client === "unassigned") conds.push(isNull(properties.clientId));
   else if (sp.client) conds.push(eq(properties.clientId, sp.client));
 
-  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp, realLeadMap] =
+  const [rowsRaw, clientList, nicheRows, counts, lifetimeMap, econByProp, realLeadMap, zeroRateSet] =
     await Promise.all([
       db
         .select({ property: properties, clientName: clients.businessName })
@@ -98,6 +103,7 @@ export default async function PropertiesPage({
       getPropertyLifetimeMap(tz),
       getPropertyEconomicsMap(tz, currentMonthKey(tz)),
       getRealLeadMap(),
+      getZeroRateRentedPropertyIds(),
     ]);
 
   // Connection input per property: admin flag + most recent real ingested lead.
@@ -150,6 +156,35 @@ export default async function PropertiesPage({
     return sortDir === "asc" ? cmp : -cmp;
   });
 
+  // Shape a property row into the value the row-actions menu expects. Shared by
+  // the desktop table and the mobile card list.
+  const actionsProperty = (p: (typeof rowsRaw)[number]["property"]) => ({
+    id: p.id,
+    name: p.name,
+    displayName: p.displayName,
+    domain: p.domain,
+    niche: p.niche,
+    city: p.city,
+    state: p.state,
+    status: p.status,
+    launchedOn: p.launchedOn,
+    gbpPlaceId: p.gbpPlaceId,
+    trackingPhone: p.trackingPhone,
+    ghlLeadSource: p.ghlLeadSource,
+    ghlFormId: p.ghlFormId,
+    shortCode: p.shortCode,
+    clientId: p.clientId,
+    billingType: p.billingType,
+    monthlyRate: p.monthlyRate,
+    targetMonthlyRent: p.targetMonthlyRent,
+    perLeadCallRate: p.perLeadCallRate,
+    perLeadFormRate: p.perLeadFormRate,
+    estimatedCallValue: p.estimatedCallValue,
+    estimatedFormValue: p.estimatedFormValue,
+    billableThresholdSeconds: p.billableThresholdSeconds,
+    notes: p.notes,
+  });
+
   // Build a sort link that preserves current filters.
   const sortHref = (key: SortKey) => {
     const next = new URLSearchParams();
@@ -181,7 +216,16 @@ export default async function PropertiesPage({
         <PropertiesFilters niches={niches} clients={clientList} />
       </div>
 
-      <div className="rounded-lg border">
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={Building2}
+          title="No properties match these filters"
+          description="Adjust or clear the filters above, or add a new property to get started."
+        />
+      ) : (
+      <>
+      {/* Desktop: full table. Hidden below lg in favour of the card list. */}
+      <div className="hidden rounded-lg border lg:block">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -228,14 +272,20 @@ export default async function PropertiesPage({
                         {[p.city, p.state].filter(Boolean).join(", ") || "—"}
                       </TableCell>
                       <TableCell>
-                        <PropertyStatusBadge status={p.status} />
+                        <span className="flex items-center gap-1.5">
+                          <PropertyStatusBadge status={p.status} />
+                          {zeroRateSet.has(p.id) ? <ZeroRateFlag /> : null}
+                        </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{clientName ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {BILLING_LABEL[p.billingType] ?? titleCase(p.billingType)}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatNumber(count?.total ?? 0)}
+                      <TableCell className="text-right">
+                        <BillableOfTotal
+                          billable={count?.billable ?? 0}
+                          total={count?.total ?? 0}
+                        />
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatCurrency(count?.estimatedValue ?? "0")}
@@ -265,32 +315,7 @@ export default async function PropertiesPage({
                       </TableCell>
                       <TableCell>
                         <PropertyRowActions
-                          property={{
-                            id: p.id,
-                            name: p.name,
-                            displayName: p.displayName,
-                            domain: p.domain,
-                            niche: p.niche,
-                            city: p.city,
-                            state: p.state,
-                            status: p.status,
-                            launchedOn: p.launchedOn,
-                            gbpPlaceId: p.gbpPlaceId,
-                            trackingPhone: p.trackingPhone,
-                            ghlLeadSource: p.ghlLeadSource,
-                            ghlFormId: p.ghlFormId,
-                            shortCode: p.shortCode,
-                            clientId: p.clientId,
-                            billingType: p.billingType,
-                            monthlyRate: p.monthlyRate,
-                            targetMonthlyRent: p.targetMonthlyRent,
-                            perLeadCallRate: p.perLeadCallRate,
-                            perLeadFormRate: p.perLeadFormRate,
-                            estimatedCallValue: p.estimatedCallValue,
-                            estimatedFormValue: p.estimatedFormValue,
-                            billableThresholdSeconds: p.billableThresholdSeconds,
-                            notes: p.notes,
-                          }}
+                          property={actionsProperty(p)}
                           clients={clientList}
                         />
                       </TableCell>
@@ -302,6 +327,150 @@ export default async function PropertiesPage({
           </Table>
         </div>
       </div>
+
+      {/* Mobile/tablet: card list. Secondary columns (niche, city, billing,
+          market $/lead, est. value) move behind the tap into the detail. */}
+      <div className="space-y-3 lg:hidden">
+        <MobileSort sortKey={sortKey} sortDir={sortDir} sortHref={sortHref} />
+        {rows.length === 0 ? (
+          <div className="rounded-lg border py-10 text-center text-muted-foreground">
+            No properties match these filters.
+          </div>
+        ) : (
+          rows.map(({ property: p, clientName }) => {
+            const count = counts.get(p.id);
+            const life = lifetimeMap.get(p.id);
+            const revPerMo =
+              life?.summary.monthsRented ? formatCurrency(life.revenuePerMonthRented) : "—";
+            return (
+              <div key={p.id} className="rounded-xl border p-4">
+                <div className="flex items-start gap-2.5">
+                  <ConnectionDot connection={connFor(p)} className="mt-[7px]" />
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/properties/${p.id}`}
+                      className="block truncate py-0.5 font-medium leading-snug hover:underline"
+                    >
+                      {p.name}
+                    </Link>
+                    <div className="truncate text-sm text-muted-foreground">
+                      {p.domain ?? "—"}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <PropertyStatusBadge status={p.status} className="mt-0.5" />
+                    {zeroRateSet.has(p.id) ? <ZeroRateFlag /> : null}
+                  </div>
+                  <PropertyRowActions
+                    property={actionsProperty(p)}
+                    clients={clientList}
+                    triggerClassName="h-11 w-11"
+                  />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <MiniStat label="Client" value={clientName ?? "—"} />
+                  <MiniStat
+                    label="30d leads"
+                    value={
+                      <BillableOfTotal
+                        billable={count?.billable ?? 0}
+                        total={count?.total ?? 0}
+                      />
+                    }
+                  />
+                  <MiniStat label="Rev/mo" value={revPerMo} numeric />
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+      </>
+      )}
+    </div>
+  );
+}
+
+/** Amber flag: rented but the active assignment bills $0 (no revenue). */
+function ZeroRateFlag() {
+  return (
+    <span
+      title="Rented at a $0 rate — no revenue is being recorded. Use Change rate to fix."
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-warning/15 px-1.5 py-0.5 text-[11px] font-medium text-warning"
+    >
+      <AlertTriangle className="h-3 w-3" />
+      $0 rate
+    </span>
+  );
+}
+
+/** A compact labelled figure inside a mobile card. */
+function MiniStat({
+  label,
+  value,
+  numeric = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  numeric?: boolean;
+}) {
+  return (
+    <div className="min-w-0 rounded-md bg-muted/50 px-2.5 py-1.5">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div
+        className={cn(
+          "truncate text-sm font-medium",
+          numeric && "tabular-nums",
+        )}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+/** Mobile sort control: a native select mirroring the table's sortable columns. */
+function MobileSort({
+  sortKey,
+  sortDir,
+  sortHref,
+}: {
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  sortHref: (k: SortKey) => string;
+}) {
+  const OPTIONS: { key: SortKey; label: string }[] = [
+    { key: "revPerMonth", label: "Rev/mo rented" },
+    { key: "leads30", label: "30d leads" },
+    { key: "estValue30", label: "30d est. value" },
+    { key: "effLead", label: "Eff. $/lead" },
+    { key: "marketLead", label: "Market $/lead" },
+    { key: "name", label: "Name" },
+  ];
+  return (
+    <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1">
+      <span className="shrink-0 text-xs font-medium text-muted-foreground">Sort</span>
+      {OPTIONS.map((o) => (
+        <Link
+          key={o.key}
+          href={sortHref(o.key)}
+          className={cn(
+            "inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-md border px-2.5 text-xs",
+            o.key === sortKey
+              ? "border-foreground/30 bg-muted font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted",
+          )}
+        >
+          {o.label}
+          {o.key === sortKey ? (
+            sortDir === "asc" ? (
+              <ArrowUp className="h-3 w-3" />
+            ) : (
+              <ArrowDown className="h-3 w-3" />
+            )
+          ) : null}
+        </Link>
+      ))}
     </div>
   );
 }

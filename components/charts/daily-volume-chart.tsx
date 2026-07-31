@@ -19,7 +19,7 @@ export interface DailyVolumePoint {
 
 export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
   return (
-    <div className="h-72 w-full">
+    <div className="h-56 w-full sm:h-72">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}

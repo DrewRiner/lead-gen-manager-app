@@ -43,7 +43,7 @@ export function MetricCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold tabular-nums">
+          <span className="text-4xl font-semibold tracking-tight tabular-nums">
             {formatNumber(current.totalLeads)}
           </span>
           <span className="text-sm text-muted-foreground">leads</span>

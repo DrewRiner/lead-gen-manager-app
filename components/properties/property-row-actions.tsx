@@ -18,13 +18,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { unassignClient } from "@/lib/actions/assignments";
 import { softDeleteProperty } from "@/lib/actions/properties";
+import { cn } from "@/lib/utils";
 
 export function PropertyRowActions({
   property,
   clients,
+  triggerClassName,
 }: {
   property: PropertyDialogValue;
   clients: { id: string; businessName: string }[];
+  /** Override the trigger size (e.g. a larger touch target on mobile cards). */
+  triggerClassName?: string;
 }) {
   const isAssigned = property.clientId != null;
 
@@ -32,7 +36,11 @@ export function PropertyRowActions({
     <div className="flex justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("h-8 w-8", triggerClassName)}
+          >
             <MoreHorizontal className="h-4 w-4" />
             <span className="sr-only">Actions</span>
           </Button>

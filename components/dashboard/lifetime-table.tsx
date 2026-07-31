@@ -129,8 +129,19 @@ export function LifetimeTable({ rows }: { rows: LifetimePropertyRow[] }) {
     </TableHead>
   );
 
+  const MOBILE_SORTS: { k: SortKey; label: string }[] = [
+    { k: "difference", label: "Difference" },
+    { k: "actualRevenue", label: "Actual" },
+    { k: "potentialRevenue", label: "Potential" },
+    { k: "multiple", label: "Multiple" },
+    { k: "totalLeads", label: "Leads" },
+    { k: "name", label: "Name" },
+  ];
+
   return (
-    <div className="overflow-x-auto">
+    <>
+    {/* Desktop: full table. Cards below lg. */}
+    <div className="hidden overflow-x-auto lg:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -186,6 +197,92 @@ export function LifetimeTable({ rows }: { rows: LifetimePropertyRow[] }) {
           </TableRow>
         </TableFooter>
       </Table>
+    </div>
+
+    {/* Mobile/tablet: card list. Niche, city, and billing move behind the tap
+        into the property; sorted by the same key as the table. */}
+    <div className="space-y-3 px-4 lg:hidden">
+      <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1">
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">Sort</span>
+        {MOBILE_SORTS.map((o) => (
+          <button
+            key={o.k}
+            type="button"
+            onClick={() => toggle(o.k)}
+            className={cn(
+              "inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-md border px-2.5 text-xs",
+              sortKey === o.k
+                ? "border-foreground/30 bg-muted font-medium text-foreground"
+                : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            {o.label}
+            {sortKey === o.k ? (
+              sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+            ) : null}
+          </button>
+        ))}
+      </div>
+
+      {sorted.map((r) => (
+        <div key={r.propertyId} className="rounded-xl border p-4">
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              href={`/properties/${r.propertyId}`}
+              className="min-w-0 truncate py-0.5 font-medium leading-snug hover:underline"
+            >
+              {r.name}
+            </Link>
+            <PropertyStatusBadge status={r.status} className="mt-0.5 shrink-0" />
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {formatNumber(r.totalLeads)} leads · {formatNumber(r.billableLeads)} billable
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <LStat label="Actual" value={formatCurrency(r.actualRevenue)} />
+            <LStat label="Potential" value={formatCurrency(r.potentialRevenue)} />
+            <LStat label="Difference" value={formatCurrency(r.difference)} strong />
+            <LStat label="Multiple" value={fmtMultiple(r.multiple)} />
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-xl border bg-muted/30 p-4">
+        <div className="text-xs font-semibold text-muted-foreground">
+          Totals ({rows.length})
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <LStat label="Actual" value={formatCurrency(totals.actual)} />
+          <LStat label="Potential" value={formatCurrency(totals.potential)} />
+          <LStat label="Difference" value={formatCurrency(totals.difference)} strong />
+          <LStat label="Multiple" value={fmtMultiple(totals.multiple)} />
+        </div>
+      </div>
+    </div>
+    </>
+  );
+}
+
+function LStat({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
+  return (
+    <div className="min-w-0 rounded-md bg-muted/50 px-2.5 py-1.5">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div
+        className={cn(
+          "truncate tabular-nums",
+          strong ? "text-sm font-semibold" : "text-sm font-medium",
+        )}
+      >
+        {value}
+      </div>
     </div>
   );
 }

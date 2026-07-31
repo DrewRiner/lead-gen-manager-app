@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, ChevronRight, FileText, Phone, PhoneMissed } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Inbox, Phone, PhoneMissed } from "lucide-react";
 import { Fragment, useState } from "react";
 
+import { EmptyState } from "@/components/empty-state";
 import { LeadDetailPanel } from "@/components/leads/lead-detail-panel";
 import { SourceBadge } from "@/components/leads/source-badge";
 import { StatusBadge } from "@/components/status-badge";
@@ -46,8 +47,21 @@ export function LeadsTable({
 
   const colCount = hideProperty ? 8 : 9;
 
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        icon={Inbox}
+        title="No leads here yet"
+        description="Calls and form submissions land here as they arrive. Adjust the filters, or add one manually to get started."
+        className="border-0"
+      />
+    );
+  }
+
   return (
-    <div className="overflow-x-auto">
+    <>
+    {/* Desktop: full table. Hidden below lg in favour of the card list. */}
+    <div className="hidden overflow-x-auto lg:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -157,5 +171,78 @@ export function LeadsTable({
         </TableBody>
       </Table>
     </div>
+
+    {/* Mobile: card list. Tap a card to expand the same detail panel. The
+        property link lives inside the expanded detail to avoid nesting a link
+        in the row button. */}
+    <div className="divide-y lg:hidden">
+      {rows.length === 0 ? (
+        <div className="py-10 text-center text-muted-foreground">
+          No leads match these filters.
+        </div>
+      ) : (
+        rows.map((r) => {
+          const isOpen = expanded === r.id;
+          const caller = r.callerName ?? formatPhone(r.callerPhone) ?? "—";
+          return (
+            <div key={r.id}>
+              <button
+                type="button"
+                onClick={() => setExpanded(isOpen ? null : r.id)}
+                aria-expanded={isOpen}
+                className="flex w-full items-start gap-3 px-4 py-3 text-left"
+              >
+                <span className="mt-0.5 shrink-0">
+                  {r.type === "call" ? (
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium">{caller}</span>
+                    {r.type === "call" && r.callAnswered === false ? (
+                      <PhoneMissed
+                        className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400"
+                        aria-label="Missed call"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+                    <span className="whitespace-nowrap">{fmt(r.occurredAt)}</span>
+                    <span aria-hidden>·</span>
+                    {r.propertyId ? (
+                      <span className="truncate">{r.propertyName}</span>
+                    ) : (
+                      <span className="font-medium text-orange-600 dark:text-orange-400">
+                        Unmatched
+                      </span>
+                    )}
+                    {r.type === "call" ? (
+                      <span className="ml-auto tabular-nums">
+                        {formatDuration(r.callDurationSeconds)}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <StatusBadge status={r.billableStatus} className="mt-0.5 shrink-0" />
+                {isOpen ? (
+                  <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
+              </button>
+              {isOpen ? (
+                <div className="bg-muted/30 px-4 py-3">
+                  <LeadDetailPanel row={r} tz={tz} properties={properties} />
+                </div>
+              ) : null}
+            </div>
+          );
+        })
+      )}
+    </div>
+    </>
   );
 }
