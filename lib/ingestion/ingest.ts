@@ -169,11 +169,16 @@ export async function ingestCanonicalLead(
   }
 
   // Call providers can deliver the same call id more than once — CallRail fires
-  // post_call then call_modified; Twilio may retry a status callback. Those
-  // repeat deliveries MERGE their later fields (recording, answered, duration)
-  // into the SAME lead — never a new row — preserving the billing decision and
-  // any manual override, only filling in the enrichment fields. This is also
-  // what makes double-delivery idempotent (returns the existing lead id).
+  // "Call Routing Complete" (duration 0, no recording) then "Call Modified"
+  // ~20 min later; Twilio may retry a status callback. Those repeat deliveries
+  // MERGE their later fields (recording, answered, transcript, DURATION) into
+  // the SAME lead — never a new row (also what makes double-delivery idempotent).
+  //
+  // Because the creating delivery often has duration 0, its billing decision is
+  // provisional. When a later delivery brings the real duration, we recompute
+  // billing FROM THAT DELIVERY'S already-evaluated decision (see the merge set) —
+  // but only for leads whose status came from the duration rule, so manual
+  // overrides (and any future non-rule qualifier) are never clobbered.
   const merge = lead.provider === "callrail" || lead.provider === "twilio";
 
   return db.transaction(async (tx) => {
@@ -197,6 +202,18 @@ export async function ingestCanonicalLead(
             callDurationSeconds: sql`coalesce(excluded.call_duration_seconds, ${leads.callDurationSeconds})`,
             rawPayload: sql`excluded.raw_payload`,
             updatedAt: sql`now()`,
+            // Recompute billing from THIS delivery's decision (already computed by
+            // evaluateLead against its real duration) ONLY when the current status
+            // came from the duration rule AND this delivery carried a duration.
+            // FAIL-CLOSED: any other qualifier — a manual override, a future 'ai'
+            // score, an unmatched/null lead — keeps its existing decision. SQL
+            // only selects which precomputed decision survives; evaluateLead stays
+            // the sole place billing is decided.
+            billableStatus: sql`case when ${leads.qualifiedBy} = 'duration_rule' and excluded.call_duration_seconds is not null then excluded.billable_status else ${leads.billableStatus} end`,
+            billableReason: sql`case when ${leads.qualifiedBy} = 'duration_rule' and excluded.call_duration_seconds is not null then excluded.billable_reason else ${leads.billableReason} end`,
+            billedAmount: sql`case when ${leads.qualifiedBy} = 'duration_rule' and excluded.call_duration_seconds is not null then excluded.billed_amount else ${leads.billedAmount} end`,
+            estimatedValue: sql`case when ${leads.qualifiedBy} = 'duration_rule' and excluded.call_duration_seconds is not null then excluded.estimated_value else ${leads.estimatedValue} end`,
+            qualifiedBy: sql`case when ${leads.qualifiedBy} = 'duration_rule' and excluded.call_duration_seconds is not null then excluded.qualified_by else ${leads.qualifiedBy} end`,
           },
         })
         // (xmax = 0) is true for a fresh insert, non-zero for an ON CONFLICT update.

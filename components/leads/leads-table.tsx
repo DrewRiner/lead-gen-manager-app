@@ -7,6 +7,7 @@ import { Fragment, useState } from "react";
 import { LeadDetailPanel } from "@/components/leads/lead-detail-panel";
 import { SourceBadge } from "@/components/leads/source-badge";
 import { StatusBadge } from "@/components/status-badge";
+import { isPendingEnrichment } from "@/lib/leads/pending-enrichment";
 import {
   Table,
   TableBody,
@@ -75,6 +76,7 @@ export function LeadsTable({
           ) : (
             rows.map((r) => {
               const isOpen = expanded === r.id;
+              const pending = isPendingEnrichment(r);
               return (
                 <Fragment key={r.id}>
                   <TableRow
@@ -131,10 +133,25 @@ export function LeadsTable({
                       {r.callerName ?? formatPhone(r.callerPhone) ?? "—"}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {r.type === "call" ? formatDuration(r.callDurationSeconds) : "—"}
+                      {pending ? (
+                        <span className="text-muted-foreground">Awaiting call data</span>
+                      ) : r.type === "call" ? (
+                        formatDuration(r.callDurationSeconds)
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={r.billableStatus} />
+                      {pending ? (
+                        <span
+                          title="Call data still arriving from CallRail — status finalizes once the call ends."
+                          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                        >
+                          Pending
+                        </span>
+                      ) : (
+                        <StatusBadge status={r.billableStatus} />
+                      )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatCurrency(r.billedAmount)}

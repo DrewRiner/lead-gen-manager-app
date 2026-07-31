@@ -35,10 +35,16 @@ profiles    - app users (3-4 internal staff), linked to Supabase auth users
    app_settings. Convert to it only at the presentation layer. "Today" on the
    dashboard means today in the ORG timezone, not UTC and not the browser's.
 
-4. BILLING SNAPSHOT: when a lead is created, snapshot the applicable rate onto
-   leads.billed_amount using the property's billing config at that moment.
-   Historical revenue is SUM(billed_amount). Never recompute revenue by joining
-   to current property rates.
+4. BILLING SNAPSHOT: snapshot the applicable rate onto leads.billed_amount using
+   the property's billing config at that moment. Historical revenue is
+   SUM(billed_amount). Never recompute revenue by joining to current property
+   rates. EXCEPTION for two-delivery call providers (CallRail/Twilio): the
+   creating delivery can arrive with duration 0 ("Call Routing Complete"), so its
+   snapshot is provisional. When a later delivery merges the real duration, the
+   ingest upsert re-snapshots billed_amount/estimated_value from that delivery's
+   evaluateLead decision — but ONLY when qualified_by = 'duration_rule' (a manual
+   override or any other qualifier is never recomputed). A snapshot computed from
+   duration 0 isn't a real snapshot; this makes it one.
 
 5. BILLABLE DECISION: exactly one function, lib/billing/evaluate-lead.ts, decides
    whether a lead is billable. It returns { billableStatus, billableReason,
@@ -119,8 +125,10 @@ Two independent money concepts per lead:
 Rules:
 1. Estimated rates live on the property: estimated_call_value and
    estimated_form_value. Set per property because value depends on niche + metro.
-2. estimated_value is SNAPSHOTTED onto each lead at creation, same as
-   billed_amount. Changing a property's rate must not rewrite historical months.
+2. estimated_value is SNAPSHOTTED onto each lead the same as billed_amount —
+   at creation, and re-snapshotted on the enrichment merge for two-delivery call
+   providers (see rule 4). Changing a property's rate must not rewrite historical
+   months.
 3. Estimated value applies ONLY to billable leads. Non-billable, spam, and
    pending_review leads get estimated_value = 0.
 4. evaluateLead() returns estimatedValue alongside billedAmount. It remains the
