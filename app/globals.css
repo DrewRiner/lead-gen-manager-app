@@ -57,3 +57,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Guides: live serif-vs-sans A/B for display headings (see GuideShell). The
+   toggle sets data-guide-headings on the guide container. "sans" = app default;
+   "serif" swaps guide titles, section headings, and the step numerals to
+   Instrument Serif, on the normal app background. */
+[data-guide-headings="sans"] .guide-numeral {
+  font-weight: 600;
+}
+[data-guide-headings="serif"] :is(h1, h2, h3),
+[data-guide-headings="serif"] .guide-numeral {
+  font-family: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
