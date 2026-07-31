@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PieChart as PieChartIcon } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
+import { EmptyState } from "@/components/empty-state";
 import { formatCurrency } from "@/lib/money";
 import type { ClientRevenue } from "@/lib/queries/revenue-by-client";
 import { cn } from "@/lib/utils";
@@ -208,8 +210,10 @@ function Legend({
 
 function Empty() {
   return (
-    <div className="flex h-40 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
-      No revenue in this period.
-    </div>
+    <EmptyState
+      icon={PieChartIcon}
+      title="No revenue in this period"
+      description="Once a client is billed flat rent or per-lead charges, their share of revenue shows here."
+    />
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, ChevronRight, FileText, Phone, PhoneMissed } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Inbox, Phone, PhoneMissed } from "lucide-react";
 import { Fragment, useState } from "react";
 
+import { EmptyState } from "@/components/empty-state";
 import { LeadDetailPanel } from "@/components/leads/lead-detail-panel";
 import { SourceBadge } from "@/components/leads/source-badge";
 import { StatusBadge } from "@/components/status-badge";
@@ -45,6 +46,17 @@ export function LeadsTable({
     }).format(new Date(d));
 
   const colCount = hideProperty ? 8 : 9;
+
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        icon={Inbox}
+        title="No leads here yet"
+        description="Calls and form submissions land here as they arrive. Adjust the filters, or add one manually to get started."
+        className="border-0"
+      />
+    );
+  }
 
   return (
     <>
