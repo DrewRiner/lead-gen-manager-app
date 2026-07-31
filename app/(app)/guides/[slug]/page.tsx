@@ -42,7 +42,11 @@ export default async function GuidePage({
     const { Designed, Plain } = designed;
     // Migrated to the app-styled shell; the rest still use the (retiring)
     // warm-paper GuideTabs until they're migrated too.
-    const MIGRATED = new Set(["update-a-clients-phone-or-email"]);
+    const MIGRATED = new Set([
+      "update-a-clients-phone-or-email",
+      "connect-callrail-call-tracking",
+      "switch-a-property-to-a-new-client",
+    ]);
     const Shell = MIGRATED.has(slug) ? GuideShell : GuideTabs;
     return (
       <Shell

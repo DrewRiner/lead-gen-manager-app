@@ -69,6 +69,7 @@ export function GuideHeader({
   eyebrow,
   alertEyebrow,
   title,
+  xl,
   sub,
   pills,
   videoId,
@@ -76,6 +77,7 @@ export function GuideHeader({
   eyebrow: string;
   alertEyebrow?: boolean;
   title: ReactNode;
+  xl?: boolean;
   sub?: ReactNode;
   pills?: string[];
   /** Optional YouTube walkthrough, shown above the steps. */
@@ -93,7 +95,12 @@ export function GuideHeader({
           >
             {eyebrow}
           </div>
-          <h1 className="max-w-[20ch] text-4xl font-semibold leading-tight tracking-tight text-balance">
+          <h1
+            className={cn(
+              "max-w-[20ch] font-semibold leading-tight tracking-tight text-balance",
+              xl ? "text-4xl md:text-5xl" : "text-4xl",
+            )}
+          >
             {title}
           </h1>
           {sub ? (
@@ -479,6 +486,25 @@ export function DiagramCard({
 /** Wrap two DiagramCards for the side-by-side (stacking) comparison. */
 export function Compare({ children }: { children: ReactNode }) {
   return <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
+}
+
+export function CodeBlock({
+  method,
+  children,
+}: {
+  method?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto rounded-md border bg-muted/50 px-3 py-2 font-mono text-xs">
+      {method ? (
+        <span className="shrink-0 rounded bg-background px-1.5 py-0.5 font-semibold text-muted-foreground">
+          {method}
+        </span>
+      ) : null}
+      <span className="whitespace-nowrap">{children}</span>
+    </div>
+  );
 }
 
 export function Crumbs({ items }: { items: string[] }) {
