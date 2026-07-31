@@ -12,12 +12,13 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   Step,
   StepVisual,
   StepsLabel,
   Success,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "connect-callrail-call-tracking";
@@ -96,11 +97,9 @@ export function ConnectCallRailDesigned({ initialDone }: { initialDone: string[]
         }
         right={
           <Panel header="The routing key">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              Dialed <strong>tracking number</strong> = the property&rsquo;s{" "}
-              <strong>Tracking Phone</strong> in the dashboard. Match them exactly
-              or the call can&rsquo;t be attributed.
-            </div>
+            Dialed <strong>tracking number</strong> = the property&rsquo;s{" "}
+            <strong>Tracking Phone</strong> in the dashboard. Match them exactly or
+            the call can&rsquo;t be attributed.
           </Panel>
         }
       />
@@ -160,11 +159,11 @@ export function ConnectCallRailDesigned({ initialDone }: { initialDone: string[]
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>An event shows <strong>auth_valid true</strong>, and the call lands on the property.</Success>
             <Warning>{VERIFY_WARN}</Warning>
             <Closing>Auth valid, call on the property.</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

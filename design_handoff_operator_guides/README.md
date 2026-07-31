@@ -1,3 +1,19 @@
+> # ⚠️ RETIRED — this design system is no longer used
+>
+> The warm-paper + Instrument-Serif "operator guide" treatment described below has
+> been **retired**. The /guides section now uses the main app's Tailwind + shadcn/ui
+> styling (same tokens as Dashboard/Leads), for one consistent product look.
+>
+> - **Content is unchanged** — same guides, steps, callouts, checklists.
+> - Only the layout/styling changed; guide navigation moved from the horizontal
+>   pill row to the app's left sidebar.
+> - Do **not** use the `.og-*` classes, `operator-guide.css`, warm-paper palette,
+>   serif display type, or mono eyebrows described here for anything new.
+>
+> This file is kept only as a historical record of the original handoff.
+
+---
+
 # Handoff: Operator guides (Guides page) — Blue Carrot Solutions Command Center
 
 ## Overview

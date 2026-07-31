@@ -16,6 +16,12 @@ export interface OperatorGuideMeta {
   stepKeys: string[];
   /** The troubleshooting guide uses a vermilion eyebrow. */
   alertEyebrow?: boolean;
+  /** Optional YouTube id embedded near the top of the guide (unset by default;
+   *  mapping supplied later). Same youtube-nocookie embed as /training. */
+  videoId?: string;
+  /** Hidden from the index + sidebar nav (content stays in the repo; direct
+   *  navigation still resolves). Unhide by removing this one line. */
+  hidden?: boolean;
 }
 
 const step = (n: number) => `step-${n}`;
@@ -75,6 +81,8 @@ export const OPERATOR_GUIDES: OperatorGuideMeta[] = [
     description:
       "Route calls for numbers running on Twilio (including WizCaller-managed numbers) into the dashboard.",
     stepKeys: steps(5),
+    // Twilio isn't wired up yet — hide it from the index + nav until it's live.
+    hidden: true,
   },
   {
     slug: "embed-a-contact-form-on-a-website",
@@ -114,6 +122,9 @@ export const OPERATOR_GUIDES: OperatorGuideMeta[] = [
     alertEyebrow: true,
   },
 ];
+
+/** Guides shown in the index + sidebar nav (excludes hidden/draft guides). */
+export const VISIBLE_OPERATOR_GUIDES = OPERATOR_GUIDES.filter((g) => !g.hidden);
 
 const BY_SLUG = new Map(OPERATOR_GUIDES.map((g) => [g.slug, g]));
 

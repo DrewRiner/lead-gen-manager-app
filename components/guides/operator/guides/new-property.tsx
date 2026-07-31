@@ -11,12 +11,13 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   Step,
   StepVisual,
   StepsLabel,
   Success,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "set-up-a-new-property-to-collect-leads";
@@ -82,11 +83,9 @@ export function NewPropertyDesigned({ initialDone }: { initialDone: string[] }) 
         }
         right={
           <Panel header="Two hidden fields do all the work">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              <strong>lead_source</strong> routes the lead to this property;{" "}
-              <strong>website</strong> is the spam honeypot. Get these two right and
-              everything else follows.
-            </div>
+            <strong>lead_source</strong> routes the lead to this property;{" "}
+            <strong>website</strong> is the spam honeypot. Get these two right and
+            everything else follows.
           </Panel>
         }
       />
@@ -143,11 +142,11 @@ export function NewPropertyDesigned({ initialDone }: { initialDone: string[] }) 
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>The property shows a <strong>green connection dot</strong>; the test lead lands on its page.</Success>
             <Warning>{VERIFY_WARN}</Warning>
             <Closing>Green dot, lead on the property.</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

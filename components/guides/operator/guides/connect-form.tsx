@@ -12,12 +12,13 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   Step,
   StepVisual,
   StepsLabel,
   Success,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "connect-a-contact-form";
@@ -94,11 +95,9 @@ export function ConnectFormDesigned({ initialDone }: { initialDone: string[] }) 
         }
         right={
           <Panel header="One field decides everything">
-            <div className="og-panel-body" style={{ fontSize: 14, lineHeight: 1.6, color: "#2a2823" }}>
-              Form <strong>Source</strong> = dashboard <strong>Lead Source</strong>{" "}
-              → routes to the property. Any mismatch → the{" "}
-              <strong>Unmatched</strong> queue.
-            </div>
+            Form <strong>Source</strong> = dashboard <strong>Lead Source</strong>{" "}
+            → routes to the property. Any mismatch → the{" "}
+            <strong>Unmatched</strong> queue.
           </Panel>
         }
       />
@@ -160,10 +159,10 @@ export function ConnectFormDesigned({ initialDone }: { initialDone: string[] }) 
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>Test entry appears on the property&rsquo;s page — not in Unmatched.</Success>
             <Closing>On the property, within seconds.</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>

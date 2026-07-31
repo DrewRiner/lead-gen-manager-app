@@ -4,7 +4,7 @@ import { ArrowLeft, Pencil } from "lucide-react";
 import { and, eq } from "drizzle-orm";
 
 import { GuideBlockView } from "@/components/guides/guide-block-view";
-import { GuideTabs } from "@/components/guides/operator/guide-tabs";
+import { GuideShell } from "@/components/guides/app/ui";
 import { getDesignedGuide } from "@/components/guides/operator/registry";
 import { Button } from "@/components/ui/button";
 import { getProfile } from "@/lib/auth";
@@ -40,7 +40,7 @@ export default async function GuidePage({
     const initialDone = doneRows.map((r) => r.stepKey);
     const { Designed, Plain } = designed;
     return (
-      <GuideTabs
+      <GuideShell
         guide={<Designed initialDone={initialDone} />}
         plain={<Plain />}
       />

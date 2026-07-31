@@ -6,6 +6,7 @@ import {
   Body,
   Checklist,
   Closing,
+  Compare,
   DiagramCard,
   GuideHeader,
   GuideProgress,
@@ -15,6 +16,7 @@ import {
   Panel,
   PlainGuide,
   Section,
+  Stack,
   StatusPill,
   Step,
   StepVisual,
@@ -22,7 +24,7 @@ import {
   Success,
   ToggleSwitch,
   Warning,
-} from "@/components/guides/operator/primitives";
+} from "@/components/guides/app/ui";
 import { getOperatorGuide } from "@/lib/guides/operator-guides";
 
 const SLUG = "switch-a-property-to-a-new-client";
@@ -87,21 +89,16 @@ export function SwitchClientDesigned({ initialDone }: { initialDone: string[] })
           </>
         }
         right={
-          <div className="og-diagram">
-            <DiagramCard tone="bad" label="Handoff done wrong" labelColor="#93290f">
-              <div style={{ fontSize: 14, lineHeight: 1.5, color: "#2a2823" }}>
-                Old client still on a notification action → keeps getting leads
-                they no longer pay for. Or the new client is never wired in → gets
-                nothing.
-              </div>
+          <Compare>
+            <DiagramCard tone="bad" label="Handoff done wrong">
+              Old client still on a notification action → keeps getting leads they
+              no longer pay for. Or the new client is never wired in → gets nothing.
             </DiagramCard>
-            <DiagramCard tone="good" label="Handoff done clean" labelColor="#245740">
-              <div style={{ fontSize: 14, lineHeight: 1.5, color: "#2a2823" }}>
-                Old assignment ended · new client active · every action repointed
-                → leads reach the new client the moment they arrive.
-              </div>
+            <DiagramCard tone="good" label="Handoff done clean">
+              Old assignment ended · new client active · every action repointed →
+              leads reach the new client the moment they arrive.
             </DiagramCard>
-          </div>
+          </Compare>
         }
       />
 
@@ -122,14 +119,12 @@ export function SwitchClientDesigned({ initialDone }: { initialDone: string[] })
         <Body>{STEPS[0].body}</Body>
         <StepVisual>
           <Panel header="Dashboard — Properties / Sumter Roofing Company" deep>
-            <div className="og-panel-body" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontFamily: "var(--og-serif)", fontSize: 22 }}>Sumter Roofing Company</span>
-              <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-                <span style={actionBtn}>Reassign</span>
-                <span style={actionBtn}>Change rate</span>
-                <span style={{ ...actionBtn, borderColor: "#c63f1e", color: "#93290f" }} className="og-ring">
-                  Unassign
-                </span>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-base font-semibold">Sumter Roofing Company</span>
+              <span className="ml-auto flex flex-wrap gap-2">
+                <ActionBtn>Reassign</ActionBtn>
+                <ActionBtn>Change rate</ActionBtn>
+                <ActionBtn danger>Unassign</ActionBtn>
               </span>
             </div>
           </Panel>
@@ -155,10 +150,10 @@ export function SwitchClientDesigned({ initialDone }: { initialDone: string[] })
           new client&rsquo;s.
         </Body>
         <StepVisual>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div className="flex flex-col items-center">
             <Node
               icon={<Bell size={12} />}
-              iconBg="#8aa542"
+              iconBg="#65a30d"
               label="Client Email Notification"
               edit
               value={<>TO CUSTOM EMAIL → new client&rsquo;s email</>}
@@ -166,7 +161,7 @@ export function SwitchClientDesigned({ initialDone }: { initialDone: string[] })
             <NodeConnector />
             <Node
               icon={<MessageSquare size={12} />}
-              iconBg="#8aa542"
+              iconBg="#65a30d"
               label="Client SMS Notification"
               edit
               value={<>TO CUSTOM PHONE → new client&rsquo;s phone</>}
@@ -185,15 +180,11 @@ export function SwitchClientDesigned({ initialDone }: { initialDone: string[] })
       <Step n={5} stepKey="step-5" badge={BADGES[4]} title={STEPS[4].title} last>
         <Body>{STEPS[4].body}</Body>
         <StepVisual>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            <Panel header="Builder — before">
-              <div className="og-panel-body" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontFamily: "var(--og-mono)", fontSize: 10.5, fontWeight: 600 }}>Draft</span>
-                <ToggleSwitch />
-                <span style={{ fontFamily: "var(--og-mono)", fontSize: 10.5, color: "#8c877d" }}>Publish</span>
-              </div>
-            </Panel>
-            <span style={{ fontFamily: "var(--og-mono)", fontSize: 20, color: "#c9c4b8" }}>→</span>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Draft</span>
+            <ToggleSwitch />
+            <span>Publish</span>
+            <span aria-hidden>→</span>
             <StatusPill tone="ok">Published</StatusPill>
           </div>
         </StepVisual>
@@ -208,11 +199,11 @@ export function SwitchClientDesigned({ initialDone }: { initialDone: string[] })
           </>
         }
         right={
-          <div className="og-stack">
+          <Stack>
             <Success>Property shows the new client active; old assignment ended.</Success>
             <Success>Test lead reaches the new client — old client gets nothing.</Success>
             <Closing>{CLOSING}</Closing>
-          </div>
+          </Stack>
         }
       />
     </GuideProgress>
@@ -232,12 +223,15 @@ export function SwitchClientPlain() {
   );
 }
 
-const actionBtn: React.CSSProperties = {
-  border: "1px solid #dcd7ca",
-  borderRadius: 8,
-  padding: "8px 12px",
-  fontSize: 12,
-  fontWeight: 600,
-  color: "#4a4741",
-  background: "#fff",
-};
+function ActionBtn({ children, danger }: { children: React.ReactNode; danger?: boolean }) {
+  return (
+    <span
+      className={
+        "rounded-md border px-2.5 py-1.5 text-xs font-medium " +
+        (danger ? "border-destructive/50 text-destructive" : "text-muted-foreground")
+      }
+    >
+      {children}
+    </span>
+  );
+}
